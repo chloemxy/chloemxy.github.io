@@ -1,0 +1,331 @@
+/* Style reference: frontoffice.co, as in the Corner newsstand. White paper, black ink, hairline rules,
+   one quiet grotesk throughout, with tracked uppercase labels. */
+
+:root {
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px;
+  --text-xs: 12px; --text-sm: 14px; --text-md: 16px; --text-lg: 20px; --text-xl: 24px; --text-3xl: 48px;
+
+  --paper: #ffffff;
+  --ink: #000000;
+  --body: rgba(0, 0, 0, 0.7);
+  --mute: rgba(0, 0, 0, 0.6);
+  --hair: rgba(0, 0, 0, 0.14);
+  --border: rgba(0, 0, 0, 0.34);
+  --slot: #efefed;
+  --disabled: #a0a0a0;
+  --panel-w: 400px;
+
+  --display: "Archivo", -apple-system, Helvetica, Arial, sans-serif;
+  --text: "Reform Grotesk", "Archivo", -apple-system, Helvetica, Arial, sans-serif;
+  --brand: "Libre Caslon Text", Georgia, serif; /* the MA wordmark only */
+
+  --out: cubic-bezier(0.16, 1, 0.3, 1);
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 var(--text-sm)/1.5 var(--text);
+  font-stretch: 92%;
+  letter-spacing: 0.04em;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  user-select: none; /* dragging the scene shouldn't select the page text */
+}
+
+#scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; outline: none; touch-action: none; }
+/* the scene's cursor: a small ink dot in a faint ring, like a fingertip
+   resting on wood; over a drawer the ring closes in, darkens, and a
+   brass dot (the knob's colour) marks the point you'll pull it by */
+#scene {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Ccircle cx='14' cy='14' r='9' fill='none' stroke='%23000' stroke-opacity='.28' stroke-width='1'/%3E%3Ccircle cx='14' cy='14' r='2' fill='%23111'/%3E%3C/svg%3E") 14 14, default;
+}
+#scene.over {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Ccircle cx='14' cy='14' r='7' fill='%23fff' fill-opacity='.55' stroke='%23111' stroke-width='1.25'/%3E%3Ccircle cx='14' cy='14' r='2.5' fill='%23b8862f'/%3E%3C/svg%3E") 14 14, pointer;
+}
+
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.label {
+  font: 400 var(--text-xs)/1.4 var(--text);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* top bar: brand split across both ends, hairline below */
+.bar {
+  position: fixed; top: 0; left: 0; right: 0; height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 var(--space-6);
+  background: var(--paper);
+  border-bottom: 1px solid var(--hair);
+  font: 400 var(--text-xl)/1 var(--text);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  z-index: 2;
+}
+.tools { display: flex; align-items: center; gap: var(--space-2); }
+/* which cabinet: two joined ghost buttons, the current one inked in */
+.switch { display: flex; height: 40px; border: 1px solid var(--border); }
+.switch[hidden] { display: none; }
+.switch a {
+  display: inline-flex; align-items: center; padding: 0 var(--space-4);
+  color: var(--ink); text-decoration: none;
+  transition: background 200ms var(--out), color 200ms var(--out);
+}
+.switch a + a { border-left: 1px solid var(--border); }
+.switch a:hover { background: var(--slot); }
+.switch a[aria-current="page"] { background: var(--ink); color: var(--paper); }
+.bar h1 { margin: 0; font: inherit; font-family: var(--brand); letter-spacing: 0.01em; text-transform: none; }
+
+.index { position: fixed; right: var(--space-6); bottom: var(--space-6); transition: opacity 400ms var(--out), visibility 400ms; }
+body.reading .index { opacity: 0; visibility: hidden; }
+.index summary {
+  cursor: pointer; list-style: none;
+  display: inline-flex; align-items: center; height: 48px; padding: 0 var(--space-5);
+  background: var(--ink); color: var(--paper);
+}
+.index summary::-webkit-details-marker { display: none; }
+.index details[open] summary { background: var(--paper); color: var(--ink); outline: 1px solid var(--ink); outline-offset: -1px; }
+
+/* the list of drawers: a small printed contents page */
+.index-panel {
+  position: absolute; right: 0; bottom: 56px; width: 320px;
+  background: var(--paper); border: 1px solid var(--hair);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+}
+.index-head {
+  display: flex; justify-content: space-between; margin: 0;
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  border-bottom: 1px solid var(--ink); color: var(--mute);
+}
+.index ol {
+  list-style: none; margin: 0; padding: 0;
+  max-height: min(60vh, 520px); overflow: auto; counter-reset: paper;
+}
+.index li + li { border-top: 1px solid var(--hair); }
+.index li button {
+  counter-increment: paper;
+  width: 100%; display: grid; grid-template-columns: 32px 1fr; column-gap: var(--space-2); align-items: baseline;
+  padding: var(--space-3) var(--space-4); text-align: left;
+  background: none; border: 0; color: var(--ink); cursor: pointer;
+  font: 400 var(--text-sm)/1.3 var(--text); letter-spacing: 0.02em; text-transform: none;
+  transition: background 200ms var(--out);
+}
+.index li button::before {
+  content: counter(paper, decimal-leading-zero); grid-row: span 2;
+  font: 400 var(--text-xs)/1.3 var(--text); letter-spacing: 0.14em; color: var(--mute);
+  font-variant-numeric: tabular-nums;
+}
+.index li button small { color: var(--mute); font-size: var(--text-xs); letter-spacing: 0.04em; }
+.index li button:hover, .index li button:focus-visible { background: var(--slot); }
+
+.tip {
+  position: fixed; top: 0; left: 0; pointer-events: none; z-index: 2;
+  display: grid; gap: 2px; padding: var(--space-2) var(--space-3);
+  background: var(--paper); color: var(--ink);
+  border: 1px solid var(--hair); border-top: 2px solid var(--ink);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  font: 400 var(--text-sm)/1.3 var(--text); letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.tip[hidden] { display: none; }
+.tip small { color: var(--mute); font-size: var(--text-xs); letter-spacing: 0.04em; }
+
+/* the name and a line about the curio in hand, above the controls */
+.caption {
+  position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%);
+  width: min(440px, calc(100vw - 32px)); margin: 0;
+  display: grid; gap: var(--space-1); padding: var(--space-3) var(--space-4);
+  background: var(--paper); border: 1px solid var(--hair); border-top: 2px solid var(--ink);
+  text-align: center; z-index: 1;
+}
+.caption[hidden] { display: none; }
+.caption strong { font: 400 var(--text-lg)/1.2 var(--brand); letter-spacing: 0.01em; }
+.caption span { color: var(--body); font-size: var(--text-sm); line-height: 1.45; letter-spacing: 0.02em; }
+
+/* reading controls: a small bar under the card; the card itself is the reader */
+.reader {
+  position: fixed; left: 50%; bottom: var(--space-5); transform: translateX(-50%);
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--paper); border: 1px solid var(--hair);
+  z-index: 1;
+}
+.reader[hidden] { display: none; }
+.count { min-width: 96px; text-align: center; color: var(--mute); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.reader .btn { white-space: nowrap; }
+.reader .btn[hidden] { display: none; }
+.reader .arrow { width: 40px; padding: 0; font-size: var(--text-lg); letter-spacing: 0; }
+/* an open portfolio drawer's book (flipbook.js). It takes over from the
+   book in the drawer, which flies out to just where it is: open on the hero
+   picture across the spread, the cover's cloth round it (--book-ar and
+   --book-pad set from BOOK, so the two match). Its pages turn about the
+   spine. On a narrow screen it shows one page at a time. Sizes inside a
+   page are in page widths (cqw). */
+.stage {
+  --w: min(1040px, calc(100vw - 48px), calc((100vh - 210px) * var(--book-ar)));
+  position: fixed; left: 50%; top: calc(50% + 6px); transform: translate(-50%, -50%);
+  width: var(--w); display: grid; justify-items: center; gap: 14px;
+  opacity: 0; pointer-events: none; transition: opacity 250ms linear; z-index: 2;
+}
+.stage[hidden] { display: none; }
+.stage.on { opacity: 1; pointer-events: auto; }
+.stage.narrow { --w: min(calc(100vw - 32px), calc((100vh - 230px) * 0.7)); top: calc(50% + 34px); }
+.book {
+  --cloth: #5a1f1b; --page: #f5efe2;
+  position: relative; width: 100%; aspect-ratio: var(--book-ar); padding: var(--book-pad);
+  background: var(--cloth); border-radius: 4px; cursor: pointer; touch-action: pan-y;
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  perspective: 2600px;
+}
+.narrow .book { aspect-ratio: 0.7; padding: 2.4% 2.4% 2.4% 0; border-radius: 0 4px 4px 0; }
+.book-pages, .book-leaves { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; }
+.book-leaves { position: absolute; inset: 0; }
+.book-left { position: absolute; left: 0; top: 0; width: 50%; height: 100%; }
+.narrow .book-left { display: none; }
+.leaf {
+  position: absolute; left: 50%; top: 0; width: 50%; height: 100%;
+  transform-origin: left center; transform-style: preserve-3d;
+  transition: transform 900ms cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+.leaf.turned { transform: rotateY(-180deg); }
+.narrow .leaf { left: 0; width: 100%; }
+/* (one page at a time, a turned page goes out of sight) */
+.narrow .leaf.turned { opacity: 0; transition: transform 900ms cubic-bezier(0.645, 0.045, 0.355, 1), opacity 250ms 650ms; }
+.face, .book-left { overflow: hidden; background: var(--page); container-type: inline-size; }
+.face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.face.back { transform: rotateY(180deg); }
+/* the shade in the gutter, and across a page as it turns */
+.face::before, .book-left::before, .face::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 1;
+}
+.face.front::before { background: linear-gradient(to right, rgba(60, 40, 20, 0.22), rgba(60, 40, 20, 0) 9%); }
+.face.back::before, .book-left::before { background: linear-gradient(to left, rgba(60, 40, 20, 0.22), rgba(60, 40, 20, 0) 9%); }
+.face::after { background: linear-gradient(to right, rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0) 70%); opacity: 0; }
+.leaf.moving .face::after { animation: page-shade 900ms ease-in-out; }
+@keyframes page-shade { 50% { opacity: 1; } }
+.page { position: absolute; inset: 0; }
+.hero-half { background-size: 200% 100%; background-repeat: no-repeat; }
+.hero-half.left { background-position: left center; }
+.hero-half.right { background-position: right center; }
+.page.text { padding: 11cqw 10cqw 13cqw; display: flex; flex-direction: column; gap: 4cqw; color: var(--ink); cursor: pointer; }
+.page-meta { margin: 0; color: var(--mute); font-size: max(10px, 2.6cqw); }
+.page-title { margin: 0; font: 700 9cqw/1 var(--display); letter-spacing: -0.04em; }
+.page-lede { margin: 0; color: #e36216; font: 700 5.4cqw/1.12 var(--display); letter-spacing: -0.02em; }
+.page-summary { margin: 0; color: var(--body); font-size: max(13px, 3.6cqw); line-height: 1.5; }
+.page .book-read {
+  margin-top: auto; align-self: flex-start; white-space: nowrap; text-decoration: none;
+  display: inline-flex; align-items: center; height: clamp(38px, 9cqw, 46px); padding: 0 var(--space-4); font-size: clamp(11px, 2.7cqw, 13px);
+}
+.book-read[aria-disabled="true"] { color: var(--disabled); border-color: var(--hair); background: transparent; cursor: default; }
+.details section { display: grid; gap: 2cqw; border-top: 1px solid var(--hair); padding-top: 3.5cqw; }
+.details section + section { margin-top: 3cqw; }
+.details h4 { margin: 0; color: var(--mute); font-size: max(10px, 2.6cqw); }
+.details p { margin: 0; color: var(--body); font-size: max(13px, 3.6cqw); line-height: 1.55; }
+.page.end { justify-content: center; }
+.page.end .book-read { margin-top: 0; }
+.page.blank { display: grid; place-items: center; }
+.monogram { font: 400 8cqw var(--brand); color: rgba(0, 0, 0, 0.16); }
+.page.plate { padding: 10cqw 8cqw; display: flex; flex-direction: column; justify-content: center; gap: 4cqw; }
+.plate-img { display: block; width: 100%; aspect-ratio: 1.6; object-fit: cover; }
+.plate-caption { margin: 0; text-align: center; color: var(--mute); font-size: max(10px, 2.8cqw); }
+.folio { position: absolute; bottom: 5cqw; color: var(--mute); font-size: max(10px, 2.4cqw); font-variant-numeric: tabular-nums; }
+.front .folio { right: 8cqw; }
+.back .folio { left: 8cqw; }
+.book-nav { display: flex; align-items: center; gap: var(--space-3); }
+.book-nav .btn { width: 40px; padding: 0; justify-content: center; letter-spacing: 0; font-size: var(--text-md); }
+.book-count { min-width: 56px; text-align: center; color: var(--mute); font-variant-numeric: tabular-nums; }
+/* the scene fading behind the opened book */
+.stage-dim {
+  position: fixed; inset: 0; background: #edeae5; opacity: 0; pointer-events: none;
+  transition: opacity 600ms var(--out); z-index: 1;
+}
+.stage-dim.on { opacity: 0.7; }
+/* in the top bar, between the name and the sound switch */
+.stage-back { position: fixed; left: 50%; top: 12px; transform: translateX(-50%); background: var(--paper); z-index: 3; }
+.stage-back[hidden] { display: none; }
+.stage-back { white-space: nowrap; }
+@media (max-width: 600px) { .stage-back { left: 16px; top: 76px; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .stage, .stage-dim, .leaf { transition: none !important; } .leaf.moving .face::after { animation: none; } }
+.staging .index, .staging .tip { opacity: 0; pointer-events: none; transition: opacity 300ms var(--out); }
+
+/* the page fading to the case study's sand as you go through to it */
+.veil {
+  position: fixed; inset: 0; background: #edeae5; opacity: 0; pointer-events: none;
+  transition: opacity 450ms var(--out); z-index: 4;
+}
+.veil.on { opacity: 1; pointer-events: auto; }
+
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.btn {
+  height: 48px; padding: 0 var(--space-5);
+  border: 1px solid var(--ink); border-radius: 0; background: var(--ink); color: var(--paper);
+  cursor: pointer;
+  transition: background 200ms var(--out), color 200ms var(--out);
+}
+.btn:hover { background: var(--paper); color: var(--ink); }
+.btn.ghost { height: 40px; padding: 0 var(--space-4); background: transparent; color: var(--ink); border-color: var(--border); }
+.btn.ghost:hover { border-color: var(--ink); }
+.btn:disabled { color: var(--disabled); border-color: var(--hair); cursor: default; background: transparent; }
+
+.loading {
+  position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; gap: var(--space-5);
+  background: var(--paper); transition: opacity 600ms var(--out); z-index: 3;
+}
+.loading.done { opacity: 0; pointer-events: none; }
+/* the loader: the six portfolio drawers, two columns of three, each one
+   filling (--f, 0..1, set by loader.js) as its share of the load comes in:
+   its hero picture rises behind the glass, the drawer pulled out a touch
+   while it fills and pushed home, its knob turning black, once it's full */
+.loader-wall { display: grid; grid-template-columns: repeat(2, 72px); gap: 8px; }
+.ld {
+  --f: 0;
+  display: grid; grid-template-rows: 1fr 12px; height: 54px;
+  border: 1px solid var(--border); background: var(--paper);
+  transition: transform 300ms var(--out), box-shadow 300ms var(--out), border-color 300ms;
+}
+.ld-glass { position: relative; overflow: hidden; background: var(--slot); }
+.ld-card {
+  position: absolute; inset: 4px 6px 0; background: #edeae5 center / cover no-repeat;
+  transform: translateY(calc((1 - var(--f)) * 105%));
+}
+/* a sheen across the glass */
+.ld-glass::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.5) 50%, transparent 60%);
+}
+.ld-front { display: grid; place-items: center; border-top: 1px solid var(--hair); }
+.ld-knob { width: 5px; height: 5px; border-radius: 50%; background: var(--hair); transition: background 300ms; }
+.ld.filling { transform: translateY(-3px); box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12); border-color: var(--ink); }
+.ld.full { animation: ld-shut 420ms var(--out); }
+.ld.full .ld-knob { background: var(--ink); }
+@keyframes ld-shut { 0% { transform: translateY(-3px); } 60% { transform: translateY(1px); } 100% { transform: none; } }
+.loader-line {
+  display: flex; gap: var(--space-3); align-items: baseline; margin: 0;
+  font: 400 var(--text-lg)/1.2 var(--display);
+}
+.loader-pct { min-width: 4ch; color: var(--mute); font-variant-numeric: tabular-nums; font-size: var(--text-sm); }
+@media (prefers-reduced-motion: reduce) { .ld, .ld.full { transition: none; animation: none; } }
+
+@media (max-width: 899px) {
+  .bar { height: 56px; padding: 0 var(--space-4); font-size: var(--text-lg); }
+  .index { left: var(--space-4); right: var(--space-4); bottom: var(--space-4); }
+  .index summary { width: 100%; justify-content: center; }
+  .index-panel { left: 0; width: auto; }
+  .reader { left: var(--space-4); right: var(--space-4); bottom: var(--space-4); transform: none; justify-content: space-between; gap: var(--space-1); }
+  .reader .count { min-width: 0; }
+  .tools { gap: var(--space-1); }
+  .switch a, .bar .btn.ghost { padding: 0 var(--space-2); letter-spacing: 0.08em; }
+  .reader .count { flex: none; padding: 0 var(--space-1); }
+  .reader .btn { padding: 0 var(--space-3); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading, .btn { transition: none; }
+}

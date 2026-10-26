@@ -15,7 +15,15 @@
    Injects the shared pill nav used on every case-study page.
    Only the title changes per page — everything else is global.
 ══════════════════════════════════ */
-function initSubNav({ title, href = 'index.html' } = {}) {
+function initSubNav({ title, href } = {}) {
+  // Case studies are shared by both versions of the site: send "Portfolio" and
+  // the switch back to whichever version the visitor came from.
+  let fi = 'lofi';
+  try { if (localStorage.getItem('portfolio.fi') === 'hifi') fi = 'hifi'; } catch (e) {}
+  if (!href) href = fi === 'hifi' ? 'hifi/' : 'index.html';
+  const lofiCurrent = fi === 'lofi' ? ' aria-current="page"' : '';
+  const hifiCurrent = fi === 'hifi' ? ' aria-current="page"' : '';
+
   // ── Nav pill ──────────────────────────────────────────────────────────────
   const nav = document.createElement('nav');
   nav.innerHTML = `
@@ -26,6 +34,10 @@ function initSubNav({ title, href = 'index.html' } = {}) {
       <svg viewBox="0 0 13 13"><path d="M10 6.5H3M6 3.5L3 6.5l3 3"/></svg>
       Portfolio
     </a>
+    <div class="fi-toggle" role="group" aria-label="Site version">
+      <a href="index.html"${lofiCurrent}>Lo-fi</a>
+      <a href="hifi/"${hifiCurrent}>Hi-fi</a>
+    </div>
     <button class="nav-hamburger" id="menuToggle" aria-label="Open menu">
       <span></span><span></span><span></span>
     </button>
