@@ -274,12 +274,13 @@ export function finishMats(finish = 'walnut', { moss = true } = {}) {
     weather(walnut, { fade: 0.22, grime: moss ? 0.4 : 0.25, moss: moss ? 1 : 0, colonies: COLONIES, outside: OUTSIDE });
     weather(binBody, { fade: 0.22, grime: moss ? 0.4 : 0.25, moss: 0 });
   }
-  // clear, clean glass: barely there, with just a glint of reflection, so
-  // you see straight in. Plain transparency rather than transmission, which
-  // would draw the whole meadow a second time every frame.
+  // clear, clean glass: barely there, with just a faint glint of
+  // reflection, so you see straight in and what's inside isn't washed out.
+  // Plain transparency rather than transmission, which would draw the whole
+  // meadow a second time every frame.
   mats.glass = new THREE.MeshPhysicalMaterial({
-    color: '#ffffff', transparent: true, opacity: 0.07, roughness: 0.02, metalness: 0,
-    specularIntensity: 0.7, envMapIntensity: 0.8, clearcoat: 1, clearcoatRoughness: 0.02, depthWrite: false,
+    color: '#ffffff', transparent: true, opacity: 0.02, roughness: 0.02, metalness: 0,
+    specularIntensity: 0.3, envMapIntensity: 0.25, clearcoat: 0.3, clearcoatRoughness: 0.02, depthWrite: false,
   });
   return { ...mats, carcass: mats.pine, pine: binBody, wall: binBody, pristine };
 }
