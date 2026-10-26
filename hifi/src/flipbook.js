@@ -119,6 +119,15 @@ const visuals = {
     v.append(dl);
     return v;
   },
+  // a close-up of one of the project's pictures, somewhere else each time
+  detail(src, caption, k) {
+    const v = el('figure', 'visual detail');
+    const lens = el('div', 'lens');
+    lens.style.backgroundImage = `url("${BASE + src}")`;
+    lens.style.backgroundPosition = `${[20, 80, 50, 15, 85][k % 5]}% ${[30, 70, 20, 80, 50][k % 5]}%`;
+    v.append(lens, el('figcaption', 'label', `Detail${caption ? ` · ${caption}` : ''}`));
+    return v;
+  },
   quote(text) {
     const v = el('figure', 'visual quote');
     v.append(el('blockquote', '', text));
@@ -144,9 +153,8 @@ export class FlipBook {
     this.leaves = [];
     this.page = 0;
     this.data = null;
-    const { w, h, margin } = BOOK;
-    root.style.setProperty('--book-ar', String((w + 2 * margin) / (h + 2 * margin)));
-    root.style.setProperty('--book-pad', `${(margin / (w + 2 * margin)) * 100}%`);
+    // the open spread, the hero's own shape, so it's never stretched
+    root.style.setProperty('--book-ar', String(BOOK.w / BOOK.h));
     load();
     this.bind();
   }
@@ -198,9 +206,7 @@ export class FlipBook {
     head.append(el('span', 'rh-l', c.title), el('span', 'rh-r', s ? s.label : c.title));
     const body = el('div', 'page-body');
     if (s && first) {
-      const sh = el('div', 'sec-head');
-      sh.append(el('span', 'sec-num label', `${s.num} · ${s.label}`), el('h3', 'sec-title', s.heading));
-      body.append(sh);
+      body.append(el('h3', 'sec-title', s.heading));
     }
     for (const b of blocks) body.append(el(b.t === 'h' ? 'h4' : 'p', b.t === 'h' ? 'sub' : '', b.text));
     p.append(head);
@@ -221,7 +227,13 @@ export class FlipBook {
       const nums = numbersIn(text);
       if (nums.length) return visuals.numbers(nums);
       if (!used.facts && c.facts?.length) { used.facts = true; return visuals.facts(c.facts.slice(0, 6)); }
-      const line = pull(pageBlocks);
+      // then a line from the page and a close-up of the project, by turns
+      used.n = (used.n ?? 0) + 1;
+      const line = pull(pageBlocks), pics = used.pics;
+      if (pics.length && (used.n % 2 === 0 || !line)) {
+        const [src, caption] = pics[used.n % pics.length];
+        return visuals.detail(src, caption, used.n);
+      }
       return line ? visuals.quote(line) : null;
     };
     const fits = (blocks, first) => {
@@ -262,23 +274,24 @@ export class FlipBook {
   pages(d, c) {
     const read = (label, cls = '') => {
       if (d.soon) {
-        const b = el('span', `btn label book-read ${cls}`, 'Case study coming soon');
+        const b = el('span', `book-read ${cls}`, 'Case study coming soon');
         b.setAttribute('aria-disabled', 'true');
         return b;
       }
-      const a = el('a', `btn label book-read ${cls}`, label);
+      const a = el('a', `book-read ${cls}`, label);
       a.href = this.href(d, c);
       return a;
     };
     const page = (cls, ...kids) => { const p = el('div', `page ${cls}`); p.append(...kids); return p; };
     const hero = c?.hero ? BASE + c.hero : d.hero;
     const title = page('title',
-      el('p', 'page-meta label', (c?.meta?.length ? c.meta : [d.meta]).join(' · ')),
       el('h2', 'page-title', d.name),
       ...((c?.lede && c.sections.length) || d.lede ? [el('p', 'page-lede', (c?.sections.length && c.lede) || d.lede)] : []),
       el('p', 'page-summary', c?.blurb || d.summary || ''),
-      read(d.cta ?? 'Read the case study'));
-    const used = {};
+      read(d.cta ?? 'Read the case study'),
+      el('p', 'page-meta label', (c?.meta?.length ? c.meta : [d.meta]).join(' · ')));
+    // the project's own pictures, for close-ups
+    const used = { pics: [...(c?.hero ? [[c.hero, '']] : []), ...(c?.sections ?? []).flatMap((s) => s.figures.filter((f) => f.kind === 'img').flatMap((f) => f.srcs.map((src) => [src, f.caption ?? ''])))] };
     const probe = el('div', 'face front probe');
     this.leavesEl.append(probe);
     const story = (c?.sections ?? []).flatMap((s) => this.section(c, s, probe, used));
@@ -348,6 +361,16 @@ export class FlipBook {
     }
   }
 
+  // back to the picture at once, for the book to go back in its drawer
+  close() {
+    for (const l of this.leaves) { l.classList.add('instant'); l.classList.remove('turned', 'moving'); }
+    this.page = 0;
+    this.stack();
+    this.show();
+    void this.book.offsetWidth;
+    for (const l of this.leaves) l.classList.remove('instant');
+  }
+
   get last() { return this.leaves.length - 1; }
 
   turn(dir) {
@@ -372,8 +395,8 @@ export class FlipBook {
     const n = this.leaves.length;
     this.leaves.forEach((l, i) => { if (!l.classList.contains('moving')) l.style.zIndex = String(i < this.page ? i + 1 : n - i + 1); });
     const k = n > 1 ? this.page / (n - 1) : 0;
-    this.book.style.setProperty('--left-edge', `${1 + 5 * k}px`);
-    this.book.style.setProperty('--right-edge', `${1 + 5 * (1 - k)}px`);
+    this.book.style.setProperty('--left-edge', `${1 + 2 * k}px`);
+    this.book.style.setProperty('--right-edge', `${1 + 2 * (1 - k)}px`);
   }
 
   // only the pages in view can be read or tabbed to

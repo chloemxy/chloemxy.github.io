@@ -43,6 +43,14 @@ function initSubNav({ title, href } = {}) {
     </button>
   `;
 
+  // ── Site version switch, top right on desktop (same as the hi-fi site) ────
+  const fiSwitch = document.createElement('div');
+  fiSwitch.className = 'fi-switch';
+  fiSwitch.setAttribute('role', 'group');
+  fiSwitch.setAttribute('aria-label', 'Site version');
+  fiSwitch.innerHTML = `<a href="index.html"${lofiCurrent}>Lo-fi</a><a href="hifi/"${hifiCurrent}>Hi-fi</a>`;
+  document.body.appendChild(fiSwitch);
+
   // ── Menu overlay ──────────────────────────────────────────────────────────
   const overlay = document.createElement('div');
   overlay.className = 'menu-overlay';

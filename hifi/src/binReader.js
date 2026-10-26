@@ -28,6 +28,10 @@ const PEEK = 0.16;   // how far open a bin tips under the pointer (0..1)
 const LIFT = 0.025;  // how high a curio rises off the bed before it flies (it
                      // stays under the raised lid, then heads out forward)
 const SPIN = 0.45;   // radians a second it turns in your hand
+// a portfolio drawer, ms: it opens while its book is set on the page, and the
+// book flies out as soon as it is, the drawer still sliding; back, the
+// drawer starts to shut as the book comes down into it
+const OPEN = 420, FLY = 620, FLY_BACK = 480, SHUT = 420;
 
 const $ = (id) => document.getElementById(id);
 
@@ -54,7 +58,8 @@ export class BinReader {
     };
     this.bookOut = false; // the drawer's book out on the page
     this.flip = new FlipBook(this.ui.stage, {
-      href: (d) => new URL(d.href, CONFIG.caseStudies).href,
+      // (the page the book was read from, or the drawer's own link)
+      href: (d, c) => new URL(c?.page ?? d.href, CONFIG.caseStudies).href,
       onTurn: () => sound.flip(),
     });
     this.stage = null;    // the portfolio bin standing open
@@ -377,7 +382,7 @@ export class BinReader {
 
   onResize() {
     // (where the book would fly back from)
-    if (this.bookOut && this.state === 'presenting') {
+    if (this.bookOut && this.state === 'presenting' && this.flip.narrow) {
       const { p, q } = this.bookTarget(this.flip.target());
       this.stage.book.root.position.copy(p); this.stage.book.root.quaternion.copy(q);
     }
@@ -387,7 +392,8 @@ export class BinReader {
 
   // ---- Staging: a portfolio drawer opened, its book out
 
-  // the drawer pulls out where it is, and its book comes out of it
+  // the drawer pulls out where it is, and at the same time the book on the
+  // page is laid out (unseen) and flies out of it
   async present(bin, opener) {
     if (this.state !== 'idle') return;
     this.state = 'busy';
@@ -396,33 +402,33 @@ export class BinReader {
     this.closeIndex();
     document.body.classList.add('staging');
     this.stage = bin;
-    this.shown = false;
-    const k0 = bin.open;
+    const d = bin.data, ui = this.ui, k0 = bin.open;
     sound.pull(this.pan(bin));
-    await tween(650, (k) => bin.setOpen(THREE.MathUtils.lerp(k0, 1, k)));
-    this.state = 'presenting';
-    this.showStage();
-  }
-
-  // open the book on the page at its first spread; it's laid out (unseen)
-  // so the one in the drawer can fly to just where it is, and then it takes
-  // over
-  showStage() {
-    if (this.shown) return;
-    this.shown = true;
-    const d = this.stage.data, ui = this.ui;
+    const opening = tween(OPEN, (k) => bin.setOpen(THREE.MathUtils.lerp(k0, 1, k)));
     ui.title.textContent = d.name;
     ui.stage.hidden = false;
-    this.flip.open(d);
+    await this.flip.open(d);
+    if (this.stage !== bin) return; // (put away meanwhile)
     ui.back.hidden = false;
     ui.text.textContent = `${d.name}${d.lede ? `: ${d.lede}` : ''}. ${d.summary ?? ''}`;
-    this.bringBook();
+    await Promise.all([this.bringBook(), opening]);
   }
 
   async bringBook() {
     const book = this.stage.book, ui = this.ui;
     this.state = 'busy';
-    if (book) {
+    if (book && !this.flip.narrow) {
+      // the book on the page flies out of the drawer itself, from just where
+      // the one in the drawer stands, so its picture never changes colour
+      // (the scene's film grade would tint a 3D book on its way)
+      const from = this.seatRect(book);
+      book.root.visible = false;
+      ui.stage.classList.add('flying', 'on');
+      ui.dim.classList.add('on');
+      sound.pickup('paper');
+      await this.flyBook(from, false);
+      ui.stage.classList.remove('flying');
+    } else if (book) {
       this.camera.updateMatrixWorld();
       this.camera.attach(book.root);
       book.castShadows(false);
@@ -430,7 +436,7 @@ export class BinReader {
       const { p, q } = this.bookTarget(this.flip.target());
       book.root.position.copy(p0); book.root.quaternion.copy(q0);
       sound.pickup('paper');
-      await tween(900, (k) => {
+      await tween(FLY, (k) => {
         book.root.position.lerpVectors(p0, p, k);
         book.root.position.y += Math.sin(Math.PI * k) * 0.02;
         book.root.quaternion.slerpQuaternions(q0, q, k);
@@ -477,16 +483,65 @@ export class BinReader {
     return { p: root.position.clone(), q };
   }
 
-  // the book back into the drawer, from wherever it stands on screen
-  async returnBook() {
+  // the drawer's book, where it stands on screen, from its seat
+  seatRect(book) {
+    this.camera.updateMatrixWorld();
+    book.root.updateMatrixWorld(true);
+    const face = book.root.getObjectByName('face');
+    face.geometry.computeBoundingBox();
+    const bb = face.geometry.boundingBox;
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (let i = 0; i < 4; i++) {
+      const v = new THREE.Vector3(i & 1 ? bb.max.x : bb.min.x, i & 2 ? bb.max.y : bb.min.y, 0).applyMatrix4(face.matrixWorld).project(this.camera);
+      const x = (v.x + 1) / 2 * innerWidth, y = (1 - v.y) / 2 * innerHeight;
+      x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+    }
+    return { left: x0, top: y0, width: x1 - x0, height: y1 - y0 };
+  }
+
+  // the book on the page between the drawer (`rect`) and its place, out
+  // (`back` false) or in; squashed a little at the drawer as the leaning
+  // book is
+  async flyBook(rect, back) {
+    const el = this.flip.book, to = el.getBoundingClientRect();
+    const dx = rect.left + rect.width / 2 - (to.left + to.width / 2), dy = rect.top + rect.height / 2 - (to.top + to.height / 2);
+    const at = `translate(${dx}px, ${dy}px) scale(${rect.width / to.width}, ${rect.height / to.height})`;
+    const frames = back ? [{ transform: 'none' }, { transform: at }] : [{ transform: at }, { transform: 'none' }];
+    await el.animate(frames, { duration: still.matches ? 0 : back ? FLY_BACK : FLY, easing: back ? 'cubic-bezier(0.5, 0, 0.75, 0.3)' : 'cubic-bezier(0.16, 0.8, 0.24, 1)' }).finished;
+  }
+
+  // the book back into the drawer, from wherever it stands on screen; `shut`
+  // starts the drawer shutting as it comes down into it
+  async returnBook(shut) {
     const book = this.stage?.book;
+    let shutting = null;
+    const soon = (ms) => setTimeout(() => { shutting = shut(); }, still.matches ? 0 : ms);
+    if (book && this.bookOut && !this.flip.narrow) {
+      // the book on the page flies back in, open at its picture again
+      this.bookOut = false;
+      this.flip.close();
+      this.ui.dim.classList.remove('on');
+      this.ui.stage.classList.add('flying');
+      const timer = soon(FLY_BACK * 0.85);
+      await this.flyBook(this.seatRect(book), true);
+      book.root.visible = true;
+      this.hideStage();
+      this.ui.stage.classList.remove('flying');
+      sound.setDown('paper');
+      await new Promise((res) => setTimeout(res, 0));
+      if (!shutting) { clearTimeout(timer); shutting = shut(); }
+      return shutting;
+    }
     this.hideStage();
-    if (!book || !this.bookOut) { this.bookOut = false; return; }
+    if (!book || !this.bookOut) { this.bookOut = false; return shut(); }
     this.bookOut = false;
     book.root.visible = true;
     const back = this.sendBack(book, 0);
-    await tween(1000, (k) => back(k * 1000), linear);
+    const timer = soon(FLY_BACK * 0.85);
+    await tween(FLY_BACK, (k) => back(k * 1000), linear);
     book.seat();
+    if (!shutting) { clearTimeout(timer); shutting = shut(); }
+    return shutting;
   }
 
   hideStage() {
@@ -507,14 +562,15 @@ export class BinReader {
     setTimeout(() => { location.href = a.href; }, still.matches ? 0 : 450);
   }
 
-  // back to the wall: the book goes back into the drawer, and it shuts
+  // back to the wall: the book goes back into the drawer as it shuts
   async dismiss() {
     if (this.state !== 'presenting') return;
     this.state = 'busy';
-    await this.returnBook();
     const bin = this.stage;
-    sound.shut(this.pan(bin));
-    await tween(600, (k) => bin.setOpen(1 - k));
+    await this.returnBook(() => {
+      sound.shut(this.pan(bin));
+      return tween(SHUT, (k) => bin.setOpen(1 - k));
+    });
     bin.hover = 0;
     this.stage = null;
     this.state = 'idle';

@@ -36,7 +36,7 @@ function painted(w, h, draw) {
 // how far it leans back on its stand (radians from upright), `ledge` the
 // height of the stand's ledge it rests on. Real metres: the bin makes it at
 // 1 / trinkets' SCALE, so it comes out this size.
-export const BOOK = { w: 0.4, h: 0.25, margin: 0.012, lean: 0.3, ledge: 0.07 };
+export const BOOK = { w: 0.4, h: 0.25, margin: 0.002, lean: 0.3, ledge: 0.07 };
 const PAPER = '#f5efe2';
 const CURVE = 0.018; // how far the pages rise from the gutter
 
@@ -44,7 +44,7 @@ export const builders = {
   // The book, open on the hero picture: the spread bowed up from the
   // gutter as an open book's is, the cover's cloth round it. Built standing
   // on its bottom edge (the origin, at the gutter), leaning back. `face` is
-  // the cover's outline, unseen, for the reader to match the book on the
+  // the spread's outline, unseen, for the reader to match the book on the
   // page to.
   casebook(d) {
     const p = d.project, { w: W, h: H, margin: m, lean } = BOOK;
@@ -52,13 +52,8 @@ export const builders = {
     const img = new Image();
     img.onload = () => {
       const ctx = tex.image.getContext('2d');
+      // (the picture as it is, as the book on the page shows it)
       ctx.drawImage(img, 0, 0, 1000, 625);
-      // the light on the pages as they curve: deep shade down the gutter,
-      // a little light on each page's crest, and shade again at the edges
-      const curve = ctx.createLinearGradient(0, 0, 1000, 0);
-      for (const [at, c] of [[0, 'rgba(0,0,0,0.14)'], [0.08, 'rgba(0,0,0,0)'], [0.3, 'rgba(255,248,232,0.1)'], [0.42, 'rgba(0,0,0,0)'],
-        [0.5, 'rgba(0,0,0,0.5)'], [0.58, 'rgba(0,0,0,0)'], [0.7, 'rgba(255,248,232,0.1)'], [0.92, 'rgba(0,0,0,0)'], [1, 'rgba(0,0,0,0.14)']]) curve.addColorStop(at, c);
-      ctx.fillStyle = curve; ctx.fillRect(0, 0, 1000, 625);
       tex.needsUpdate = true;
     };
     img.src = p.hero;
@@ -77,12 +72,12 @@ export const builders = {
     // and the pages under the top one, a sliver of each showing at the
     // fore-edges, stepping down to the cover
     for (let i = 1; i <= 3; i++) for (const x of [-1, 1]) {
-      turn.add(mesh(new THREE.BoxGeometry(0.0025, H + 0.002 * i, 0.002), block, x * (W / 2 + 0.0022 * i), H / 2 + m, CURVE - 0.004 * i));
+      turn.add(mesh(new THREE.BoxGeometry(0.0025, H, 0.002), block, x * (W / 2 - 0.0012), H / 2 + m, CURVE - 0.004 * i));
     }
     // the covers behind, a touch bigger all round
     const cloth = matte(p.cloth, 0.85);
     for (const x of [-1, 1]) turn.add(mesh(new THREE.BoxGeometry(W / 2 + m, H + 2 * m, 0.004), cloth, x * (W / 4 + m / 2), H / 2 + m, -0.014));
-    const face = mesh(new THREE.PlaneGeometry(W + 2 * m, H + 2 * m), new THREE.MeshBasicMaterial(), 0, H / 2 + m, 0);
+    const face = mesh(new THREE.PlaneGeometry(W, H), new THREE.MeshBasicMaterial(), 0, H / 2 + m, 0);
     face.name = 'face';
     face.visible = false;
     turn.add(face);
