@@ -9,7 +9,7 @@
 // blade by blade.
 
 import * as THREE from 'three';
-import { rock } from './zenGarden.js';
+import { rock } from './zenGarden.js?v=20261027175029';
 
 const TAU = Math.PI * 2;
 
