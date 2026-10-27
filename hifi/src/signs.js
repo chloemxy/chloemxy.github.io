@@ -745,6 +745,192 @@ export function stylePlaque(kind, text, w, h, fit = text) {
   return grp;
 }
 
+// ---- painted: a sign of hand-painted tiles, after a Mediterranean house
+// sign: speckled cream tiles (six by two here, the sign being long), a
+// rough terracotta border, a wobbly hand-drawn blue line curling into
+// scrolls at the corners, orange fans in the corners, a blue palmette with gold scrolls above the words and a small
+// sprig below, the words in navy old-style capitals and lower case, the
+// paint a little worn so the tile shows through. Returns a group centred on
+// its face, back at z = 0; every plaque sets its words at the size that
+// fits `fit`, so they match.
+
+export function paintedPlaque(text, w, h, fit = text) {
+  const W = 2048, H = Math.round(W * h / w);
+  const FONT = (px) => `400 ${px}px "Libre Caslon Text", Georgia, serif`;
+  let seed = 71;
+  const r = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+  const art = document.createElement('canvas');
+  art.width = W; art.height = H;
+  const p = art.getContext('2d');
+  const NAVY = '#24346d', NAVY_D = '#18234d', TERRA = '#b65c36', TERRA_D = '#8e4325', ORANGE = '#d8723a', ORANGE_D = '#9b4320';
+  const GOLD = '#c79a3e';
+  const u = H / 100; // one unit: a hundredth of the sign's height
+
+  // ---- the tiles: speckled cream, each a slightly different tint
+  const COLS = 6, ROWS = 2, B = 7.5 * u; // border width
+  for (let ty = 0; ty < ROWS; ty++) for (let tx = 0; tx < COLS; tx++) {
+    const x0 = (W / COLS) * tx, y0 = (H / ROWS) * ty, t = (r() - 0.5) * 10;
+    p.fillStyle = `rgb(${236 + t},${224 + t},${199 + t})`;
+    p.fillRect(x0, y0, W / COLS + 1, H / ROWS + 1);
+  }
+  p.save(); p.filter = 'blur(18px)';
+  for (let i = 0; i < 60; i++) { p.fillStyle = r() < 0.5 ? 'rgba(205,185,150,0.2)' : 'rgba(250,244,230,0.3)'; p.beginPath(); p.ellipse(r() * W, r() * H, 20 + r() * 120, 15 + r() * 60, r() * 3, 0, Math.PI * 2); p.fill(); }
+  p.restore();
+  const speckle = (n, colours, max) => { for (let i = 0; i < n; i++) { p.fillStyle = colours[Math.floor(r() * colours.length)]; const s = 0.6 + r() * max; p.fillRect(r() * W, r() * H, s, s); } };
+  speckle(110000, ['rgba(150,125,90,0.45)', 'rgba(115,95,65,0.35)', 'rgba(255,250,238,0.6)'], 2.8);
+
+  // ---- paint helpers
+  const fillStroke = (fill, stroke, width) => { if (fill) { p.fillStyle = fill; p.fill(); } if (stroke) { p.strokeStyle = stroke; p.lineWidth = width; p.lineJoin = 'round'; p.stroke(); } };
+  // a hand-drawn line through points, a little unsteady
+  const wobbly = (pts, colour, width) => {
+    p.beginPath();
+    pts.forEach(([x, y], i) => { const jx = (r() - 0.5) * u * 0.35, jy = (r() - 0.5) * u * 0.35; i ? p.lineTo(x + jx, y + jy) : p.moveTo(x + jx, y + jy); });
+    fillStroke(null, colour, width);
+  };
+  // a fan in a corner: veined petals spreading from the corner
+  const fan = (x, y, size, ang, n = 6) => {
+    for (let i = 0; i < n; i++) {
+      const a = ang + (i - (n - 1) / 2) * 0.27;
+      p.save(); p.translate(x, y); p.rotate(a);
+      p.beginPath(); p.moveTo(0, 0); p.quadraticCurveTo(size * 0.4, -size * 0.2, size, -size * 0.08); p.quadraticCurveTo(size * 1.05, 0, size, size * 0.08); p.quadraticCurveTo(size * 0.4, size * 0.2, 0, 0);
+      fillStroke(ORANGE, ORANGE_D, u * 0.45);
+      p.beginPath(); p.moveTo(size * 0.2, 0); p.lineTo(size * 0.85, 0); fillStroke(null, 'rgba(240,170,120,0.85)', u * 0.4);
+      p.restore();
+    }
+  };
+  // a palmette: tall blue petals fanning up from a point
+  const palmette = (x, y, size, dir = -1) => {
+    const n = 7;
+    for (let i = 0; i < n; i++) {
+      const a = -Math.PI / 2 * -dir + (i - (n - 1) / 2) * 0.32;
+      const len = size * (1 - Math.abs(i - (n - 1) / 2) * 0.12);
+      p.save(); p.translate(x, y); p.rotate(a);
+      p.beginPath(); p.moveTo(0, 0); p.quadraticCurveTo(len * 0.55, -len * 0.16, len, 0); p.quadraticCurveTo(len * 0.55, len * 0.16, 0, 0);
+      fillStroke(NAVY, NAVY_D, u * 0.35);
+      p.beginPath(); p.moveTo(len * 0.15, 0); p.lineTo(len * 0.75, 0); fillStroke(null, 'rgba(120,145,200,0.6)', u * 0.3);
+      p.restore();
+    }
+  };
+  // a gold C-scroll ending in a small ball
+  const cscroll = (x, y, size, flip, dir = -1) => {
+    p.beginPath(); p.moveTo(x, y);
+    p.bezierCurveTo(x + flip * size * 0.6, y + dir * size * 0.5, x + flip * size * 1.2, y + dir * size * 0.1, x + flip * size * 1.3, y + dir * size * 0.6);
+    fillStroke(null, GOLD, u * 0.9);
+    p.beginPath(); p.arc(x + flip * size * 1.3, y + dir * size * 0.6, u * 1.1, 0, Math.PI * 2); fillStroke(GOLD, '#8c6a22', u * 0.3);
+  };
+  // a corner scroll: the blue line curling into a loop
+  const cornerScroll = (x, y, fx, fy) => {
+    const s = u * 9;
+    wobbly([[x + fx * s * 1.4, y], [x + fx * s * 0.5, y + fy * s * 0.05], [x + fx * s * 0.1, y + fy * s * 0.4], [x, y + fy * s * 1.2]], NAVY, u * 1.1);
+    p.beginPath(); p.arc(x + fx * s * 1.4, y + fy * s * 0.35, s * 0.35, 0, Math.PI * 2); fillStroke(null, NAVY, u * 1);
+    p.beginPath(); p.arc(x + fx * s * 0.35, y + fy * s * 1.35, s * 0.3, 0, Math.PI * 2); fillStroke(null, NAVY, u * 1);
+  };
+
+  // ---- the border: terracotta, its inner edge rough, darker at the rim
+  p.fillStyle = TERRA;
+  p.beginPath(); p.rect(0, 0, W, H);
+  const inner = [];
+  const edgeRun = (x0, y0, x1, y1, n) => { for (let i = 0; i < n; i++) { const t = i / n; inner.push([x0 + (x1 - x0) * t + (r() - 0.5) * u * 1.2, y0 + (y1 - y0) * t + (r() - 0.5) * u * 1.2]); } };
+  edgeRun(B, B, W - B, B, 120); edgeRun(W - B, B, W - B, H - B, 30); edgeRun(W - B, H - B, B, H - B, 120); edgeRun(B, H - B, B, B, 30);
+  inner.forEach(([x, y], i) => (i ? p.lineTo(x, y) : p.moveTo(x, y)));
+  p.closePath(); p.fill('evenodd');
+  p.save(); p.globalAlpha = 0.5;
+  for (let i = 0; i < 9000; i++) { const x = r() * W, y = r() * H; if (x > B * 1.1 && x < W - B * 1.1 && y > B * 1.1 && y < H - B * 1.1) continue; p.fillStyle = r() < 0.5 ? TERRA_D : '#d08a62'; p.fillRect(x, y, 1 + r() * 2.5, 1 + r() * 2.5); }
+  p.restore();
+  p.strokeStyle = 'rgba(90,40,20,0.55)'; p.lineWidth = u * 0.8; p.strokeRect(u * 0.4, u * 0.4, W - u * 0.8, H - u * 0.8);
+
+  // ---- tile seams, drawn over the border too (it's painted across the tiles)
+  p.strokeStyle = 'rgba(140,120,92,0.6)'; p.lineWidth = u * 0.45;
+  for (let i = 1; i < COLS; i++) { const x = (W / COLS) * i; p.beginPath(); p.moveTo(x, 0); p.lineTo(x, H); p.stroke(); }
+  p.beginPath(); p.moveTo(0, H / 2); p.lineTo(W, H / 2); p.stroke();
+
+  // ---- the blue line inside the border, and its corner scrolls
+  const L = B + u * 3.5;
+  wobbly([[L + u * 12, L], [W - L - u * 12, L]], NAVY, u * 1.1);
+  wobbly([[L + u * 12, H - L], [W - L - u * 12, H - L]], NAVY, u * 1.1);
+  wobbly([[L, L + u * 12], [L, H - L - u * 12]], NAVY, u * 1.1);
+  wobbly([[W - L, L + u * 12], [W - L, H - L - u * 12]], NAVY, u * 1.1);
+  for (const [x, y, fx, fy] of [[L, L, 1, 1], [W - L, L, -1, 1], [L, H - L, 1, -1], [W - L, H - L, -1, -1]]) {
+    // the fan tucked in the corner, the scroll curling out beside it
+    fan(x + fx * u * 1.5, y + fy * u * 1.5, u * 11, Math.atan2(fy, fx));
+    cornerScroll(x + fx * u * 12, y + fy * u * 3, fx, fy);
+  }
+
+
+  // ---- the ornaments above and below the words
+  palmette(W / 2, L + u * 22, u * 18);
+  cscroll(W / 2 - u * 2, L + u * 17, u * 16, -1, -1);
+  cscroll(W / 2 + u * 2, L + u * 17, u * 16, 1, -1);
+  p.beginPath(); p.moveTo(W / 2, L + u * 18); p.lineTo(W / 2 + u * 1.8, L + u * 21); p.lineTo(W / 2, L + u * 24); p.lineTo(W / 2 - u * 1.8, L + u * 21); p.closePath(); fillStroke(ORANGE, ORANGE_D, u * 0.3);
+  fan(W / 2, H - L - u * 4, u * 8, -Math.PI / 2, 5);
+  for (const fl of [-1, 1]) {
+    p.beginPath(); p.moveTo(W / 2 + fl * u * 3, H - L - u * 4); p.quadraticCurveTo(W / 2 + fl * u * 12, H - L - u * 9, W / 2 + fl * u * 20, H - L - u * 6); fillStroke(null, NAVY, u * 0.8);
+    for (let k = 1; k <= 3; k++) {
+      const x = W / 2 + fl * u * (4 + k * 5), y = H - L - u * (5 + Math.sin(k) * 2);
+      p.save(); p.translate(x, y); p.rotate(fl > 0 ? -0.9 : Math.PI + 0.9);
+      p.beginPath(); p.moveTo(0, 0); p.quadraticCurveTo(u * 2.5, -u * 1.2, u * 5, 0); p.quadraticCurveTo(u * 2.5, u * 1.2, 0, 0); fillStroke(NAVY, NAVY_D, u * 0.3);
+      p.restore();
+    }
+    p.beginPath(); p.arc(W / 2 + fl * u * 20, H - L - u * 6, u * 1, 0, Math.PI * 2); fillStroke(GOLD, '#8c6a22', u * 0.3);
+  }
+
+  const map = face('PT2' + text + '|' + fit + w.toFixed(3), W, H, (g) => {
+    g.drawImage(art, 0, 0);
+    // the words, painted in navy between the branches
+    let px = Math.round(H * 0.34);
+    g.font = FONT(px);
+    while (g.measureText(fit).width > W * 0.52 && px > 20) { px -= 2; g.font = FONT(px); }
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    const y = H * 0.56;
+    g.fillStyle = 'rgba(24,35,77,0.35)'; g.fillText(text, W / 2 + 3, y + 4);   // the brush's softer edge
+    g.fillStyle = NAVY; g.fillText(text, W / 2, y);
+    // the paint worn a little, the tile's speckle showing through everywhere
+    let ws = 977;
+    const wr = () => ((ws = (ws * 1664525 + 1013904223) >>> 0) / 4294967296);
+    for (let i = 0; i < 52000; i++) { g.fillStyle = wr() < 0.7 ? 'rgba(240,230,208,0.6)' : 'rgba(120,100,70,0.35)'; const s = 0.6 + wr() * 2.4; g.fillRect(wr() * W, wr() * H, s, s); }
+  }, [FONT(80)]);
+
+  // The relief: a gritty, stuccoed tile face, the seams sunk, the border's
+  // rough edge and the paint's edges catching the light; built from the
+  // painting itself over a coarse noise, again once the lettering is in.
+  const relief = document.createElement('canvas');
+  relief.width = W; relief.height = H;
+  const rg = relief.getContext('2d');
+  const bump = new THREE.CanvasTexture(relief);
+  const drawRelief = () => {
+    let rs = 313;
+    const rr = () => ((rs = (rs * 1664525 + 1013904223) >>> 0) / 4294967296);
+    rg.filter = 'none'; rg.globalAlpha = 1;
+    rg.fillStyle = '#808080'; rg.fillRect(0, 0, W, H);
+    rg.filter = 'blur(3px)';
+    for (let i = 0; i < 2600; i++) { const c = Math.round(60 + rr() * 140); rg.fillStyle = `rgba(${c},${c},${c},0.5)`; rg.beginPath(); rg.arc(rr() * W, rr() * H, 2 + rr() * 9, 0, Math.PI * 2); rg.fill(); }
+    rg.filter = 'none';
+    for (let i = 0; i < 70000; i++) { const c = rr() < 0.5 ? 40 : 220; rg.fillStyle = `rgba(${c},${c},${c},0.35)`; rg.fillRect(rr() * W, rr() * H, 1 + rr() * 2.2, 1 + rr() * 2.2); }
+    // the painting itself, darker paint sitting a little proud of the tile
+    rg.globalAlpha = 0.55; rg.filter = 'grayscale(1) invert(1) contrast(1.4)';
+    rg.drawImage(map.image, 0, 0);
+    rg.globalAlpha = 1; rg.filter = 'none';
+    // the seams sunk between the tiles
+    rg.strokeStyle = '#1a1a1a'; rg.lineWidth = u * 1.1;
+    for (let i = 1; i < COLS; i++) { const x = (W / COLS) * i; rg.beginPath(); rg.moveTo(x, 0); rg.lineTo(x, H); rg.stroke(); }
+    rg.beginPath(); rg.moveTo(0, H / 2); rg.lineTo(W, H / 2); rg.stroke();
+    bump.needsUpdate = true;
+  };
+  drawRelief();
+  document.fonts?.load(FONT(80)).then(() => setTimeout(drawRelief, 0)).catch(() => {});
+  // a rough, satin glaze over a hand-made surface
+  // lifted and warmed: set into the back of a shelf, it sits in shade
+  const glaze = new THREE.MeshPhysicalMaterial({ map, color: new THREE.Color(1.45, 1.36, 1.22), bumpMap: bump, bumpScale: 3, roughness: 0.68, clearcoat: 0.25, clearcoatRoughness: 0.55 });
+  const edge = new THREE.MeshPhysicalMaterial({ color: '#a9573a', roughness: 0.7 });
+  const depth = 0.014;
+  const slab = new THREE.Mesh(new RoundedBoxGeometry(w, h, depth, 3, 0.0025), sixSides(glaze, edge));
+  slab.position.z = depth / 2;
+  const grp = new THREE.Group();
+  grp.add(slab);
+  grp.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  return grp;
+}
+
 const BUILDERS = { blocks, lego, tiles, woodtype, cutout, board };
 
 // z is the middle of the shelf's depth, measured from the wall's face

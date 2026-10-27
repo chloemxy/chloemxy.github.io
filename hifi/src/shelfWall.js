@@ -13,8 +13,8 @@
 import * as THREE from 'three';
 import { Kit } from './cabinet.js';
 import { BIN } from './bincabinet.js';
-import { signPieces, plaqueFace, castPlaque, platePlaque, stylePlaque, PLAQUE_KINDS } from './signs.js';
-import { woodSheet, limestoneMap, brushedBrass } from './materials.js';
+import { signPieces, plaqueFace, castPlaque, platePlaque, stylePlaque, paintedPlaque, PLAQUE_KINDS } from './signs.js';
+import { woodSheet, limestoneMap, pearlTileMap, zelligeMaps, brushedBrass } from './materials.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { PLANT_MODELS, placePlant } from './plantModels.js';
 
@@ -79,6 +79,7 @@ const SHAPES = {
 
 const soilMat = new THREE.MeshStandardMaterial({ color: '#3b2a1e', roughness: 1 });
 
+const titleCaseWords = (t) => t.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 const SMALL = PLANT_MODELS.filter((m) => !m.big), BIG = PLANT_MODELS.filter((m) => m.big);
 
 function plant(r, maxH) {
@@ -191,7 +192,7 @@ function ceramic(r, maxH) {
 // the rest become open shelves.
 // `sign(x, y)`, if given, can return a word (or words, one per row) for the
 // open cell at the top of a bin column, spelled out in `signStyle` (signs.js).
-export function shelfWall(scene, mats, { back = '#e2cba6', backWood = false, backStone = false, seed = 7, bins = 16, binAt = null, sign = null, signStyle = 'blocks', signFit = null, plaqueKind = 'concrete', grain = 'knotty' } = {}) {
+export function shelfWall(scene, mats, { back = '#e2cba6', backWood = false, backStone = false, backTiles = false, seed = 7, bins = 16, binAt = null, sign = null, signStyle = 'blocks', signFit = null, plaqueKind = 'painted', grain = 'knotty' } = {}) {
   const r = seeded(seed);
   const k = new Kit(31);
   const wood = mats.wall;
@@ -249,7 +250,8 @@ export function shelfWall(scene, mats, { back = '#e2cba6', backWood = false, bac
   k.beam(V(-half, TOP + BT / 2, -DEPTH / 2), V(half + T, TOP + BT / 2, -DEPTH / 2), DEPTH, BT, wood, V(0, 0, 1));
   k.beam(V(-half - 0.01, TOP + BT + 0.03, 0.01 - (DEPTH + 0.02) / 2), V(half + T + 0.01, TOP + BT + 0.03, 0.01 - (DEPTH + 0.02) / 2), 0.06, DEPTH + 0.02, wood, V(0, 1, 0));
 
-  const board = (x0, x1, y) => k.beam(V(x0, y - BT / 2, -DEPTH / 2), V(x1, y - BT / 2, -DEPTH / 2), DEPTH, BT, wood, V(0, 0, 1));
+  const boardYs = []; // [x middle, y middle] of each shelf board
+  const board = (x0, x1, y) => (boardYs.push([(x0 + x1) / 2, y - BT / 2]), k.beam(V(x0, y - BT / 2, -DEPTH / 2), V(x1, y - BT / 2, -DEPTH / 2), DEPTH, BT, wood, V(0, 0, 1)));
   const display = (x0, x1, y0, y1) => {
     // fill a cell with ceramics, left to right, leaving some air
     if (Math.min(Math.abs(x0), Math.abs(x1)) > FILL) return;
@@ -285,13 +287,24 @@ export function shelfWall(scene, mats, { back = '#e2cba6', backWood = false, bac
     const g = 0.004, w = x1 - x0, cx = (x0 + x1) / 2;
     const gap = Math.max(0, DH - DRAWER_H), bottom = TOP - Math.min(DH, DRAWER_H);
     if (gap > 0.001) k.beam(V(x0, y + gap / 2, -DEPTH / 2), V(x1, y + gap / 2, -DEPTH / 2), DEPTH, gap, wood, V(0, 0, 1));
-    k.beam(V(x0 + g, (bottom + TOP) / 2, -0.012), V(x1 - g, (bottom + TOP) / 2, -0.012), TOP - bottom - 2 * g, 0.022, wood, V(0, 1, 0));
+    // the drawer front, except for the painted sign, which has no drawer: the
+    // cell stays open, the sign set into the tiled wall at its back
+    if (plaqueKind !== 'painted') k.beam(V(x0 + g, (bottom + TOP) / 2, -0.012), V(x1 - g, (bottom + TOP) / 2, -0.012), TOP - bottom - 2 * g, 0.022, wood, V(0, 1, 0));
 
     const text = [].concat(words).join(' ');
     if (plaqueKind === 'cast') {
       // a cast brass name plate, screwed to the middle of the drawer front
       const plate = castPlaque(text, w - 0.05, 0.11, signFit ?? text);
       plate.position.set(cx, (bottom + TOP) / 2, 0.006);
+      things.push(plate);
+      return;
+    }
+    if (plaqueKind === 'painted') {
+      // hand-painted glazed tiles, the words in blue (signs.js paintedPlaque),
+      // filling the back of the open cell in place of the zellige there
+      const words2 = titleCaseWords(text);
+      const plate = paintedPlaque(words2, w - 0.002, TOP - bottom - 0.002, titleCaseWords(signFit ?? text));
+      plate.position.set(cx, (bottom + TOP) / 2, -DEPTH - 0.005);
       things.push(plate);
       return;
     }
@@ -396,6 +409,56 @@ export function shelfWall(scene, mats, { back = '#e2cba6', backWood = false, bac
     slots.push(s);
     group.add(s);
   });
+
+  // The tiled back: one grid of identical square tiles across the whole
+  // wall, its tile size and starting point chosen so that as many grout
+  // lines as possible fall on the uprights and shelf boards in view.
+  // `backTiles` is 'zellige' (glossy handmade squares, 6-8.5 cm) or
+  // 'pearl' (marble with mother-of-pearl quatrefoils, about 16 cm).
+  if (backTiles) {
+    const near = (v, origin, size) => { const d = (((v - origin) % size) + size) % size; return Math.min(d, size - d); };
+    const VIEW = 2.6; // what the camera sees either side of the middle
+    const ups = edges.map((e) => e + T / 2).filter((x) => Math.abs(x) < VIEW);
+    const shelves = boardYs.filter(([x, y]) => Math.abs(x) < VIEW && y > BASE + 0.01 && y < TOP - 0.01).map(([, y]) => y);
+    const fit = (vals, size, tol) => {
+      let best = { score: -1, at: 0 };
+      for (let at = 0; at < size; at += 0.002) {
+        const score = vals.reduce((n, v) => n + (near(v, at, size) <= tol ? 1 : 0), 0);
+        if (score > best.score) best = { score, at };
+      }
+      return best;
+    };
+    let grid = { score: -1 };
+    const zellige = backTiles !== 'pearl';
+    const [lo, hi] = zellige ? [0.06, 0.085] : [0.14, 0.22];
+    for (let size = lo; size <= hi; size += 0.0005) {
+      const gx = fit(ups, size, T * 0.4), gy = fit(shelves, size, BT * 0.4);
+      const score = gx.score * 2 + gy.score; // uprights count double: they run the full height
+      if (score > grid.score) grid = { score, size, ox: gx.at, oy: gy.at, cols: gx.score, rows: gy.score };
+    }
+    let per = 1; // tiles across one sheet of the texture
+    if (zellige) {
+      // a thick, wet-looking glaze: a near-mirror clear coat over a rippled,
+      // pillowed face, so the sun on the wall throws bright, wavering highlights
+      const { map, normal } = zelligeMaps({ n: 4 });
+      per = 4;
+      plaster.material = new THREE.MeshPhysicalMaterial({
+        map, color: new THREE.Color(1.4, 1.28, 1.1), // warm beige even in the cells' shade
+        normalMap: normal, normalScale: new THREE.Vector2(1.1, 1.1),
+        roughness: 0.04, metalness: 0, specularIntensity: 1, envMapIntensity: 6, // reflections strong enough to read in the cells' shade
+        clearcoat: 1, clearcoatRoughness: 0.01, clearcoatNormalMap: normal, clearcoatNormalScale: new THREE.Vector2(0.9, 0.9),
+      });
+    } else {
+      // lifted and warmed, so the marble reads a warm beige in the shade of the cells
+      plaster.material = new THREE.MeshPhysicalMaterial({ map: pearlTileMap(), color: new THREE.Color(1.36, 1.22, 1.0), roughness: 0.38, clearcoat: 0.35, clearcoatRoughness: 0.2 });
+    }
+    const pos = plaster.geometry.attributes.position, uv = plaster.geometry.attributes.uv, sheet = grid.size * per;
+    for (let i = 0; i < pos.count; i++) {
+      uv.setXY(i, (pos.getX(i) - grid.ox) / sheet, (pos.getY(i) + plaster.position.y - grid.oy) / sheet);
+    }
+    uv.needsUpdate = true;
+    group.userData.tileGrid = { size: +grid.size.toFixed(4), uprights: `${grid.cols}/${ups.length}`, shelves: `${grid.rows}/${shelves.length}` };
+  }
 
   const built = k.build('shelving');
   built.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });

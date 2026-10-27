@@ -425,6 +425,141 @@ export function knottyPineMap({ seed = 11, size = 2048, metres = 0.9, knots: per
   return texture(c, { srgb: true });
 }
 
+// Zellige: handmade glazed squares in creams and pale beiges, a sheet of
+// N x N of them, each its own shade, the thick glaze pooling darker toward
+// the edges and rippled across the face, thin pale grout between. Returns
+// the colour map and a height map for the glaze's uneven surface.
+export function zelligeMaps({ n = 4, px = 256, seed = 61 } = {}) {
+  const W = n * px;
+  const col = document.createElement('canvas'), hgt = document.createElement('canvas');
+  col.width = col.height = hgt.width = hgt.height = W;
+  const g = col.getContext('2d'), h = hgt.getContext('2d');
+  let s = seed;
+  const r = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
+  const grout = Math.max(2, Math.round(px * 0.016)); // tight joints
+  g.fillStyle = '#e3d5bd'; g.fillRect(0, 0, W, W);     // the grout, a light beige
+  h.fillStyle = '#202020'; h.fillRect(0, 0, W, W);     // set back below the tiles
+  for (let ty = 0; ty < n; ty++) for (let tx = 0; tx < n; tx++) {
+    const x0 = tx * px + grout / 2, y0 = ty * px + grout / 2, sz = px - grout;
+    // each tile its own cream: some warmer, some paler, now and then a deeper beige
+    // a warm, beige off-white, each tile a touch different
+    const t = r(), base = t < 0.3 ? [238, 226, 205] : t < 0.7 ? [243, 233, 214] : [247, 239, 223]; // beige off-white
+    const v = (r() - 0.5) * 5;
+    g.fillStyle = `rgb(${base[0] + v},${base[1] + v},${base[2] + v * 0.8})`;
+    g.fillRect(x0, y0, sz, sz);
+    // the glaze pools darker toward the edges
+    const edge = g.createRadialGradient(x0 + sz / 2, y0 + sz / 2, sz * 0.25, x0 + sz / 2, y0 + sz / 2, sz * 0.75);
+    edge.addColorStop(0, 'rgba(0,0,0,0)'); edge.addColorStop(1, `rgba(200,180,150,${0.06 + r() * 0.06})`);
+    g.fillStyle = edge; g.fillRect(x0, y0, sz, sz);
+    // soft clouds of thicker and thinner glaze across the face
+    g.save(); g.beginPath(); g.rect(x0, y0, sz, sz); g.clip(); g.filter = 'blur(14px)';
+    for (let i = 0; i < 3; i++) {
+      g.fillStyle = r() < 0.7 ? 'rgba(255,253,248,0.35)' : 'rgba(225,210,185,0.08)';
+      g.beginPath(); g.ellipse(x0 + r() * sz, y0 + r() * sz, sz * (0.1 + r() * 0.3), sz * (0.06 + r() * 0.2), r() * 3, 0, Math.PI * 2); g.fill();
+    }
+    g.restore();
+    // the height: a pillowed tile, higher in the middle, rippled and a little tilted
+    h.save(); h.beginPath(); h.rect(x0, y0, sz, sz); h.clip();
+    const pillow = h.createRadialGradient(x0 + sz * (0.4 + r() * 0.2), y0 + sz * (0.4 + r() * 0.2), 0, x0 + sz / 2, y0 + sz / 2, sz * 0.8);
+    pillow.addColorStop(0, '#d0d0d0'); pillow.addColorStop(0.75, '#b8b8b8'); pillow.addColorStop(1, '#8c8c8c');
+    h.fillStyle = pillow; h.fillRect(x0, y0, sz, sz);
+    // a gentle, glassy undulation rather than lumps
+    h.filter = 'blur(12px)';
+    for (let i = 0; i < 5; i++) {
+      const c = Math.round(150 + r() * 80);
+      h.fillStyle = `rgba(${c},${c},${c},0.25)`;
+      h.beginPath(); h.ellipse(x0 + r() * sz, y0 + r() * sz, sz * (0.05 + r() * 0.18), sz * (0.04 + r() * 0.12), r() * 3, 0, Math.PI * 2); h.fill();
+    }
+    h.restore();
+  }
+  // ripples in the glaze, as it settled: soft, uneven rings spreading from
+  // a point or two on each tile, like the surface of still water
+  for (let ty = 0; ty < n; ty++) for (let tx = 0; tx < n; tx++) {
+    const x0 = tx * px + grout / 2, y0 = ty * px + grout / 2, sz = px - grout;
+    h.save(); h.beginPath(); h.rect(x0, y0, sz, sz); h.clip(); h.filter = 'blur(5px)';
+    for (let c = 0; c < 2; c++) {
+      const cx = x0 + sz * (0.2 + r() * 0.6), cy = y0 + sz * (0.2 + r() * 0.6), step = 9 + r() * 7, ph = r() * 6;
+      for (let rad = step; rad < sz * 1.2; rad += step) {
+        const fade = Math.max(0, 1 - rad / (sz * 1.2));
+        h.strokeStyle = `rgba(${rad % (step * 2) < step ? '235,235,235' : '40,40,40'},${0.08 * fade})`; h.lineWidth = step * 0.6;
+        h.beginPath();
+        for (let a = 0; a <= Math.PI * 2 + 0.01; a += 0.12) {
+          const rr = rad * (1 + 0.08 * Math.sin(a * 3 + ph) + 0.05 * Math.sin(a * 5 + c));
+          const x = cx + Math.cos(a) * rr, y = cy + Math.sin(a) * rr * 0.9;
+          a === 0 ? h.moveTo(x, y) : h.lineTo(x, y);
+        }
+        h.stroke();
+      }
+    }
+    h.restore();
+  }
+  // the height turned into a normal map, so reflections bend across the ripples
+  const src = h.getImageData(0, 0, W, W).data, nrm = document.createElement('canvas');
+  nrm.width = nrm.height = W;
+  const nc = nrm.getContext('2d'), out = nc.createImageData(W, W), d = out.data;
+  const at = (x, y) => src[(((y + W) % W) * W + ((x + W) % W)) * 4] / 255;
+  const strength = 3;
+  for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) {
+    const dx = (at(x + 1, y) - at(x - 1, y)) * strength, dy = (at(x, y + 1) - at(x, y - 1)) * strength;
+    const len = Math.hypot(dx, dy, 1), i = (y * W + x) * 4;
+    d[i] = Math.round((-dx / len * 0.5 + 0.5) * 255);
+    d[i + 1] = Math.round((dy / len * 0.5 + 0.5) * 255);
+    d[i + 2] = Math.round((1 / len * 0.5 + 0.5) * 255);
+    d[i + 3] = 255;
+  }
+  nc.putImageData(out, 0, 0);
+  const map = texture(col, { srgb: true }), bump = texture(hgt), normal = texture(nrm);
+  return { map, bump, normal };
+}
+
+// One square tile of the back of the cells: honed white marble with a
+// thin grout line round it, and a quarter of a mother-of-pearl quatrefoil
+// in each corner, so wherever four tiles meet a whole quatrefoil forms.
+export function pearlTileMap({ size = 512 } = {}) {
+  const W = size, c = document.createElement('canvas');
+  c.width = c.height = W;
+  const g = c.getContext('2d');
+  let s = 53;
+  const r = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
+  // the marble: warm white, faint grey veins, a little cloud
+  g.fillStyle = '#f2e7d6'; g.fillRect(0, 0, W, W);
+  g.save(); g.filter = 'blur(10px)';
+  for (let i = 0; i < 14; i++) { g.fillStyle = r() < 0.5 ? 'rgba(222,204,178,0.18)' : 'rgba(255,250,240,0.35)'; g.beginPath(); g.ellipse(r() * W, r() * W, 30 + r() * 90, 20 + r() * 60, r() * 3, 0, Math.PI * 2); g.fill(); }
+  g.restore();
+  g.strokeStyle = 'rgba(180,160,130,0.22)'; g.lineWidth = 1;
+  for (let i = 0; i < 4; i++) {
+    let x = r() * W, y = r() * W, a = r() * Math.PI * 2;
+    g.beginPath(); g.moveTo(x, y);
+    for (let k = 0; k < 30; k++) { a += (r() - 0.5) * 0.5; x += Math.cos(a) * 14; y += Math.sin(a) * 14; g.lineTo(x, y); }
+    g.stroke();
+  }
+  // the quatrefoils: four lobes round each corner, filled with pearl
+  const R = W * 0.1; // one lobe's radius
+  const lobes = (cx, cy) => [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => [cx + dx * R * 0.95, cy + dy * R * 0.95]);
+  const pearl = (cx, cy) => {
+    const grad = g.createLinearGradient(cx - R * 2, cy - R * 2, cx + R * 2, cy + R * 2);
+    grad.addColorStop(0, '#fbf8f2'); grad.addColorStop(0.3, '#ece7f0'); grad.addColorStop(0.5, '#fdfcf8');
+    grad.addColorStop(0.7, '#e6efec'); grad.addColorStop(1, '#f6eee6');
+    g.fillStyle = grad;
+    for (const [x, y] of lobes(cx, cy)) { g.beginPath(); g.arc(x, y, R, 0, Math.PI * 2); g.fill(); }
+    // the shell's layered sheen: a few soft bands, and the pieces' seams
+    g.save(); g.beginPath(); for (const [x, y] of lobes(cx, cy)) { g.moveTo(x + R, y); g.arc(x, y, R, 0, Math.PI * 2); } g.clip();
+    for (let i = 0; i < 6; i++) { g.strokeStyle = `rgba(${r() < 0.5 ? '210,200,225' : '255,255,255'},0.5)`; g.lineWidth = 2 + r() * 4; g.beginPath(); g.moveTo(cx - R * 2, cy - R * 2 + i * R * 0.8); g.lineTo(cx + R * 2, cy - R * 1.2 + i * R * 0.8); g.stroke(); }
+    g.strokeStyle = 'rgba(190,182,170,0.6)'; g.lineWidth = 1.2;
+    g.beginPath(); g.moveTo(cx - R * 2, cy); g.lineTo(cx + R * 2, cy); g.moveTo(cx, cy - R * 2); g.lineTo(cx, cy + R * 2); g.stroke();
+    g.restore();
+    // the grout round the inlay
+    g.strokeStyle = '#c6b499'; g.lineWidth = 5;
+    for (const [x, y] of lobes(cx, cy)) { g.beginPath(); g.arc(x, y, R, 0, Math.PI * 2); g.stroke(); }
+  };
+  for (const [x, y] of [[0, 0], [W, 0], [0, W], [W, W]]) pearl(x, y);
+  // the grout between tiles, along the edges (half on each tile)
+  g.fillStyle = '#cdbb9f';
+  g.fillRect(0, 0, W, 3); g.fillRect(0, W - 3, W, 3); g.fillRect(0, 0, 3, W); g.fillRect(W - 3, 0, 3, W);
+  const t = texture(c, { srgb: true });
+  return t;
+}
+
 // limestone for the back of the shelving: pale dressed blocks laid in
 // courses, finely speckled, with faint bedding lines and soft patches of
 // darker and lighter stone, the joints thin. `size` px covering `metres`.

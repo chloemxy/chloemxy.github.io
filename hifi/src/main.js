@@ -145,9 +145,10 @@ function setupStudio(scene, camera) {
     signStyle: new URLSearchParams(location.search).get('sign') || 'plaque',
     // every plaque's words at the size the longest label fits
     signFit: Object.values(GROUPS).map((w) => [].concat(w).join(' ')).sort((a, b) => b.length - a.length)[0],
-    backStone: true, // limestone behind the shelves
+    backStone: true,  // limestone behind it all
+    backTiles: new URLSearchParams(location.search).get('tiles') || 'zellige', // glossy zellige, or ?tiles=pearl
     grain,
-    plaqueKind: new URLSearchParams(location.search).get('plaque') || 'concrete',
+    plaqueKind: new URLSearchParams(location.search).get('plaque') || 'painted',
   });
   // the case studies in reading order: the left column top to bottom, then the right
   slots.sort((a, b) => a.position.x - b.position.x || b.position.y - a.position.y);
