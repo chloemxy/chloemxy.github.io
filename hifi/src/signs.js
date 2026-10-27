@@ -920,7 +920,7 @@ export function paintedPlaque(text, w, h, fit = text) {
   document.fonts?.load(FONT(80)).then(() => setTimeout(drawRelief, 0)).catch(() => {});
   // a rough, satin glaze over a hand-made surface
   // lifted and warmed: set into the back of a shelf, it sits in shade
-  const glaze = new THREE.MeshPhysicalMaterial({ map, color: new THREE.Color(1.45, 1.36, 1.22), bumpMap: bump, bumpScale: 3, roughness: 0.68, clearcoat: 0.25, clearcoatRoughness: 0.55 });
+  const glaze = new THREE.MeshPhysicalMaterial({ map, color: new THREE.Color(1.12, 1.07, 1.0), bumpMap: bump, bumpScale: 3, roughness: 0.68, clearcoat: 0.25, clearcoatRoughness: 0.55 });
   const edge = new THREE.MeshPhysicalMaterial({ color: '#a9573a', roughness: 0.7 });
   const depth = 0.014;
   const slab = new THREE.Mesh(new RoundedBoxGeometry(w, h, depth, 3, 0.0025), sixSides(glaze, edge));
