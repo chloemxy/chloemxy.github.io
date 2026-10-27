@@ -312,7 +312,7 @@ export function whiteMarble() {
 export const PINE_PRESETS = {
   pine1: { knots: 2, knotScale: 0.6, bigShare: 0, cathedral: 0.3, spacing: 1, contrast: 0.8, plank: [0.12, 0.24] },   // clear: barely a knot
   pine2: { knots: 16, knotScale: 1, bigShare: 0.12, cathedral: 0.55, contrast: 1.4 },                                // rustic: knots everywhere
-  pine3: { knots: 3, knotScale: 2.2, bigShare: 0.4, cathedral: 0.5 },                                                // a few big knots
+  pine3: { knots: 4, knotScale: 1.5, bigShare: 0.35, cathedral: 0.5 },                                                // a few big knots
   pine4: { knots: 40, knotScale: 0.35, bigShare: 0, cathedral: 0.4 },                                                // pin knots, scattered
   pine5: { knots: 6, cathedral: 1, contrast: 1.5, plank: [0.14, 0.26] },                                             // all cathedral arches
   pine6: { knots: 4, cathedral: 0, spacing: 0.45, contrast: 1.4, wave: 0.3 },                                         // tight straight grain
@@ -320,7 +320,7 @@ export const PINE_PRESETS = {
   pine8: { knots: 12, cathedral: 0.5, plank: [0.04, 0.08], amber: 1, contrast: 1.2 },                                  // narrow aged amber boards
 };
 
-export function knottyPineMap({ seed = 11, size = 2048, metres = 1.8, knots: perM2 = 8, knotScale = 1, bigShare = 0.08,
+export function knottyPineMap({ seed = 11, size = 2048, metres = 0.9, knots: perM2 = 8, knotScale = 1, bigShare = 0.08,
   cathedral = 0.55, spacing = 1, contrast = 1, wave: waveK = 1, plank = [0.07, 0.21], amber = 0 } = {}) {
   const W = size, c = document.createElement('canvas');
   c.width = c.height = W;
@@ -406,28 +406,84 @@ export function knottyPineMap({ seed = 11, size = 2048, metres = 1.8, knots: per
   for (const k of all) {
     if (k.x < -k.rad * 4 || k.x > W + k.rad * 4 || k.y < -k.rad * 4 || k.y > W + k.rad * 4) continue;
     g.save(); g.translate(k.x, k.y); g.rotate(k.tilt);
-    for (let i = 3; i >= 1; i--) {
-      g.strokeStyle = `rgba(150,90,40,${0.1 + 0.06 * (3 - i)})`; g.lineWidth = Math.max(1.5, k.rad * 0.06);
-      g.beginPath(); g.ellipse(0, 0, k.rad * (1 + i * 0.5), k.rad * k.stretch * (1 + i * 0.65), 0, 0, Math.PI * 2); g.stroke();
-    }
-    const grad = g.createRadialGradient(0, 0, 0, 0, 0, k.rad * 1.15);
-    grad.addColorStop(0, '#4a2a12'); grad.addColorStop(0.3, '#6e4220'); grad.addColorStop(0.65, '#9a6634'); grad.addColorStop(1, 'rgba(175,115,60,0)');
-    g.fillStyle = grad;
-    g.beginPath(); g.ellipse(0, 0, k.rad * 1.15, k.rad * 1.15 * k.stretch, 0, 0, Math.PI * 2); g.fill();
-    // a big knot sometimes has a dark rim, or a small check across it
-    if (k.rad > 0.025 * pxPerM) {
-      g.strokeStyle = 'rgba(55,30,12,0.55)'; g.lineWidth = 2;
-      g.beginPath(); g.ellipse(0, 0, k.rad * 0.85, k.rad * 0.85 * k.stretch, 0, 0, Math.PI * 2); g.stroke();
-      if (r() < 0.5) line([[-k.rad * 0.6, -k.rad * 0.1], [k.rad * 0.5, k.rad * 0.2]], 'rgba(40,20,8,0.5)', 1.4);
-    }
+    const ell = (rr, fill, stroke, width) => {
+      g.beginPath(); g.ellipse(0, 0, rr, rr * k.stretch, 0, 0, Math.PI * 2);
+      if (fill) { g.fillStyle = fill; g.fill(); }
+      if (stroke) { g.strokeStyle = stroke; g.lineWidth = width; g.stroke(); }
+    };
+    // fine growth rings just outside, then the knot: a clean edge, darker
+    // inside, a dark heart, and a sharp outline where it meets the board
+    for (let i = 3; i >= 1; i--) ell(k.rad * (1 + i * 0.32), null, `rgba(140,85,38,${0.18 + 0.08 * (3 - i)})`, Math.max(1.2, k.rad * 0.035));
+    ell(k.rad, '#a8703a');
+    ell(k.rad * 0.72, '#83522a');
+    ell(k.rad * 0.38, '#5a3518');
+    ell(k.rad, null, 'rgba(60,32,12,0.85)', Math.max(1.5, k.rad * 0.06));
+    // big knots sometimes carry a fine check across them
+    if (k.rad > 0.02 * pxPerM && r() < 0.5) line([[-k.rad * 0.7, -k.rad * 0.1], [k.rad * 0.6, k.rad * 0.15]], 'rgba(40,20,8,0.6)', Math.max(1.2, k.rad * 0.04));
     g.restore();
+  }
+  return texture(c, { srgb: true });
+}
+
+// limestone for the back of the shelving: pale dressed blocks laid in
+// courses, finely speckled, with faint bedding lines and soft patches of
+// darker and lighter stone, the joints thin. `size` px covering `metres`.
+export function limestoneMap({ seed = 41, size = 2048, metres = 1.8 } = {}) {
+  const W = size, c = document.createElement('canvas');
+  c.width = c.height = W;
+  const g = c.getContext('2d');
+  let s = seed;
+  const r = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
+  const pxPerM = W / metres;
+  g.fillStyle = '#eadcc1'; g.fillRect(0, 0, W, W);
+  // the courses: rows 0.3 m high, blocks 0.45-0.8 m long, each a shade of its own
+  const rowH = 0.3 * pxPerM, rows = Math.round(W / rowH), rh = W / rows;
+  for (let row = 0; row < rows; row++) {
+    let x = -r() * 0.5 * pxPerM;
+    while (x < W) {
+      const bw = (0.45 + r() * 0.35) * pxPerM, y = row * rh, t = (r() - 0.5) * 16;
+      g.fillStyle = `rgb(${234 + t},${220 + t},${193 + t * 0.9})`;
+      g.fillRect(x, y, bw, rh);
+      // the block drawn again a sheet away too, so the edges wrap
+      if (x + bw > W) g.fillRect(x - W, y, bw, rh);
+      // joints: a thin shadowed line along the top and the left of each block
+      g.fillStyle = 'rgba(120,105,82,0.55)';
+      g.fillRect(x, y, bw, 2); g.fillRect(x, y, 2, rh);
+      if (x + bw > W) { g.fillRect(x - W, y, bw, 2); g.fillRect(x - W, y, 2, rh); }
+      g.fillStyle = 'rgba(255,252,244,0.5)';
+      g.fillRect(x, y + 2, bw, 1);
+      x += bw;
+    }
+  }
+  // soft clouds of darker and lighter stone
+  g.save(); g.filter = 'blur(26px)';
+  for (let i = 0; i < 70; i++) {
+    g.fillStyle = r() < 0.5 ? 'rgba(170,150,118,0.12)' : 'rgba(250,246,236,0.16)';
+    g.beginPath(); g.ellipse(r() * W, r() * W, 40 + r() * 160, 20 + r() * 60, 0, 0, Math.PI * 2); g.fill();
+  }
+  g.restore();
+  // faint bedding lines running across, and the fine speckle of the stone
+  for (let i = 0; i < 40; i++) {
+    const y = r() * W;
+    g.strokeStyle = `rgba(175,150,110,${0.03 + r() * 0.05})`; g.lineWidth = 1 + r() * 2; g.beginPath();
+    for (let x = 0; x <= W; x += 32) g.lineTo(x, y + Math.sin(x * 0.004 + i) * 4);
+    g.stroke();
+  }
+  for (let i = 0; i < 26000; i++) {
+    g.fillStyle = r() < 0.6 ? `rgba(140,122,95,${0.15 + r() * 0.25})` : `rgba(255,252,245,${0.25 + r() * 0.3})`;
+    g.fillRect(r() * W, r() * W, 1 + r() * 1.6, 1 + r() * 1.6);
+  }
+  // a few tiny fossil pits
+  for (let i = 0; i < 60; i++) {
+    g.fillStyle = 'rgba(120,102,78,0.45)';
+    g.beginPath(); g.ellipse(r() * W, r() * W, 1.5 + r() * 4, 1 + r() * 2.5, r() * 3, 0, Math.PI * 2); g.fill();
   }
   return texture(c, { srgb: true });
 }
 
 // a sheet of wood for the wall in any of the grains (woodGrains.js); knotty
 // pine is drawn above
-export function woodSheet(style = 'knotty', { seed = 11, size = 2048, metres = 1.8 } = {}) {
+export function woodSheet(style = 'knotty', { seed = 11, size = 2048, metres = 0.9 } = {}) {
   if (style === 'knotty') return knottyPineMap({ seed, size, metres });
   if (PINE_PRESETS[style]) return knottyPineMap({ seed, size, metres, ...PINE_PRESETS[style] });
   const c = document.createElement('canvas');
@@ -440,9 +496,9 @@ export function woodSheet(style = 'knotty', { seed = 11, size = 2048, metres = 1
 export function knottyPine() {
   const nor = scans.ashNor.clone();
   nor.center.set(0.5, 0.5); nor.rotation = Math.PI / 2; nor.needsUpdate = true;
-  // the boards' UVs run one unit per 0.45 m (cabinet.js); the sheet covers 1.8 m
+  // the boards' UVs run one unit per 0.45 m (cabinet.js); the sheet covers 0.9 m
   const map = knottyPineMap();
-  map.repeat.set(0.45 / 1.8, 0.45 / 1.8);
+  map.repeat.set(0.45 / 0.9, 0.45 / 0.9);
   return new THREE.MeshStandardMaterial({
     color: '#ffffff', vertexColors: true, // each piece keeps its own tone (cabinet.js)
     map, roughness: 0.72,

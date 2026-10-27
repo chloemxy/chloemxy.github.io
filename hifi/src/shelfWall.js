@@ -14,7 +14,7 @@ import * as THREE from 'three';
 import { Kit } from './cabinet.js';
 import { BIN } from './bincabinet.js';
 import { signPieces, plaqueFace, castPlaque, platePlaque, stylePlaque, PLAQUE_KINDS } from './signs.js';
-import { woodSheet, brushedBrass } from './materials.js';
+import { woodSheet, limestoneMap, brushedBrass } from './materials.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { PLANT_MODELS, placePlant } from './plantModels.js';
 
@@ -79,9 +79,27 @@ const SHAPES = {
 
 const soilMat = new THREE.MeshStandardMaterial({ color: '#3b2a1e', roughness: 1 });
 
+const SMALL = PLANT_MODELS.filter((m) => !m.big), BIG = PLANT_MODELS.filter((m) => m.big);
+
 function plant(r, maxH) {
   const g = new THREE.Group();
-  const model = PLANT_MODELS[Math.floor(r() * PLANT_MODELS.length)];
+  // the taller cells are given to the big plants, as anchors among the rest
+  const big = maxH > 0.3 && r() < 0.55;
+  const pool = big ? BIG : SMALL, model = pool[Math.floor(r() * pool.length)];
+  if (big) {
+    if (model.potted) {
+      placePlant(g, model.id, { width: 0.34, height: maxH - 0.02, pick: r() });
+      return { g, w: 0.28 };
+    }
+    // in a larger clay pot, the plant filling the cell above it
+    const ps = 1.05 + r() * 0.2, potH = SHAPES.jar.h * ps, potR = 0.072 * ps;
+    g.add(lathe(SHAPES.jar.pts, ps, clay(CLAY[Math.floor(r() * CLAY.length)], r)));
+    const soil = new THREE.Mesh(new THREE.CylinderGeometry(potR * 0.68, potR * 0.68, 0.004, 32), soilMat);
+    soil.position.y = potH - 0.012;
+    g.add(soil);
+    placePlant(g, model.id, { width: 0.42, height: Math.max(0.12, maxH - potH - 0.01), y: potH - 0.014, pick: r() });
+    return { g, w: 0.3 };
+  }
   if (model.potted) {
     // it comes in its own pot: just give it the room
     const w = 0.16 + r() * 0.06;
@@ -101,7 +119,7 @@ function plant(r, maxH) {
   if (r() < 0.5) {
     const extra = new THREE.Group();
     extra.position.set((r() < 0.5 ? -1 : 1) * potR * 0.6, 0, potR * 0.3);
-    const unpotted = PLANT_MODELS.filter((m) => !m.potted);
+    const unpotted = SMALL.filter((m) => !m.potted);
     placePlant(extra, unpotted[Math.floor(r() * unpotted.length)].id, { width: 0.2, height: Math.min(room * 0.7, 0.22), y: top - 0.004, pick: r() });
     g.add(extra);
   }
@@ -173,7 +191,7 @@ function ceramic(r, maxH) {
 // the rest become open shelves.
 // `sign(x, y)`, if given, can return a word (or words, one per row) for the
 // open cell at the top of a bin column, spelled out in `signStyle` (signs.js).
-export function shelfWall(scene, mats, { back = '#e2cba6', backWood = false, seed = 7, bins = 16, binAt = null, sign = null, signStyle = 'blocks', signFit = null, plaqueKind = 'concrete', grain = 'knotty' } = {}) {
+export function shelfWall(scene, mats, { back = '#e2cba6', backWood = false, backStone = false, seed = 7, bins = 16, binAt = null, sign = null, signStyle = 'blocks', signFit = null, plaqueKind = 'concrete', grain = 'knotty' } = {}) {
   const r = seeded(seed);
   const k = new Kit(31);
   const wood = mats.wall;
@@ -204,11 +222,17 @@ export function shelfWall(scene, mats, { back = '#e2cba6', backWood = false, see
   // or (`backWood`) panelled in the shelving's own wood, a shade darker, so
   // its knots and grain show across the back of every cell
   let backMat = new THREE.MeshStandardMaterial({ map: plasterTex, roughness: 0.95 });
-  if (backWood && mats.wall.map) {
-    // its own sheet (2.7 m square, a different seed) so the pattern doesn't
-    // visibly repeat cell to cell or match the boards in front
-    const map = woodSheet(grain, { seed: 23, size: 2048, metres: 2.7 });
-    map.repeat.set((total + 12) / 2.7, (TOP + 0.4) / 2.7);
+  if (backStone) {
+    // or (`backStone`) dressed limestone blocks
+    const map = limestoneMap({ size: 2048, metres: 1.8 });
+    map.repeat.set((total + 12) / 1.8, (TOP + 0.4) / 1.8);
+    // a warm cream, so the stone stays honey-coloured in the shade of the cells
+    backMat = new THREE.MeshStandardMaterial({ map, color: '#fff3df', roughness: 0.92, normalMap: mats.wall.normalMap, normalScale: new THREE.Vector2(0.08, 0.08) });
+  } else if (backWood && mats.wall.map) {
+    // its own sheet (1.5 m square, a different seed) so the pattern doesn't
+    // match the boards in front, fine enough to stay sharp in the cells
+    const map = woodSheet(grain, { seed: 23, size: 2048, metres: 1.5 });
+    map.repeat.set((total + 12) / 1.5, (TOP + 0.4) / 1.5);
     backMat = new THREE.MeshStandardMaterial({ map, color: '#efd6c4', roughness: 0.8, normalMap: mats.wall.normalMap, normalScale: new THREE.Vector2(0.2, 0.2) });
   }
   const plaster = new THREE.Mesh(new THREE.PlaneGeometry(total + 12, TOP + 0.4), backMat);

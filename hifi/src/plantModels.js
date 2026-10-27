@@ -1,4 +1,4 @@
-// Real plants for the shelves: five CC0 models from Poly Haven
+// Real plants for the shelves: eight CC0 models from Poly Haven
 // (polyhaven.com, no credit required; see assets/plants/SOURCES.txt), loaded
 // once each and cloned wherever they're placed. Two come in their own pots;
 // the rest are set into the wall's turned clay pots by shelfWall.js.
@@ -12,6 +12,10 @@ export const PLANT_MODELS = [
   { id: 'shrub_sorrel_01', potted: false },
   { id: 'potted_plant_02', potted: true },
   { id: 'potted_plant_04', potted: true },
+  // the big ones, for the taller cells
+  { id: 'potted_plant_01', potted: true, big: true },
+  { id: 'pachira_aquatica_01', potted: false, variants: true, big: true }, // four money trees
+  { id: 'anthurium_botany_01', potted: false, variants: true, big: true }, // six anthuriums
 ];
 
 const loader = new GLTFLoader();
@@ -30,14 +34,23 @@ function stand(obj) {
   return holder;
 }
 
-// A file holding several plants side by side (`variants`: fern_02_a, _b, …)
-// gives one template per plant; otherwise the parts (pot, leaves, dirt, or a
-// clump's stems) make one plant. A ground plane under a model is left out.
+// A file holding several plants side by side (`variants`) gives one template
+// per plant, its parts gathered by their letter (fern_02_a; pachira's bark_a
+// with leaves_a); otherwise all the parts (pot, leaves, dirt, or a clump's
+// stems) make one plant. A ground plane under a model is left out.
 function load(id, variants) {
   if (!templates.has(id)) {
     templates.set(id, loader.loadAsync(`assets/plants/${id}/${id}_1k.gltf`).then((gltf) => {
       const parts = gltf.scene.children.filter((n) => !/_ground$/.test(n.name));
-      if (variants) return parts.map((n) => stand(n));
+      if (variants) {
+        const byLetter = new Map();
+        for (const n of parts) {
+          const k = (n.name.match(/_([a-z])$/) ?? [, n.name])[1];
+          if (!byLetter.has(k)) byLetter.set(k, new THREE.Group());
+          byLetter.get(k).add(n);
+        }
+        return [...byLetter.values()].map((grp) => stand(grp));
+      }
       const whole = new THREE.Group();
       parts.forEach((n) => whole.add(n));
       return [stand(whole)];

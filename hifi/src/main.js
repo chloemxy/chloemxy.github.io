@@ -145,7 +145,7 @@ function setupStudio(scene, camera) {
     signStyle: new URLSearchParams(location.search).get('sign') || 'plaque',
     // every plaque's words at the size the longest label fits
     signFit: Object.values(GROUPS).map((w) => [].concat(w).join(' ')).sort((a, b) => b.length - a.length)[0],
-    backWood: finish === 'knotty',
+    backStone: true, // limestone behind the shelves
     grain,
     plaqueKind: new URLSearchParams(location.search).get('plaque') || 'concrete',
   });
