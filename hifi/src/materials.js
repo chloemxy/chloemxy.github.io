@@ -5,7 +5,7 @@
 // from seeded noise, so the wear is the same on every load.
 
 import * as THREE from 'three';
-import { drawGrain } from './woodGrains.js?v=20261027175029';
+import { drawGrain } from './woodGrains.js?v=20261027180954';
 
 let anisotropy = 4;
 export function setMaterialAnisotropy(n) { anisotropy = n; }
@@ -318,10 +318,11 @@ export const PINE_PRESETS = {
   pine6: { knots: 4, cathedral: 0, spacing: 0.45, contrast: 1.4, wave: 0.3 },                                         // tight straight grain
   pine7: { knots: 8, knotScale: 1.3, cathedral: 0.6, spacing: 2.4, wave: 3.5, contrast: 1.3 },                         // wide, wild grain
   pine8: { knots: 12, cathedral: 0.5, plank: [0.04, 0.08], amber: 1, contrast: 1.2 },                                  // narrow aged amber boards
+  raw: { knots: 0, cathedral: 0.5, contrast: 2.4, natural: true },                                                     // raw, unfinished pine: no knots, clear grain
 };
 
 export function knottyPineMap({ seed = 11, size = 2048, metres = 0.9, knots: perM2 = 8, knotScale = 1, bigShare = 0.08,
-  cathedral = 0.55, spacing = 1, contrast = 1, wave: waveK = 1, plank = [0.07, 0.21], amber = 0 } = {}) {
+  cathedral = 0.55, spacing = 1, contrast = 1, wave: waveK = 1, plank = [0.07, 0.21], amber = 0, natural = false } = {}) {
   const W = size, c = document.createElement('canvas');
   c.width = c.height = W;
   const g = c.getContext('2d');
@@ -355,7 +356,10 @@ export function knottyPineMap({ seed = 11, size = 2048, metres = 0.9, knots: per
     pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y)));
     g.stroke();
   };
-  const grainColour = (a) => `rgba(${140 + r() * 40},${85 + r() * 30},${40 + r() * 22},${a})`;
+  // reddish-brown lines on honey pine, or (`natural`) plain brown on pale raw wood
+  const grainColour = natural
+    ? (a) => `rgba(${112 + r() * 22},${94 + r() * 18},${64 + r() * 14},${a})`
+    : (a) => `rgba(${140 + r() * 40},${85 + r() * 30},${40 + r() * 22},${a})`;
 
   // the planks, edge to edge across the sheet
   let px0 = 0;
@@ -367,10 +371,12 @@ export function knottyPineMap({ seed = 11, size = 2048, metres = 0.9, knots: per
     const right = px0 === W ? W : x1;
     g.save(); g.beginPath(); g.rect(x0, 0, right - x0, W); g.clip();
     // each plank its own shade of honey
-    const tone = [218 + r() * 22 - amber * 30, 178 + r() * 26 - amber * 55, 122 + r() * 30 - amber * 70];
+    const tone = natural
+      ? [226 + r() * 14, 210 + r() * 14, 174 + r() * 16]
+      : [218 + r() * 22 - amber * 30, 178 + r() * 26 - amber * 55, 122 + r() * 30 - amber * 70];
     g.fillStyle = `rgb(${tone[0]},${tone[1]},${tone[2]})`; g.fillRect(x0, 0, right - x0, W);
     for (let i = 0; i < 6; i++) {
-      g.fillStyle = r() < 0.5 ? 'rgba(255,240,215,0.07)' : 'rgba(150,95,45,0.07)';
+      g.fillStyle = r() < 0.5 ? 'rgba(255,245,225,0.07)' : (natural ? 'rgba(130,110,80,0.08)' : 'rgba(150,95,45,0.07)');
       g.fillRect(x0 + r() * (right - x0), 0, 6 + r() * 40, W);
     }
     // straight grain: lines down the plank, unevenly spaced, wandering a little

@@ -9,7 +9,7 @@
 // little down, so the ceiling is never in frame and isn't built.
 
 import * as THREE from 'three';
-import { Kit } from './cabinet.js?v=20261027175029';
+import { Kit } from './cabinet.js?v=20261027180954';
 
 const still = matchMedia('(prefers-reduced-motion: reduce)');
 const V = (x, y, z) => new THREE.Vector3(x, y, z);

@@ -4,7 +4,7 @@
 // down the sheet, as down a board's length.
 
 export const GRAINS = ['knotty', 'riftoak', 'walnut', 'burl', 'zebrawood', 'barnwood', 'spalted', 'charred',
-  'pine1', 'pine2', 'pine3', 'pine4', 'pine5', 'pine6', 'pine7', 'pine8']; // pine1-8: knotty pine variations (materials.js PINE_PRESETS)
+  'pine1', 'pine2', 'pine3', 'pine4', 'pine5', 'pine6', 'pine7', 'pine8', 'raw']; // pine1-8: knotty pine variations (materials.js PINE_PRESETS)
 
 export function drawGrain(style, g, W, r) {
   const fill = (c) => { g.fillStyle = c; g.fillRect(0, 0, W, W); };

@@ -11,12 +11,12 @@
 // are built into. The shelving's face is at z = 0, its back at -DEPTH.
 
 import * as THREE from 'three';
-import { Kit } from './cabinet.js?v=20261027175029';
-import { BIN } from './bincabinet.js?v=20261027175029';
-import { signPieces, plaqueFace, castPlaque, platePlaque, stylePlaque, paintedPlaque, PLAQUE_KINDS } from './signs.js?v=20261027175029';
-import { woodSheet, limestoneMap, pearlTileMap, zelligeMaps, brushedBrass } from './materials.js?v=20261027175029';
+import { Kit } from './cabinet.js?v=20261027180954';
+import { BIN } from './bincabinet.js?v=20261027180954';
+import { signPieces, plaqueFace, castPlaque, platePlaque, stylePlaque, paintedPlaque, PLAQUE_KINDS } from './signs.js?v=20261027180954';
+import { woodSheet, limestoneMap, pearlTileMap, zelligeMaps, brushedBrass } from './materials.js?v=20261027180954';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { PLANT_MODELS, placePlant } from './plantModels.js?v=20261027175029';
+import { PLANT_MODELS, placePlant } from './plantModels.js?v=20261027180954';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const TAU = Math.PI * 2;
@@ -72,6 +72,12 @@ const SHAPES = {
   bowl: { h: 0.075, w: 0.19, pts: [[0, 0], [0.04, 0], [0.075, 0.03], [0.092, 0.07], [0.09, 0.075], [0.07, 0.04], [0.0, 0.012]] },
   urn: { h: 0.3, w: 0.24, pts: [[0, 0], [0.07, 0], [0.11, 0.08], [0.12, 0.16], [0.09, 0.25], [0.06, 0.28], [0.065, 0.3]] },
 };
+// the pots plants are set in: a jar, a low wide bowl-planter, a flared tub
+const POTS = [
+  { pts: SHAPES.jar.pts, h: 0.16, rim: 0.05 },
+  { pts: [[0, 0], [0.05, 0], [0.085, 0.04], [0.095, 0.085], [0.09, 0.09]], h: 0.09, rim: 0.088 },
+  { pts: [[0, 0], [0.048, 0], [0.062, 0.1], [0.07, 0.13], [0.068, 0.135]], h: 0.135, rim: 0.064 },
+];
 
 // ---- Green plants among the ceramics: only the real, scanned models
 // (plantModels.js). The potted ones stand as they are; the rest are set into
@@ -93,8 +99,8 @@ function plant(r, maxH) {
       return { g, w: 0.28 };
     }
     // in a larger clay pot, the plant filling the cell above it
-    const ps = 1.05 + r() * 0.2, potH = SHAPES.jar.h * ps, potR = 0.072 * ps;
-    g.add(lathe(SHAPES.jar.pts, ps, clay(CLAY[Math.floor(r() * CLAY.length)], r)));
+    const pot = POTS[Math.floor(r() * POTS.length)], ps = 1.05 + r() * 0.2, potH = pot.h * ps, potR = pot.rim * ps;
+    g.add(lathe(pot.pts, ps, clay(CLAY[Math.floor(r() * CLAY.length)], r)));
     const soil = new THREE.Mesh(new THREE.CylinderGeometry(potR * 0.68, potR * 0.68, 0.004, 32), soilMat);
     soil.position.y = potH - 0.012;
     g.add(soil);
@@ -108,8 +114,8 @@ function plant(r, maxH) {
     return { g, w };
   }
   // the pot: a small turned jar with soil in the top
-  const ps = 0.75 + r() * 0.3, potH = SHAPES.jar.h * ps, potR = 0.072 * ps;
-  g.add(lathe(SHAPES.jar.pts, ps, clay(CLAY[Math.floor(r() * CLAY.length)], r)));
+  const pot = POTS[Math.floor(r() * POTS.length)], ps = 0.75 + r() * 0.3, potH = pot.h * ps, potR = pot.rim * ps;
+  g.add(lathe(pot.pts, ps, clay(CLAY[Math.floor(r() * CLAY.length)], r)));
   const soil = new THREE.Mesh(new THREE.CylinderGeometry(potR * 0.68, potR * 0.68, 0.004, 32), soilMat);
   soil.position.y = potH - 0.012;
   g.add(soil);
@@ -129,10 +135,11 @@ function plant(r, maxH) {
 
 // one piece (or a little group) for a cell; sits on y = 0, centred; fits
 // within `maxH` high; more than half are green plants. Returns it and its width.
-function ceramic(r, maxH) {
-  if (maxH > 0.2 && r() < 0.55) return plant(r, maxH);
+// `only` asks for one kind: 'plates', 'cylinders', 'cups', 'bowl' or 'turned'
+function ceramic(r, maxH, only = null) {
+  if (!only && maxH > 0.2 && r() < 0.55) return plant(r, maxH);
   const g = new THREE.Group();
-  const pick = r();
+  const pick = only ? { plates: 0.1, cylinders: 0.2, cups: 0.35, bowl: 0.9, turned: 0.9 }[only] : r();
   const colour = () => CLAY[Math.floor(r() * CLAY.length)];
   if (pick < 0.16) {
     // a stack of plates
@@ -169,7 +176,7 @@ function ceramic(r, maxH) {
     g.children.forEach((c) => { c.position.x -= ((n - 1) * 0.075) / 2; });
     return { g, w: n * 0.075 };
   }
-  const fits = Object.entries(SHAPES).filter(([, s]) => s.h * 0.85 < maxH);
+  const fits = Object.entries(SHAPES).filter(([name, s]) => s.h * 0.85 < maxH && (only === 'bowl' ? name === 'bowl' : only === 'turned' ? name !== 'bowl' : true));
   if (!fits.length) return { g, w: 0.05 };
   const [, shape] = fits[Math.floor(r() * fits.length)];
   const s = Math.min(1.25, (maxH - 0.02) / shape.h, 0.8 + r() * 0.45);
@@ -252,19 +259,48 @@ export function shelfWall(scene, mats, { back = '#e2cba6', backWood = false, bac
 
   const boardYs = []; // [x middle, y middle] of each shelf board
   const board = (x0, x1, y) => (boardYs.push([(x0 + x1) / 2, y - BT / 2]), k.beam(V(x0, y - BT / 2, -DEPTH / 2), V(x1, y - BT / 2, -DEPTH / 2), DEPTH, BT, wood, V(0, 0, 1)));
+  // Each open cell holds one small composition, chosen so that no cell
+  // repeats the one below it or the one just set beside it: a plant, a
+  // single turned vessel, a tall piece with a small one, a stack, a bowl, a
+  // few cups, a plant beside a vessel, or now and then nothing at all.
+  // Single pieces sit off-centre as often as centred, for rhythm.
+  const VIGNETTES = [['plant', 3], ['vessel', 2.4], ['pair', 2], ['plantPair', 1.6], ['bowl', 1.1], ['stack', 1], ['cups', 0.9], ['air', 0.7]];
+  const below = new Map(); // a column's last vignette, by its x
+  let beside = null;
+  const place = (piece, x, y0) => {
+    piece.g.position.set(x, y0, -DEPTH / 2 + (r() - 0.5) * 0.05);
+    piece.g.rotation.y = r() * TAU;
+    things.push(piece.g);
+  };
   const display = (x0, x1, y0, y1) => {
-    // fill a cell with ceramics, left to right, leaving some air
     if (Math.min(Math.abs(x0), Math.abs(x1)) > FILL) return;
-    let at = x0 + 0.03 + r() * 0.04;
-    for (let n = 0; n < 5; n++) {
-      const { g, w } = ceramic(r, y1 - y0 - 0.03);
-      if (!g.children.length || at + w > x1 - 0.03) break;
-      g.position.set(at + w / 2, y0, -DEPTH / 2 + (r() - 0.5) * 0.06);
-      g.rotation.y = r() * TAU;
-      things.push(g);
-      at += w + 0.03 + r() * 0.08;
-      if (r() < 0.2) break; // some cells hold just one or two pieces
+    const key = Math.round((x0 + x1) * 50), maxH = y1 - y0 - 0.03, wide = x1 - x0;
+    const options = VIGNETTES.filter(([kind]) => kind !== below.get(key) && kind !== beside && (maxH > 0.2 || !kind.startsWith('plant')));
+    const total = options.reduce((t, [, wt]) => t + wt, 0);
+    let pickAt = r() * total, kind = options[0][0];
+    for (const [k, wt] of options) { if ((pickAt -= wt) <= 0) { kind = k; break; } }
+    below.set(key, kind); beside = kind;
+    const mid = (x0 + x1) / 2, offset = () => (r() < 0.5 ? 0 : (r() < 0.5 ? -1 : 1) * wide * 0.18);
+    const fitsIn = (piece) => piece.g.children.length && piece.w < wide - 0.05;
+    if (kind === 'air') return;
+    if (kind === 'plant' || kind === 'vessel' || kind === 'bowl' || kind === 'stack' || kind === 'cups') {
+      const piece = kind === 'plant' ? plant(r, maxH)
+        : kind === 'vessel' ? ceramic(r, maxH, 'turned')
+        : kind === 'bowl' ? ceramic(r, maxH, 'bowl')
+        : kind === 'stack' ? ceramic(r, maxH, r() < 0.5 ? 'plates' : 'cylinders')
+        : ceramic(r, maxH, 'cups');
+      if (fitsIn(piece)) place(piece, mid + Math.max(-(wide - piece.w) / 2 + 0.03, Math.min((wide - piece.w) / 2 - 0.03, offset())), y0);
+      return;
     }
+    // two pieces: a taller one and a smaller companion, a little apart
+    const first = kind === 'plantPair' ? plant(r, maxH) : ceramic(r, maxH, 'turned');
+    const second = ceramic(r, Math.min(maxH, 0.14), r() < 0.5 ? 'cups' : 'bowl');
+    const gap = 0.03 + r() * 0.04, span = first.w + gap + second.w;
+    if (!fitsIn(first)) return;
+    if (span > wide - 0.05 || !second.g.children.length) { place(first, mid, y0); return; }
+    const flip = r() < 0.5 ? 1 : -1, left = mid - span / 2;
+    place(first, flip > 0 ? left + first.w / 2 : left + span - first.w / 2, y0);
+    place(second, flip > 0 ? left + first.w + gap + second.w / 2 : left + second.w / 2, y0);
   };
 
   // a slim drawer filling a cell DH high: a plain wooden front flush with

@@ -6,7 +6,7 @@
  * loaded before this file, adds spring animation where it's available.
  *
  * Functions:
- *   initBar({ home })             — injects the global top bar and the menu (every lo-fi page)
+ *   initBar({ home, version })    — injects the global top bar and the menu (every lo-fi page)
  *   initSubNav({ title, href })   — old name for initBar, kept so case-study pages don't change
  *   initSidenav({ ids, darkIds }) — wires up the side nav dots + dark-mode switching
  *   initScrollProgress()          — drives the orange progress bar
@@ -21,24 +21,21 @@ const motion = !prefersStill && window.Motion ? window.Motion : null;
    The same bar as the hi-fi site (see bar.css): CHLOE, the Lo-fi / Hi-fi
    switch and a Menu button, MA. The menu slides in from the right.
 ══════════════════════════════════ */
-function initBar({ home } = {}) {
+function initBar({ home, version } = {}) {
   // Case studies are shared by both versions of the site: send CHLOE, the menu
-  // and the switch back to whichever version the visitor came from.
-  let fi = 'lofi';
-  try { if (localStorage.getItem('portfolio.fi') === 'hifi') fi = 'hifi'; } catch (e) {}
-  if (!home) home = fi === 'hifi' ? 'hifi/' : 'index.html';
-  const lofiCurrent = fi === 'lofi' ? ' aria-current="page"' : '';
-  const hifiCurrent = fi === 'hifi' ? ' aria-current="page"' : '';
+  // and the switch back to whichever version the visitor came from. `version`
+  // is set by a page that is one version itself (the lo-fi homepage).
+  const fixedHome = home;
   // The menu's section links always go to the lo-fi homepage, which has them
   const sections = 'index.html';
 
   const bar = document.createElement('header');
   bar.className = 'site-bar';
   bar.innerHTML = `
-    <a href="${home}" class="site-bar__mark" aria-label="Chloe Ma, home">CHLOE</a>
+    <a href="index.html" class="site-bar__mark" aria-label="Chloe Ma, home">CHLOE</a>
     <div class="site-bar__tools">
       <nav class="site-bar__switch" aria-label="Site version">
-        <a href="index.html"${lofiCurrent}>Lo-fi</a><a href="hifi/"${hifiCurrent}>Hi-fi</a>
+        <a href="index.html" data-fi="lofi">Lo-fi</a><a href="hifi/" data-fi="hifi">Hi-fi</a>
       </nav>
       <button type="button" class="site-bar__icon" id="menuToggle" aria-label="Menu" aria-expanded="false" aria-controls="menuPanel">
         <svg class="site-bar__burger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
@@ -86,6 +83,23 @@ function initBar({ home } = {}) {
 
   document.body.prepend(overlay, panel, bar);   // bar ends up first in the DOM
   document.body.classList.add('has-bar');       // pages start below the bar (shared.css)
+
+  // Mark the current version. Run again when the browser restores this page
+  // from its back/forward cache, since the visitor may have switched since.
+  function syncVersion() {
+    let fi = version;
+    try {
+      if (fi) localStorage.setItem('portfolio.fi', fi);
+      else fi = localStorage.getItem('portfolio.fi') === 'hifi' ? 'hifi' : 'lofi';
+    } catch (e) { fi = fi || 'lofi'; }
+    bar.querySelector('.site-bar__mark').setAttribute('href', fixedHome || (fi === 'hifi' ? 'hifi/' : 'index.html'));
+    bar.querySelectorAll('.site-bar__switch a').forEach(a => {
+      if (a.dataset.fi === fi) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
+    });
+  }
+  syncVersion();
+  window.addEventListener('pageshow', e => { if (e.persisted) syncVersion(); });
 
   // ── Open / close ──────────────────────────────────────────────────────────
   const toggle = bar.querySelector('#menuToggle');

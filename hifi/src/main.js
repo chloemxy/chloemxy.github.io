@@ -1,32 +1,32 @@
 import * as THREE from 'three';
-import { CONFIG } from './config.js?v=20261027175029';
-import { herbs, binContents, curios, jars } from './content.js?v=20261027175029';
-import { loadFonts, loadGrain } from './paint.js?v=20261027175029';
-import { HerbDrawer, setAnisotropy } from './items.js?v=20261027175029';
-import { buildCabinet } from './cabinet.js?v=20261027175029';
-import { Reader } from './reader.js?v=20261027175029';
-import { Bin } from './bins.js?v=20261027175029';
-import { projects, GROUPS } from './portfolio.js?v=20261027175029';
-import { woodSheet } from './materials.js?v=20261027175029';
-import { GRAINS } from './woodGrains.js?v=20261027175029';
-import { buildBinCabinet } from './bincabinet.js?v=20261027175029';
-import { BinReader } from './binReader.js?v=20261027175029';
+import { CONFIG } from './config.js?v=20261027180954';
+import { herbs, binContents, curios, jars } from './content.js?v=20261027180954';
+import { loadFonts, loadGrain } from './paint.js?v=20261027180954';
+import { HerbDrawer, setAnisotropy } from './items.js?v=20261027180954';
+import { buildCabinet } from './cabinet.js?v=20261027180954';
+import { Reader } from './reader.js?v=20261027180954';
+import { Bin } from './bins.js?v=20261027180954';
+import { projects, GROUPS } from './portfolio.js?v=20261027180954';
+import { woodSheet } from './materials.js?v=20261027180954';
+import { GRAINS } from './woodGrains.js?v=20261027180954';
+import { buildBinCabinet } from './bincabinet.js?v=20261027180954';
+import { BinReader } from './binReader.js?v=20261027180954';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { setMaterialAnisotropy, loadScans } from './materials.js?v=20261027175029';
-import { makePost } from './post.js?v=20261027175029';
-import { daySky } from './sky.js?v=20261027175029';
-import { meadow, cloudShadowAt } from './meadow.js?v=20261027175029';
-import { videoBackdrop, shadowCatcher } from './videoBackdrop.js?v=20261027175029';
-import { cabin } from './cabin.js?v=20261027175029';
-import { apothecaryWall } from './apothecaryWall.js?v=20261027175029';
-import { shelfWall } from './shelfWall.js?v=20261027175029';
-import { zenGarden } from './zenGarden.js?v=20261027175029';
-import { plantedGarden } from './plantedGarden.js?v=20261027175029';
-import { carpet } from './carpet.js?v=20261027175029';
-import { finishMats } from './bincabinet.js?v=20261027175029';
+import { setMaterialAnisotropy, loadScans } from './materials.js?v=20261027180954';
+import { makePost } from './post.js?v=20261027180954';
+import { daySky } from './sky.js?v=20261027180954';
+import { meadow, cloudShadowAt } from './meadow.js?v=20261027180954';
+import { videoBackdrop, shadowCatcher } from './videoBackdrop.js?v=20261027180954';
+import { cabin } from './cabin.js?v=20261027180954';
+import { apothecaryWall } from './apothecaryWall.js?v=20261027180954';
+import { shelfWall } from './shelfWall.js?v=20261027180954';
+import { zenGarden } from './zenGarden.js?v=20261027180954';
+import { plantedGarden } from './plantedGarden.js?v=20261027180954';
+import { carpet } from './carpet.js?v=20261027180954';
+import { finishMats } from './bincabinet.js?v=20261027180954';
 
-import { renderScale } from './post.js?v=20261027175029';
-import { loader, nextFrame } from './loader.js?v=20261027175029';
+import { renderScale } from './post.js?v=20261027180954';
+import { loader, nextFrame } from './loader.js?v=20261027180954';
 const canvas = document.getElementById('scene');
 const loading = document.getElementById('loading');
 
@@ -125,9 +125,44 @@ function setupStudio(scene, camera) {
   const shot = CONFIG.studioShot;
   const finish = new URLSearchParams(location.search).get('finish') || 'knotty';
   const mats = finishMats(finish, { moss: false });
-  // the wall's wood: knotty pine with a few big knots (pine3), or ?grain=… for another (woodGrains.js)
-  const grain = new URLSearchParams(location.search).get('grain') || 'pine3';
-  if (finish === 'knotty' && grain !== 'knotty' && GRAINS.includes(grain)) {
+  // the wall's wood: scanned plywood (assets/wood/plywood), or ?grain=… for another (woodGrains.js)
+  const grain = new URLSearchParams(location.search).get('grain') || 'scan-plywood';
+  // ?grain=scan-<id> uses a scanned CC0 wood from assets/wood (Poly Haven):
+  // its colour, surface and gloss maps, the grain turned to run along each
+  // board; ?grain=lime-<id> the same wood limewashed, the grain showing through
+  const scan = /^(scan|lime)-(.+)$/.exec(grain);
+  if (scan) {
+    const [, how, id] = scan, sizeM = { plywood: 0.5 }[id] ?? 1; // what one scan covers
+    const load = (name, srgb, done) => {
+      const t = new THREE.TextureLoader().load(`assets/wood/${id}/${name}.jpg`, done);
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.center.set(0.5, 0.5); t.rotation = Math.PI / 2;
+      t.repeat.setScalar(0.45 / sizeM); // the boards' UVs run one unit per 0.45 m
+      if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+      return t;
+    };
+    const w = mats.wall;
+    w.map = load('diff', true, how === 'lime' ? (tex) => {
+      // limewash: the wood washed over with a chalky warm white, grain still showing
+      const c = document.createElement('canvas'), img = tex.image;
+      c.width = img.width; c.height = img.height;
+      const g = c.getContext('2d');
+      g.drawImage(img, 0, 0);
+      g.fillStyle = 'rgba(244,238,226,0.62)'; g.fillRect(0, 0, c.width, c.height);
+      g.globalCompositeOperation = 'multiply'; g.globalAlpha = 0.35; g.drawImage(img, 0, 0);
+      tex.image = c; tex.needsUpdate = true;
+    } : undefined);
+    w.normalMap = load('nor', false); w.normalScale.setScalar(how === 'lime' ? 0.6 : 1);
+    w.roughnessMap = load('rough', false); w.roughness = how === 'lime' ? 1 : 0.9;
+    // ambient occlusion where the scan has it (plywood), and a stronger
+    // surface: the pores and figure darkened and deepened, so the grain has depth
+    if (id === 'plywood') {
+      w.aoMap = load('ao', false); w.aoMap.channel = 0; w.aoMapIntensity = 1;
+      w.normalScale.setScalar(1.8);
+    }
+    w.color.set('#ffffff');
+    w.needsUpdate = true;
+  } else if (finish === 'knotty' && grain !== 'knotty' && GRAINS.includes(grain)) {
     const sheet = woodSheet(grain);
     sheet.repeat.copy(mats.wall.map.repeat);
     mats.wall.map = sheet; mats.wall.needsUpdate = true;
@@ -182,6 +217,9 @@ function setupStudio(scene, camera) {
     scene.add(floor);
   }
 
+  // and the low sun through the windows, laid across the wall
+  windowLight(scene);
+
   const shotFocus = (x, y) => new THREE.Vector3(x, y, 0);
   return {
     reader: new BinReader({ camera, canvas, bins: items, cols: 7 }), focus, shotFocus, shot,
@@ -191,7 +229,7 @@ function setupStudio(scene, camera) {
     // low, warm sun from the left, as in the photo
     // from high on the left and a little in front, so it lands in patches on
     // the plaster at the back of the cells, part shaded by uprights and shelves
-    light: { sun: new THREE.Vector3(-2.4, 2.7, 2.6), colour: '#ffd29a', intensity: 6, sky: ['#fff1de', '#b8a283', 0.62], reach: 4.6 },
+    light: { sun: new THREE.Vector3(-2.4, 2.7, 2.6), colour: '#ffd29a', intensity: 6, sky: ['#fff1de', '#b8a283', 0.85], reach: 4.6 },
   };
 }
 
@@ -334,6 +372,38 @@ async function start() {
 // dims and the light turns a little cooler, as it does outdoors.
 // In the cabin (`bright`), sun pours in from the sunroof and bounces off
 // pale wood all round, so the sky and the bounce are stronger and warmer.
+// Sunlight through two tall windows off to the front left: a spotlight
+// whose cookie is the windows' panes, so bright window-shaped patches, cut
+// by the glazing bars' shadows, fall across the shelf wall, the light
+// slanting down into the cells.
+function windowLight(scene, { from = new THREE.Vector3(-3.4, 3.3, 3.1), to = new THREE.Vector3(-0.2, 1.1, -0.3), colour = '#ffe4bd', intensity = 160 } = {}) {
+  const c = document.createElement('canvas');
+  c.width = c.height = 512;
+  const g = c.getContext('2d');
+  g.fillStyle = '#000'; g.fillRect(0, 0, 512, 512);
+  g.filter = 'blur(6px)';
+  // two windows, each four panes high and two wide, a gap of wall between
+  for (const wx of [70, 290]) {
+    for (let row = 0; row < 4; row++) for (let col = 0; col < 2; col++) {
+      g.fillStyle = '#fff';
+      g.fillRect(wx + col * 78 + 6, 60 + row * 98 + 6, 66, 86);
+    }
+  }
+  const cookie = new THREE.CanvasTexture(c);
+  cookie.colorSpace = THREE.SRGBColorSpace;
+  const spot = new THREE.SpotLight(colour, intensity, 14, 0.62, 0.25, 2);
+  spot.position.copy(from);
+  spot.target.position.copy(to);
+  spot.map = cookie;
+  spot.castShadow = true;
+  spot.shadow.mapSize.setScalar(innerWidth < 700 ? 1024 : 2048);
+  spot.shadow.bias = -0.0005;
+  spot.shadow.normalBias = 0.02;
+  spot.shadow.radius = 3;
+  scene.add(spot, spot.target);
+  return spot;
+}
+
 function addLights(scene, { bright = false, target = new THREE.Vector3(0, 0.7, -0.15), sun = null, colour = null, intensity = null, sky: skyTone = null, reach = 2.6 } = {}) {
   const SKY = skyTone ? skyTone[2] : bright ? 1.1 : 0.6;
   const sky = skyTone ? new THREE.HemisphereLight(skyTone[0], skyTone[1], SKY) : bright ? new THREE.HemisphereLight('#fff4e2', '#d9b98a', SKY) : new THREE.HemisphereLight('#cfe0ff', '#9aa47a', SKY);

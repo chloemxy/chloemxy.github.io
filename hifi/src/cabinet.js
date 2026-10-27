@@ -9,8 +9,8 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { makeMaterials, herbFill } from './materials.js?v=20261027175029';
-import { paintJarLabel } from './paint.js?v=20261027175029';
+import { makeMaterials, herbFill } from './materials.js?v=20261027180954';
+import { paintJarLabel } from './paint.js?v=20261027180954';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const TILE = { u: 0.45, v: 0.45 }; // metres covered by one tile of the scanned veneer
