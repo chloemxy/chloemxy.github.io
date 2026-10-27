@@ -9,14 +9,15 @@
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-            href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..600&family=Libre+Caslon+Text&display=swap"
+            href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=Libre+Caslon+Text&display=swap"
             rel="stylesheet"
         />
 
         <style>
-            /* The hi-fi site's loading screen, used as the way in: the six
-               portfolio drawers fill as the page loads, then ask for the password.
-               White paper, black ink, hairline rules, tracked uppercase labels. */
+            /* The way in: an old arched barn door with the name over it. Flowers
+               grow out of the name while the page loads; the right password
+               swings the door open and the view moves through the doorway to
+               the shelf wall inside. White paper, black ink, hairline rules. */
             :root {
                 --paper: #ffffff;
                 --ink: #000000;
@@ -35,6 +36,10 @@
                 --display: "Archivo", -apple-system, Helvetica, Arial, sans-serif;
                 --brand: "Libre Caslon Text", Georgia, serif;
                 --out: cubic-bezier(0.16, 1, 0.3, 1);
+                --swing: cubic-bezier(0.5, 0, 0.15, 1);
+                --push: cubic-bezier(0.62, 0, 0.25, 1);
+
+                --u: 1px; /* one unit of the door drawing */
             }
 
             * { box-sizing: border-box; }
@@ -58,47 +63,79 @@
             .staticrypt-spinner-container { min-height: 100vh; min-height: 100svh; }
 
             .bar {
-                position: fixed; top: 0; left: 0; right: 0; height: 64px;
+                position: fixed; top: 0; left: 0; right: 0; height: 64px; z-index: 5;
                 display: flex; align-items: center; justify-content: space-between;
                 padding: 0 var(--space-6);
                 background: var(--paper);
                 border-bottom: 1px solid var(--hair);
+                transition: opacity 400ms var(--out);
             }
             .bar .mark { font: 400 24px/1 var(--brand); letter-spacing: 0.01em; }
             .bar .label { color: var(--mute); }
 
             .gate {
                 min-height: 100vh; min-height: 100svh;
-                display: grid; place-content: center; justify-items: center; gap: var(--space-5);
-                padding: 96px var(--space-4) var(--space-7);
+                display: grid; justify-content: center; align-content: center; justify-items: center;
+                grid-template-columns: auto; gap: var(--space-5);
+                padding: 72px var(--space-4) var(--space-7);
+            }
+            @media (min-width: 900px) {
+                .gate { grid-template-columns: auto 320px; column-gap: 88px; align-items: center; }
             }
 
-            /* ---------- The six drawers (as on the hi-fi loading screen) ---------- */
-            .loader-wall { display: grid; grid-template-columns: repeat(2, 72px); gap: 8px; }
-            .loader-wall.rattle { animation: rattle 380ms var(--out); }
-            .ld {
-                --f: 0;
-                display: grid; grid-template-rows: 1fr 12px; height: 54px;
-                border: 1px solid var(--border); background: var(--paper);
-                transition: transform 300ms var(--out), box-shadow 300ms var(--out), border-color 300ms;
+            /* ---------- The name and the door ---------- */
+            .stage {
+                position: relative;
+                display: grid; justify-items: center;
+                padding: calc(118 * var(--u)) calc(40 * var(--u)) 0;
+                transition: transform 1700ms var(--push);
+                will-change: transform;
             }
-            .ld-glass { position: relative; overflow: hidden; background: var(--slot); }
-            .ld-card {
-                position: absolute; inset: 4px 6px 0; background: #edeae5 center / cover no-repeat;
-                transform: translateY(calc((1 - var(--f)) * 105%));
+            .stage > canvas { transition: opacity 500ms var(--out); }
+            .name {
+                position: relative; z-index: 1; display: flex;
+                margin: 0 0 calc(22 * var(--u));
+                font: 800 calc(62 * var(--u))/0.9 var(--display); font-stretch: 100%;
+                letter-spacing: -0.045em; text-transform: uppercase;
+                transition: opacity 500ms var(--out);
             }
-            .ld-glass::after {
-                content: ""; position: absolute; inset: 0;
-                background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.5) 50%, transparent 60%);
+            .name .l { display: inline-block; opacity: 0; transform: translateY(-0.3em); transition: opacity 240ms, transform 560ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+            .name .l.in { opacity: 1; transform: none; }
+            .name .sp { width: 0.28em; }
+
+            .doorway { position: relative; z-index: 1; width: calc(320 * var(--u)); height: calc(410 * var(--u)); }
+            .doorway.rattle { animation: rattle 380ms var(--out); }
+            .frame { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; overflow: visible; }
+            .opening {
+                position: absolute; z-index: 1;
+                left: calc(30 * var(--u)); top: calc(26 * var(--u));
+                width: calc(260 * var(--u)); height: calc(370 * var(--u));
+                border-radius: calc(130 * var(--u)) calc(130 * var(--u)) 0 0;
+                overflow: hidden; background: #2a1d14;
+                perspective: calc(900 * var(--u));
             }
-            .ld-front { display: grid; place-items: center; border-top: 1px solid var(--hair); }
-            .ld-knob { width: 5px; height: 5px; border-radius: 50%; background: var(--hair); transition: background 300ms; }
-            .ld.filling { transform: translateY(-3px); box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12); border-color: var(--ink); }
-            .ld.full { animation: ld-shut 420ms var(--out); }
-            .ld.full .ld-knob { background: var(--ink); }
-            /* opening: every drawer pulled out again, one after another */
-            .ld.open { transform: translateY(-3px); box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12); border-color: var(--ink); animation: none; }
-            @keyframes ld-shut { 0% { transform: translateY(-3px); } 60% { transform: translateY(1px); } 100% { transform: none; } }
+            /* the room behind the door: the hi-fi shelf wall */
+            .room {
+                position: absolute; left: 50%; top: 50%;
+                width: calc(700 * var(--u)); max-width: none; height: auto;
+                transform: translate(-50%, -50%) scale(var(--room, 1));
+                transition: transform 1700ms var(--push);
+            }
+            .shade {
+                position: absolute; inset: 0;
+                background: radial-gradient(ellipse 70% 60% at 50% 55%, rgba(30, 18, 8, 0.15), rgba(20, 12, 6, 0.8));
+                transition: opacity 1400ms var(--out);
+            }
+            .leaf { position: absolute; top: 0; width: 50%; height: 100%; transition: transform 1400ms var(--swing); }
+            .leaf svg { display: block; width: 100%; height: 100%; transition: filter 1400ms var(--swing); }
+            .leaf.l { left: 0; transform-origin: 0 50%; }
+            .leaf.r { right: 0; transform-origin: 100% 50%; }
+            /* swinging inward, away from the viewer */
+            .doorway.open .leaf.l { transform: rotateY(82deg); }
+            .doorway.open .leaf.r { transform: rotateY(-82deg); }
+            .doorway.open .leaf svg { filter: brightness(0.5); }
+            .doorway.open .shade { opacity: 0.35; }
+
             @keyframes rattle {
                 0%, 100% { transform: translateX(0); }
                 25% { transform: translateX(-6px); }
@@ -106,20 +143,21 @@
                 75% { transform: translateX(-3px); }
             }
 
+            /* ---------- Loading, then the password ---------- */
+            .panel { width: min(320px, 100%); transition: opacity 400ms var(--out); }
             .loader-line {
-                display: flex; gap: var(--space-3); align-items: baseline; margin: 0;
+                display: flex; gap: var(--space-3); align-items: baseline; margin: 0 0 var(--space-5);
                 font: 400 var(--text-lg)/1.2 var(--display);
             }
             .loader-pct { min-width: 4ch; color: var(--mute); font-variant-numeric: tabular-nums; font-size: var(--text-sm); }
+            @media (max-width: 899px) { .loader-line { justify-content: center; } }
 
-            /* ---------- The password, once the drawers are full ---------- */
             form {
-                width: min(320px, 100%);
                 opacity: 0; transform: translateY(8px);
                 transition: opacity 500ms var(--out), transform 500ms var(--out);
             }
             form.ready { opacity: 1; transform: none; }
-            .lede { margin: 0 0 var(--space-4); color: var(--body); text-align: center; }
+            .lede { margin: 0 0 var(--space-4); color: var(--body); }
             .field-label { display: block; margin-bottom: var(--space-2); }
             .field { display: flex; }
             .field input {
@@ -150,15 +188,22 @@
                 transition: background 200ms var(--out), color 200ms var(--out);
             }
             .enter:hover { background: var(--paper); color: var(--ink); }
-            .help { margin: var(--space-5) 0 0; padding-top: var(--space-4); border-top: 1px solid var(--hair); color: var(--mute); text-align: center; }
+            .help { margin: var(--space-5) 0 0; padding-top: var(--space-4); border-top: 1px solid var(--hair); color: var(--mute); }
             .help a { color: var(--ink); text-underline-offset: 3px; }
 
+            /* On the way in: everything but the door steps aside */
+            .leaving .bar, .leaving .panel, .leaving .name, .leaving .stage > canvas { opacity: 0; }
+            .veil { position: fixed; inset: 0; z-index: 10; opacity: 0; pointer-events: none; transition: opacity 380ms ease; }
+            .veil.on { opacity: 1; }
+
             @media (max-width: 899px) {
+                :root { --u: 0.74px; }
                 .bar { height: 56px; padding: 0 var(--space-4); }
+                .gate { padding-top: 56px; }
             }
             @media (prefers-reduced-motion: reduce) {
-                .ld, .ld.full, .loader-wall.rattle { transition: none; animation: none; }
-                form { transition: none; }
+                .doorway.rattle { animation: none; }
+                form, .name .l { transition: none; }
             }
         </style>
     </head>
@@ -173,47 +218,310 @@
             </header>
 
             <main class="gate">
-                <div class="loader-wall" id="wall" role="progressbar" aria-label="Filling the drawers" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-                    <div class="ld"><span class="ld-glass"><i class="ld-card"></i></span><span class="ld-front"><b class="ld-knob"></b></span></div>
-                    <div class="ld"><span class="ld-glass"><i class="ld-card"></i></span><span class="ld-front"><b class="ld-knob"></b></span></div>
-                    <div class="ld"><span class="ld-glass"><i class="ld-card"></i></span><span class="ld-front"><b class="ld-knob"></b></span></div>
-                    <div class="ld"><span class="ld-glass"><i class="ld-card"></i></span><span class="ld-front"><b class="ld-knob"></b></span></div>
-                    <div class="ld"><span class="ld-glass"><i class="ld-card"></i></span><span class="ld-front"><b class="ld-knob"></b></span></div>
-                    <div class="ld"><span class="ld-glass"><i class="ld-card"></i></span><span class="ld-front"><b class="ld-knob"></b></span></div>
-                </div>
-                <p class="loader-line"><span class="loader-text" id="loader-text">Filling the drawers</span><span class="loader-pct" id="loader-pct">0%</span></p>
-
-                <form id="staticrypt-form" action="#" method="post" novalidate aria-hidden="true">
-                    <p class="lede">This portfolio is shared by invitation. Enter the password you were given.</p>
-                    <label class="field-label label" for="staticrypt-password">Password</label>
-                    <div class="field">
-                        <input
-                            id="staticrypt-password"
-                            type="password"
-                            name="password"
-                            aria-describedby="gate-error"
-                            autocomplete="current-password"
-                            autocapitalize="off"
-                            spellcheck="false"
-                            tabindex="-1"
-                        />
-                        <button type="button" class="eye label" id="eye" aria-pressed="false" tabindex="-1">Show</button>
+                <div class="stage" id="stage">
+                    <h1 class="name" id="name" aria-label="Chloe Ma"></h1>
+                    <div class="doorway" id="doorway" role="progressbar" aria-label="Opening up" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                        <div class="opening" id="opening">
+                            <img class="room" id="room" alt="" />
+                            <div class="shade" id="shade"></div>
+                            <div class="leaf l" id="leaf-l"></div>
+                            <div class="leaf r" id="leaf-r"></div>
+                        </div>
+                        <svg class="frame" id="frame" viewBox="-30 -26 320 410" aria-hidden="true"></svg>
                     </div>
+                </div>
 
-                    <p class="error" id="gate-error" role="status" aria-live="polite"></p>
+                <div class="panel" id="panel">
+                    <p class="loader-line"><span class="loader-text" id="loader-text">Opening up</span><span class="loader-pct" id="loader-pct">0%</span></p>
 
-                    <label id="staticrypt-remember-label" class="remember hidden">
-                        <input id="staticrypt-remember" type="checkbox" name="remember" checked tabindex="-1" />
-                        Remember me on this device
-                    </label>
+                    <form id="staticrypt-form" action="#" method="post" novalidate aria-hidden="true">
+                        <p class="lede">This portfolio is shared by invitation. Enter the password you were given.</p>
+                        <label class="field-label label" for="staticrypt-password">Password</label>
+                        <div class="field">
+                            <input
+                                id="staticrypt-password"
+                                type="password"
+                                name="password"
+                                aria-describedby="gate-error"
+                                autocomplete="current-password"
+                                autocapitalize="off"
+                                spellcheck="false"
+                                tabindex="-1"
+                            />
+                            <button type="button" class="eye label" id="eye" aria-pressed="false" tabindex="-1">Show</button>
+                        </div>
 
-                    <button type="submit" class="enter label" tabindex="-1">Open the cabinet</button>
+                        <p class="error" id="gate-error" role="status" aria-live="polite"></p>
 
-                    <p class="help">No password? Ask <a href="mailto:chloexy.ma@gmail.com" tabindex="-1">chloexy.ma@gmail.com</a></p>
-                </form>
+                        <label id="staticrypt-remember-label" class="remember hidden">
+                            <input id="staticrypt-remember" type="checkbox" name="remember" checked tabindex="-1" />
+                            Remember me on this device
+                        </label>
+
+                        <button type="submit" class="enter label" tabindex="-1">Open the door</button>
+
+                        <p class="help">No password? Ask <a href="mailto:chloexy.ma@gmail.com" tabindex="-1">chloexy.ma@gmail.com</a></p>
+                    </form>
+                </div>
             </main>
+            <div class="veil" id="veil"></div>
         </div>
 
+        <script>
+/* ══════════════════════════════════
+   INTRO GARDEN — vines and flowers grow out of each letter of the name as it
+   lands. Everything is drawn from code on two canvases, one behind the letters
+   and one in front, so a stem can pass behind a letter and come out over it.
+   Usage: const garden = introGarden(introEl); garden.grow(letterSpan);
+   Options: introGarden(el, { petals: [...], stem, leaves: [...], centre, reach })
+   (reach lengthens the upward stems, so blooms clear smaller lettering)
+══════════════════════════════════ */
+window.introGarden = function (intro, colours = {}) {
+  const quiet = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (quiet || !intro) return { grow() {}, remaining() { return 0; } };
+
+  const PETALS = colours.petals || ['#9b8cf8', '#f97316', '#06b6d4', '#ffffff', '#c4b5fd'];
+  const STEM = colours.stem || '#84cc16', LEAF = colours.leaves || ['#84cc16', '#65a30d'];
+  const CENTRE = colours.centre || '#161412', VEIN = 'rgba(22,20,18,0.45)', REACH = colours.reach || 1;
+
+  /* Two layers: back sits under the name (z 0), front over it (z 2) */
+  function layer(z) {
+    const c = document.createElement('canvas');
+    c.setAttribute('aria-hidden', 'true');
+    c.style.cssText = `position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:${z}`;
+    intro.appendChild(c);
+    return c.getContext('2d');
+  }
+  const back = layer(0), front = layer(2);
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  function fit() {
+    for (const g of [back, front]) {
+      g.canvas.width = intro.clientWidth * dpr;
+      g.canvas.height = intro.clientHeight * dpr;
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+  }
+  fit();
+  window.addEventListener('resize', fit);
+
+  /* ── Helpers ── */
+  let seed = (Math.random() * 1e9) | 0;            // a different garden on every replay
+  function rnd() { seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5; return (seed >>> 0) / 4294967296; }
+  const pick = a => a[Math.floor(rnd() * a.length)];
+  const easeOut = t => t <= 0 ? 0 : t >= 1 ? 1 : 1 - Math.pow(1 - t, 3);
+  const spring = t => t <= 0 ? 0 : t >= 1.6 ? 1 : 1 - Math.exp(-5 * t) * Math.cos(11 * t);  // overshoots, then settles
+
+  /* A wandering stem: walk forward in small steps while the heading sways */
+  function vine(x, y, dir, len, sway, waves, phase, n = 30) {
+    const pts = [[x, y]], step = len / n;
+    for (let i = 1; i <= n; i++) {
+      const u = i / n, a = dir + sway * Math.sin(u * Math.PI * waves + phase) * Math.min(1, u * 2.5);
+      x += Math.cos(a) * step; y += Math.sin(a) * step;
+      pts.push([x, y]);
+    }
+    return pts;
+  }
+  /* An arching stem from one point to another, lifted by `lift` */
+  function arch(a, b, lift, n = 30) {
+    const c = [(a[0] + b[0]) / 2, Math.min(a[1], b[1]) - lift], pts = [];
+    for (let i = 0; i <= n; i++) {
+      const t = i / n, u = 1 - t;
+      pts.push([u * u * a[0] + 2 * u * t * c[0] + t * t * b[0], u * u * a[1] + 2 * u * t * c[1] + t * t * b[1]]);
+    }
+    return pts;
+  }
+  /* Finish a stem in a little spiral */
+  function curl(pts, side, r) {
+    const [x, y] = pts[pts.length - 1], [px, py] = pts[pts.length - 2];
+    const a = Math.atan2(y - py, x - px), cx = x - Math.sin(a) * side * r, cy = y + Math.cos(a) * side * r;
+    const a0 = Math.atan2(y - cy, x - cx);
+    for (let i = 1; i <= 16; i++) {
+      const u = i / 16, t = a0 + side * u * Math.PI * 1.7, rr = r * (1 - 0.55 * u);
+      pts.push([cx + Math.cos(t) * rr, cy + Math.sin(t) * rr]);
+    }
+    return pts;
+  }
+  const heading = (pts, i) => {
+    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
+    return Math.atan2(b[1] - a[1], b[0] - a[0]);
+  };
+
+  /* ── Garden state ── */
+  const stems = [], leaves = [], flowers = [];
+  let lastLetter = null, raf = 0;
+
+  /* Split a stem into stretches that alternate behind and in front of the letters.
+     It always starts behind, so it looks like it grows out of the letter. */
+  function weave() {
+    const cuts = [0];
+    let u = 0.18 + rnd() * 0.25;
+    while (u < 0.9) { cuts.push(u); u += 0.25 + rnd() * 0.35; }
+    cuts.push(1);
+    return cuts.slice(1).map((b, i) => ({ a: cuts[i], b, front: i % 2 === 1 }));
+  }
+
+  function addStem(pts, w, t0, dur, tip, size) {
+    stems.push({ pts, w, t0, dur, runs: weave() });
+    // leaves along the way, appearing as the stem reaches them
+    const n = Math.floor(rnd() * 3);
+    for (let k = 0; k < n; k++) {
+      const u = 0.25 + rnd() * 0.55, i = Math.round(u * (pts.length - 1));
+      const side = rnd() < 0.5 ? -1 : 1;
+      leaves.push({ x: pts[i][0], y: pts[i][1], ang: heading(pts, i) + side * (0.7 + rnd() * 0.5),
+        L: size * (0.32 + rnd() * 0.2), col: pick(LEAF), t0: t0 + dur * u, front: rnd() < 0.6 });
+    }
+    const end = pts[pts.length - 1], tEnd = t0 + dur * 0.85;
+    if (tip === 'leaf') {
+      leaves.push({ x: end[0], y: end[1], ang: heading(pts, pts.length - 1), L: size * 0.42, col: pick(LEAF), t0: tEnd, front: true });
+    } else if (tip !== 'none') {
+      const col = pick(PETALS);
+      let col2 = pick(PETALS); if (col2 === col) col2 = PETALS[(PETALS.indexOf(col) + 1) % PETALS.length];
+      flowers.push({ type: tip, x: end[0], y: end[1], R: size * (0.22 + rnd() * 0.14), rot: rnd() * Math.PI * 2,
+        col, col2, t0: tEnd, front: true, sway: rnd() * 10 });    // blooms open above the name, in front of everything
+    }
+  }
+
+  function grow(span) {
+    const box = intro.getBoundingClientRect(), b = span.getBoundingClientRect();
+    const h = b.height, w = b.width, x0 = b.left - box.left, top = b.top - box.top + h * 0.1;
+    const now = performance.now(), lw = Math.max(1.6, h * 0.028);
+    const flower = () => pick(['bloom', 'bloom', 'daisy', 'star', 'tulip', 'berry']);
+    const inside = () => x0 + w * (0.2 + rnd() * 0.6);
+
+    // one or two stems reaching up out of the letter
+    const up = 1 + (rnd() < 0.55 ? 1 : 0);
+    for (let i = 0; i < up; i++) {
+      const pts = vine(inside(), top + h * (0.3 + rnd() * 0.25), -Math.PI / 2 + (rnd() - 0.5) * 0.7,
+        h * (0.8 + rnd() * 0.55) * REACH, 0.35 + rnd() * 0.4, 1 + rnd() * 1.5, rnd() * 6);
+      addStem(pts, lw, now + i * 140, 520 + rnd() * 260, rnd() < 0.85 ? flower() : 'leaf', h);
+    }
+    // sometimes a short one sneaks out sideways
+    if (rnd() < 0.45) {
+      const side = rnd() < 0.5 ? -1 : 1;
+      let pts = vine(inside(), top + h * (0.4 + rnd() * 0.3), side < 0 ? Math.PI + 0.3 : -0.3,
+        h * (0.3 + rnd() * 0.2), 0.5, 1.2, rnd() * 6);
+      pts = curl(pts, side < 0 ? 1 : -1, h * 0.06);
+      addStem(pts, lw * 0.8, now + 220, 480, rnd() < 0.5 ? 'none' : 'berry', h);
+    }
+    // a vine that arches over to the previous letter
+    if (lastLetter && rnd() < 0.7) {
+      const a = [inside(), top + h * (0.15 + rnd() * 0.3)];
+      const pb = lastLetter.getBoundingClientRect();
+      const bpt = [pb.left - box.left + pb.width * (0.3 + rnd() * 0.5), pb.top - box.top + h * (0.15 + rnd() * 0.3)];
+      addStem(arch(a, bpt, h * (0.3 + rnd() * 0.35)), lw * 0.9, now + 90, 600, rnd() < 0.5 ? 'leaf' : 'none', h);
+    }
+    lastLetter = span;
+    if (!raf) raf = requestAnimationFrame(frame);
+  }
+
+  /* ── Drawing ── */
+  function smooth(g, pts, i0, i1) {
+    g.beginPath();
+    g.moveTo(pts[i0][0], pts[i0][1]);
+    for (let i = i0 + 1; i < i1; i++) {
+      const mx = (pts[i][0] + pts[i + 1][0]) / 2, my = (pts[i][1] + pts[i + 1][1]) / 2;
+      g.quadraticCurveTo(pts[i][0], pts[i][1], mx, my);
+    }
+    g.lineTo(pts[i1][0], pts[i1][1]);
+    g.stroke();
+  }
+
+  function drawStem(s, now) {
+    const p = easeOut((now - s.t0) / s.dur);
+    if (p <= 0) return;
+    const last = s.pts.length - 1, reach = p * last;
+    for (const r of s.runs) {
+      const i0 = Math.floor(r.a * last), i1 = Math.min(Math.ceil(r.b * last), Math.ceil(reach));
+      if (i1 <= i0) continue;
+      const g = r.front ? front : back;
+      g.strokeStyle = STEM; g.lineWidth = s.w; g.lineCap = 'round'; g.lineJoin = 'round';
+      smooth(g, s.pts, i0, i1);
+    }
+  }
+
+  function drawLeaf(l, now) {
+    const s = spring((now - l.t0) / 450);
+    if (s <= 0) return;
+    const g = l.front ? front : back, L = l.L * s, wd = L * 0.38;
+    g.save(); g.translate(l.x, l.y); g.rotate(l.ang);
+    g.beginPath(); g.moveTo(0, 0);
+    g.quadraticCurveTo(L * 0.5, -wd, L, 0);
+    g.quadraticCurveTo(L * 0.5, wd, 0, 0);
+    g.fillStyle = l.col; g.fill();
+    g.beginPath(); g.moveTo(L * 0.1, 0); g.lineTo(L * 0.8, 0);
+    g.strokeStyle = VEIN; g.lineWidth = Math.max(1, L * 0.04); g.stroke();
+    g.restore();
+  }
+
+  function petal(g, len, wid) {        // a rounded petal pointing along +x from the centre
+    g.beginPath(); g.moveTo(0, 0);
+    g.bezierCurveTo(len * 0.3, -wid, len, -wid * 0.8, len, 0);
+    g.bezierCurveTo(len, wid * 0.8, len * 0.3, wid, 0, 0);
+    g.fill();
+  }
+
+  function drawFlower(f, now) {
+    const s = spring((now - f.t0) / 700);
+    if (s <= 0) return;
+    const g = f.front ? front : back, R = f.R * s;
+    g.save(); g.translate(f.x, f.y); g.rotate(f.rot + Math.sin(now / 900 + f.sway) * 0.06);
+    if (f.type === 'bloom') {                     // layered petals, darker inside
+      for (let ring = 0; ring < 3; ring++) {
+        const n = 5, rr = R * (1 - ring * 0.28);
+        g.fillStyle = ring === 1 ? f.col2 : f.col;
+        g.globalAlpha = ring === 2 ? 0.9 : 1;
+        for (let k = 0; k < n; k++) { g.save(); g.rotate(k * Math.PI * 2 / n + ring * 0.6); petal(g, rr, rr * 0.55); g.restore(); }
+      }
+      g.globalAlpha = 1;
+      g.beginPath(); g.arc(0, 0, R * 0.16, 0, Math.PI * 2); g.fillStyle = CENTRE; g.fill();
+    } else if (f.type === 'daisy') {              // thin petals around a big centre
+      const n = 9; g.fillStyle = f.col;
+      for (let k = 0; k < n; k++) { g.save(); g.rotate(k * Math.PI * 2 / n); petal(g, R, R * 0.2); g.restore(); }
+      g.beginPath(); g.arc(0, 0, R * 0.3, 0, Math.PI * 2); g.fillStyle = f.col2; g.fill();
+    } else if (f.type === 'star') {               // the site's four-point sparkle, as a flower
+      g.fillStyle = f.col;
+      for (let k = 0; k < 4; k++) {
+        g.save(); g.rotate(k * Math.PI / 2);
+        g.beginPath(); g.moveTo(0, -R * 1.25); g.quadraticCurveTo(R * 0.12, -R * 0.12, 0, 0); g.quadraticCurveTo(-R * 0.12, -R * 0.12, 0, -R * 1.25); g.fill();
+        g.restore();
+      }
+      g.beginPath(); g.arc(0, 0, R * 0.18, 0, Math.PI * 2); g.fillStyle = f.col2; g.fill();
+    } else if (f.type === 'tulip') {              // a closed cup, opening upward
+      g.rotate(-f.rot - Math.PI / 2 + Math.sin(f.sway) * 0.3);
+      g.fillStyle = f.col2; g.save(); g.rotate(-0.5); petal(g, R * 1.1, R * 0.42); g.restore();
+      g.save(); g.rotate(0.5); petal(g, R * 1.1, R * 0.42); g.restore();
+      g.fillStyle = f.col; petal(g, R * 1.2, R * 0.5);
+    } else {                                      // berries: a small cluster of dots
+      const n = 4; g.fillStyle = f.col;
+      for (let k = 0; k < n; k++) {
+        const a = k * Math.PI * 2 / n;
+        g.beginPath(); g.arc(Math.cos(a) * R * 0.45, Math.sin(a) * R * 0.45, R * 0.34, 0, Math.PI * 2); g.fill();
+      }
+      g.beginPath(); g.arc(0, 0, R * 0.3, 0, Math.PI * 2); g.fillStyle = f.col2; g.fill();
+    }
+    g.restore();
+  }
+
+  function frame(now) {
+    if (!intro.isConnected) { window.removeEventListener('resize', fit); return; }  // intro has gone
+    for (const g of [back, front]) g.clearRect(0, 0, g.canvas.width, g.canvas.height);
+    stems.forEach(s => drawStem(s, now));
+    leaves.forEach(l => drawLeaf(l, now));
+    flowers.forEach(f => drawFlower(f, now));
+    raf = requestAnimationFrame(frame);
+  }
+
+  return {
+    grow,
+    /* how long until the last flower has opened, in ms */
+    remaining() {
+      const ends = flowers.map(f => f.t0 + 700).concat(stems.map(s => s.t0 + s.dur), leaves.map(l => l.t0 + 450));
+      return Math.max(0, ...ends) - performance.now();
+    },
+  };
+};
+
+</script>
         <script>
             // these variables will be filled when generating the file - the template format is 'variable_name'
             const staticryptInitiator = ((function(){
@@ -814,12 +1122,19 @@ exports.init = init;
 })());
             const templateError = "Bad password!",
                 isRememberEnabled = true,
-                staticryptConfig = {"staticryptEncryptedMsgUniqueVariableName":"beece3d2e4077c192d31613a62926e825507ce946b57533c1b1d898bc24b789f2d0f7c08759957105a71a2f7e9c620507184a323d8e40b8596c3f4b561dd457c9428084f79d5cac187026057ecf1bed43effcc38919905d99f67813e43b3e4539c932de7044665e4d4ef7f0892104d603507efde0014a49620375f229b7e31f439f5f06078f864d25dd415666f0d62d4e5c88d42ac021bbe5dbb109b821cf15886208244cd4a7495060cea22da1a8233c3e112ae6727bd51034302b78f396cc9d09b2710299e097d6da5d5b94ecf6c67f643bb7b251958bc0269f753b2a3e711e7cd6cba28f5a55c0fdd8bb25ec53e92727fa3e99884929ab461160cbf48adc07f2d854d7fb57483e937ce84983b581c310deecff7776cfe9a5db40ddac0a12dbbca2385f3e29945da237d73a219a41e2538eb7445c1a1d59f2bccb348fc75a6443fcfa6778ed7334ed860650837f22dc5f355a26a5e63352b39ac680359b9289ff662b8ed53463bde519e453d5a0f189dbd90ac0de98a57a599d42964943f52f987a685b4a2a262c90d29bd34712f6478ac4aa467cf9e7eac251a78e154e1dd28e85588e6ddc23a9405525db9f8bcab6e9d812f4b671d526fc5ad2da63032ac8ed04034d91b255ccb0967b8022519b756b6888eb0f8a0b3bab3bfca0c0b8cf8d77d8d3d7c9e71db3e9749baa333d067a17099957455d4cc25468b8bd78d998b197b8a5c8f8c64dfa3fc065814b299822f7934257beef8c7c5b1bcc7e871ce86937a00a8ad079ee3dbcd13980fca48d3fe78de4f3433b1e0ae99b6f7d7766ab1fdcfd16e4dbe0bec57ff2298148ec4bb66935dfc3cd342a249095df210b1b1380b5073535c698cdac8c962a30be77d75f5303eab7253d23198ea3d5cf02273e2648cce33077edd5cd0dc631764c6b58d2d8f32af7d5d2b16fbca8e66c85af1e81b228412de711d589680ed8b359e27678b3862dd50cc31c8df39122aab7f27ee78cd8683b458ab15b9361727011e6ad083f7211e4816674fb8ba6fd406ecd0732c9c11e5d0c2a9eab1366b9e8da3ad49bca6ce6fd8f02d3d6ebc07ac2b3a92e1bd741d4717cdab59e50c7de872283202775a4ccbf055c1bb8582d01961b4ebf23da508fa2afc59045978b6f4deaa96ac33c92fe2ef2daf8107cb28c9d6e5a42daabd77581c90453e7ad317447b73cd25eccee30781241fe9421a982ce503b350777d42cbd03133c81bedd1d2c28a6cabbb82075a5c5363b62f89b1ff9dba34ff79d86f0245187562e70dc23baaf5473f20dd1665cceb8a2b9a761743572d2c2e5915b56eb5068213ea26102a2632c9c515d7360aa74c3cfd5a011152b3ac0c0a03dc7e7fa59593ee4a7f215587f04a062c4a12e0d9d625448d83b03d73a9f8f6c630cb4a461ebd46ce1eeca188d9ef581306a9847c85637b22f635b71310efe203c4f5ce7657db6833fa5c45c450fe0d02998302a9d289a021436b545ff444bd4f0937a6fce14bc13b638860ba243671920a249769d305fcbe4ba1274db5144184b5c452fd29847efe4c3133c46a64d68d794214cc46d2961169d56e7a76a526b78c193a1292221571321a5504d2f1f96fd91419befdb9108fa60a59e2a5e2af8835f27d3baff4b1282cb779d693d0ff153d5a9be2e9a06e1154cab6c1b8c629c0fb2a3ad812b68c993396500c7deda4a86fa5db44964d02dbb003698b32c68c7ae9135b290feadbf2d301266dde4047ba7acaee6834418192bcbfe7e33da71acbb525a47a2a697cfb759ef8e56c14a27642244afd0676d4cf0c227a6bdb83244633dfac6037926799457442f34682de9be00ffc08dbce8171d2cbdc84c87d0c8cafb189758ff54cd4fc792fd0fb1ae6987d26fa5815f9a2f0bc34309cb939ccc0e4f751bbfeabb24220dc5ba684498d73d456d9538151a49a8cfdcbfd0ae14520ec2e0af0bf95e5645febfc0cdcfde81c052c6df7b64f612edc8f299f6742614994a2539279dfa4007911feef9732841a54006f38b43ecddabddea34956c9b46fb7192d887ef1536d0651622dc9f27ad95ada74bb53263ed1e720249379881d8856b2650b5988a2b3d09d4d3b60954ad0fff44d1ee19a56f82c66bca8d7db9a9c8d14f0cb9cf8fb5c07e3ef00619c487b84936bcbab26ab3417aacf02cfdb30ec9fe6280af719dd428fe38d1db207705bb6d689e9aa5129bae79b1552cb705f9b0fe74b93b9915a7618cab6dfd22dfd5c3ce85f10ab56d6c5666afd81309eb85feed83ed6d861d413d4f49bdb8c5a8cdaef3ed7a424c8d04c076cd1371b7d2402ecb0ebf70935db39e2980ef17cd13288522c466c4acb120dda385408dd035ef9fdcd88ea0665db342049752a5ecf56266976164897e827ec72f89ed24a15e57537f2e563e891e8adf4a764a1b4caad58b3d9b3a154b436f3573a0adb446d92ca73592d9bc1f41b37e35bc980fb6cfe7f9b11cadfdccfc58fdc20d346523ce0983afc90f64864c0a811ad4a8966d4e33f439f03a63c2aca64eb31d5cd6fc5be5f56dfc7a70b65ba483cb519ed6746440fd9dd16ae4249e1733d057566cb71cffaec8d8978eb5df905d359b1c459601ea784501be3764d57edc04f49d685e5b29294c7fec598468b22284269d913c1e496ac2939e92e11d8b26601ee0f28e2595fbff64e9292aecda20b1967aac9b9ac2356bed245dc942e660fccc2aaf3c8bd5776a68f0c9a751b915b938e9c39b3f953190db79586eecc35dac64f716b2966eaa58bbcf25397ee003ddccd2353704d4b17f0017e05b043a5927c3705dd2d874049500aea4633be64b3c126208f01b184625c71dd89cf6d1f7023b8b77b83ed3e5f7002202d75b4c6b9d72167a7ab0aba7025d57695aa0e5e5aa52f79c17686a5250192d57237fe514fc028bceb718dd115b09a393248c9d936388e73d9f47a81d910a47fdf31912ecdc2a112373d36eca2fe0a2e8ace32289c6e3ae72312aed685b947cce72b989855d55ae8654cf381ecdfdcee9584bafb24f6263369042f73daf7a728a60c647082a38646b0e9cc46e3f8f8302c05685f5bb72b1eccc6ce49ad0aa095af3dfa928e7d91f51c080b5417a60ffc98fd1d1107dc05571b708184ea9d7caf350391ded48e110a7593f6822c0583ea9614459d74da108aeb1a2acf47aa1c7328c3e678e72d5680e5e2e1704a780d9295749f69344bd8a404650a0ab78722c799cb87c87e76bd32c04570fc16d5877a5dffe92380179cfdd2a7b5e332c2beeee2554d6ec4d57f7131c47fa0f57f3432282d93c6c6c8ac40d9b5e809f2faa0d8bbd26ed4e7a0bba312818388d56bbda4da7902b8a9ac173d68cb7a62b254781657e8cb8c300bbf35aebb9fb086559e27a32e27b3016861b99d93b10645c86e52e443e7d08ff796601b5e91f03e2a8aaf53c55ead536fcc6d79919ca2016605c2ba88877a23eceaecbd52c826bfbecc00d2c93ce645a927f33fc62c179e21aef03cc43d2ba3bc33277875ea9fa0f714b9d10a19df6fdb0a6dd3ef708bdb57450fd66a9cb8cab23badc7f5d39bdd0c85ab6245da4413112e867e5fd507a77779a9d132d238c9bca40ed73ddad40c310d703cc74240a798ebed7a44c9f1820b5dd4d3a33cc19817e8f9fca6efb710e6fc487f81b7909b774238d7710f15c6d986682485330188b7eec5cdf29d717243157d186b701490cc2520e476c9675bbcccb3837f567e78b614c29782e773a2cc0f6521ba711d0c7a324a5bde3b0812050987c9f21137a1df9a2ef78449597afe7eaad2dbd5e99467d1239151befc2ed7f7c8fda443c02dac533b70898b657efadb050bcbdb11c274b7aff24d7c130ec979c6cc6765839dd3850a3fc3d6418544a3860437d6edaafe0762bf8dab64147b691794f645fa72f017facd19144dfba4ba3fc40afe523167be44b182b87dcf42a51d2597017d7a330bd58a1af6af23a17f44ae5af67958ac47fa1d0fa69068b2696985d2b66a4f43f862a85b2450f6382c5fb2cc96df14917f6f40c27aff2467ca9f2da2308b1f90421bce58b86a942e84eda4d4dc05bcb0eefece52dd1e4aa15a11a9870b5a71fb3e8987add9a5a6d904de3de26529d4dd1a532d9a7d3522132a7b51e1f7da6e5ffb3d891048159e47142278d124c88c21697e6616c3e044c7f930a73b496b6af4963975d7b4e924e138f328f898aa81aed742021f70e779e8dc6130168a2440f816db04144f9f601f9e0be1f6d975859e67e331c6467790ef5d02310202b3563d31490eef3211f1285ea130324418cce255e3c6e5a0a60ee7b3da7a30e9f9c77c9ddb285cb0d9857bfd998d34d37296c9c7d7e85f8989b8bf37542b3beefcdf01a1454fcc7041a8aa48963069ed3c028905c1b7fe66bde681bb141752a40fca288a5cca6186ecbcd42abaf6ecafb8155a850200d57916d045027a6dd46d6b2c118a3c3889f163d347c1421e39f8010884cc3e96819ea5c38329f7084cd36ad3d1d6f2819e7aa4d4e3d1b8bf7e37e4db95dff454c91ea1ae3db35a459c6f13b48e02b7b1e28765b1a78640db7de0e22fa34d4a7f959151f0bec05a7277080744cccdd70197a0419a3f43663a12e92a433fb60006be10ffef09b812b1b6aa5ba13cd14f1b211e1f8ff62e56c5bec0f9bbd81107ce2227fea9e6cb33b6d91a460be2cff187d212b166e4405840b07ca58e40216b7d29c33411a3be9e525e0f1ecd083c316b1f6b483414b09b8091f6faac3268294eed7d9ee29f8341d1c17910db01a447027638266e7b98a196f89e66edf11f0817dd16694d18d678544964632daaeb7866a1de26ee51a8802e7e5dbdfb26a5b8eee7aa78df6a3dfed1613a2fee44a05c8f5e1262c2781f2ff16fc384698421f31c7d174bb77766cb9a6e2217d34e10a9ba8f1d7cb851db2620335bb7c2a4549548b47e9fae4b146ee5c2466e466613644e89f78b08fcd9302907973c17744270e427077baa1f4b8174d859502e92ff09c2501ae5f0bd926c8ba7f3caae254e117414188e7c0de9e5f8e732e6ef16410e6b077514dcd7dfb4069c6e8ec1fdb733d572851b225eda9344263a8ad949e707ebe6392d2085f596ad69808afc22ea6be45e4aed9c7c1ecfcb5b9cf03e7f9462135274dc553201029bc37fe55f674fee7681d5114374b72a0b35eba774d2ebfe7226debedac3c3efb6145b063e26347739eef9ecfd21a07fc43baa9e35d8c7c79c74c7ea296d4ead6111b10a99ef07fc28656b1b26a3ac0d6d4f3e1345ecb02956f11a113cbafc93a95a22f5ba3b2c71ef2ec74650f5f420e77859350c9efc8385b9691e10e8bfa33ab1294f4656ce88d97f8af7006d6d82c7acbec4abb1da2ac590a6a3023c333125471ebce7d27e393d8ff3af39b9e1922b418efdc2c1f5c94e91a735553d2128d76be70d4b67226e09a86074aaadaa83e02c80ccff99f6022f1fe3c8a7522528ba75d5dd5a64b7a7ad35af16a0423cfcfba22c56518733d9eae7fa494218d354e708ec69e36c3220aed8e4e09a087ea57ecb05e71d5513112c0f4c5b8b3fd2e918c2780c4f9baf76abad89efb74da4befb550d0ba8ed31e3214def4325cbb7c8a2c53d088dc93839051726c20ff6223a7d33db31fdd1002c8a45578be63d06d9f504b9993a6466343a0457b2f7591720613ffde708f2c17e06ec9b0ee4c7730165ef8e8c01865c5945a34a56e150f24f46467b24a414bedb1d022784d7706caa7ffadbeacdddd59bcbfc9657f1548e34db7a5b3878873a8a9b514e56181a7e3fb5d888ea73248ec25277df5895d86b052e46612aebe9419e7e47e877af6965bdbcd2bb1bb5dee9c0b1ce048a9a49231d7e627792ab905f1a0a947f04aeb3b5d3b11da685786c1b0f650848ea1c740319528743a1fd1c97c32aac37a262e4a0b8a4d5bdaa77e993a41ad21cc89260ba1d3d0dd3603795e1a818a36afb08990f85736573b826eeac1200374d527b3f85a1b50ebdca1344dbdca548b8086e599c1183f62d533223d88274bff39c3d7de284ee4b563845b8ee99a26789e546824269e8c9e8d4479d59273ae511a8bc9962732461e991634dfab59868532e7d9f60b5c2e0519616d971594888726f14bca81f5d3853d21b7745bcfe662eb88838727c656c5b1babce8f55958f88145fb025c191ba5d90a3779d4c9966b90195e639d8656b8c94dc2b2263b83a718ef4c1d436e854464e55ee43ee0931855cbcd81a7a720f8814b1ff94aac5943704854aac6bf1e22ab2f1b8edfd3b1e4f32d4fc9e0ac7eaf83bf9c668dcf5298afc906a5b6b8966dab47b5bf54ed293052881a4561737c4427e2669cd39ad010c3b9619ae64250bbd17b3ee84f11832c49cb396fad9c3ff976746612b5ce3f83ae84faafa3ec8d8d524310d808bfd1b777348cfe2b68a7a499a891d0ed753a209101658fe77cae6e3b193193e74a72cd1903aac265aa5f75b220b986e80fc39a00ddb71dadc5dd5400c939e7db58e0978d5017cbf4b69da2edee6800aee1b0eaa74310458c48a17fe7607a67fc5283bdb9cad10599b77fd05092361f26c5623acd7e1f744260e8f7dc9e3b543f0458f831b15dd68c0de3339c421ad2393d7255003401350ba85f65338b1b22f72aad02616af400143caf62bb29af51cf8384fe3864552639f98acbf5f6438e5c0ac1fb0c8179b658e9f7faf8b01ba1f7e0066c88e174a68c9e475c649311fa6bc6ba1176d54306b97c527eb75a4cb523b1902eac5c7658c36906530ecb7a5b0317003372dc9b4ef67d66f8ba604e3f8686bcdde60b2b5549734d04ad8d926bfb4db6f9729d69017de6f6c959e903e61cfe64f7a7dcf94571dfe70f8686df723b94dae9499debddea298fd253dc54a77987ed3d66b867d564898a81dd6c8d06637653027a35279ac738e32d8a2f87f8c7c6638c30a55a43e9196fd45dfa63c288b67e75ef247d8143c0eaa49573db01fe2900c1ed919b2438c97e3084caa3f0339d4f11efb2a24f050dcb66d72fe1bd6e0f490a0ba05bb9b40aa7acc6025b7428a6f25cca0b58c05f0764e306254b99ef427667807da383981e070a609522f80cdea36eb7612a1fb556cbcc7f50c24edc1abc7e1b93da4ee95d6c4d736a94e0061d851a432ab2495830564ad38fa0ab0886e3376218c33560188049d94e4469fd7ed5ce41eaca94c17b289f85f7c518efd25d0d3533d835de14488672c54db50d8d44451e387bb42cb3e0c23dcbd2b7637c9c6be0a9c3ce97759757be770c5077f8b4bde1ca920e3ac754c1ccc2779f66c9d38d1b37d44ea6371b3c0b8a6aa517037afa029a52f74d9a3f55a02958850aa05bdd4c350b16f3c3d60dc351fd286466e2852e496b602002c7fae390348a127c706f70aa7005128e97b5488d435ed8c47f64ae31584213d5542ace9e30d950bbea9887db27e9c84ebceeb1317f6d3073095ef6c3f8863be604d0fc86312633e2e09f544a1f56b67571cc2c8f0117babaefba35ca9dc84117347b5c23011ac67387de0d9c13acfa72cd2e153b757708f62dba6eb199b2442aabe8f780e40323524f7558f416148d3d197a159d7187e87518e468ecd0bbacc885039665c51fbcdffa56f344100cefe440f365e8bcb31815a46d7ec2e3398fae5b66f42889476b1c2a74ec898a9782ef21e14db65f1b02e6c049e3e31f22f1454568da75af066a0afd227db583d49e462b17ec5893e1d56c5d87d51cb367fcbdcb95a76ce5744a0eff5c6fb6aee2f05a0b88c18e81a8e45b29a0cf87f488a8cc4c94ee8dc7750617c695184d464a47aa487cd190d71bcef367ce5f2d4d16765d08981cc7db29d243dbf6ee9dbfc19c15152d249a1b0eaa179ac733a2653490fdea3ec754990d0830ddb3615704376da13cbc20d9936c8867d755abfeb3ea647544101b27948301a15d6f1a761208721f954567f92c057c9936752f6e7fcaabb92c926c32d80173419ca07279ffadd3ccceb79e1d0df25d4e80f2078369176720c908678ae0a8a20c0fd8a474ce5a15f43591801e86f73cedd148bdcd2ab93626e1b987d2fe859009b9ababf9ba4e7a47b2a650056043768ad4caacbc4d23eea526df92ae486db7896637323fcab4279e884737ee51a897b6fac0e","isRememberEnabled":true,"rememberDurationInDays":30,"staticryptSaltUniqueVariableName":"ef5aeea5389fcb38dcf9b27da875ba41"};
+                staticryptConfig = {"staticryptEncryptedMsgUniqueVariableName":"5ba1cb87f3cce6589ebf1bff51dc94e7b9146cac610dfa0ebc86220a050250fff90fc6b9b796ebb88cd209d64ddb4d420b90e35ad5268037291760198559fe6f8b4a8b7eeec456cafb8771a297e656a674f0be34e3a3af667b5898aeff2b0e2836d2f96edf4ced359c4a92eb862a2fc21959d265aa1a7e4c0ddafdf26a231ef6e65b5bab1a5c0a1d9d6afe18de18b375a8f37aa5bc76331467aa6d94533d06b166d9801f7d9b7f82400a7ba1679cab45b40c7b11c9380f0e2f086d8186220cfa322d790c575b2a13e8a15d387a30277f8b916171e9101b7716765cf72d290f18adc0f6957756a1b55a3057f96d2193738f966cda80ead508dbd2e59fcc041f748bf47e9d4a0c56fa066b6a99ecf857d8b0eeee25538cee0d46a418b27fd23754a3b2e104ad1701ad19922293c8fe04d0c753c265fe926cf15c3fbb56fa8e97454945c4349870b96973b41fdee75b2a870c7fe16eb7da673fcf2b0fd692fef7e58dd0e3bcba057d74687b781348d594c6fecb0eaa371321ad2c41f9f3184496d8a456927b504f8264226613f94463c045c8027380f5584e4c311c49337207dd049b55890f1cbfb5bcbab8d93908bd326f5dca8d2b59ec0ac40ab2f590b4f09c62a0cc4a8f6d19101a4c7ebdc93fa6a980761005ee5c33e80c952e275fd5338a25c5d27374efeb83213d805f6205953fd2cddceab5e60be5a57dc33c3477fc3b54cb4151c284a05515aa9212d2f46bb1dfab1d397563dd56693428a958e5818361545a7dd9bdcf58bfdd939791e1532b6858c221e30f0a3d6b40e17497b969c31a50a6a851374286dcd5781a264ddb40ed2b9382d4db56380ddd146c60d0be8d9655f8770ff792eafd345cd81a83f753aee3ed319a274180c36ec8338fa2508ee2ba528e71872f8f527c21537283bc06e9f39e6e32ec4c075d5937f34d96b488f09f3e79d06296f31cea70ca45d0fe0c46cdd569cd06e00ac74ba3b7cc53c69eda71d7de009584812b95ba249034b28db7de0530c1773d2d7680a31e322b4b27cb08f05817d7f8ab6a30bfc37d89517c2762877931b4762969f77cf69a8739ac12b66dda7a7cdb35bc6708cc7f4835d099628080e4324f3fe727030be7fbdf2cb9bcd8a95dc278469c1a248f702474ed06cee265569194297d914252f79402a6c350d12664e38372103d585bb7890d003f17f3f1f98693fcbb2611dcab4d1f2fc5bd4b1b0e92b4c8df95aa207ec5c5fa04c9ee262fc56114a5e9e73fd2879fa08a684f07caefac6e65577ea2c035c9c12bd32bbeb7e73ac547a4a93f5e9570d2a49606a2a353e31101e6c9a4aa5a8ac09a33e137417dd78fe879750119c5b7dff3de286e813e53746a610e354600f7e018d6f559f0b80199ea5f744924836d490d4d7a26ff7608f088de65a59700344fa86751e907ecaea2e7a162ad7fcaa27bc970101b29e65b00f7476d6b775f84429e854ebdf4578c332dcb63594b465850283f304313735c8c579f0dfdb45bd66937d541f755a6e5c26b44630c059ddd277604ea0087a8d4e6ebac7fd365938ac4ed71ef8557b59b5523be7f6edfe265a960cd90523ed9994f44934635d113e8115264f08a36cc821f6ff0459130202414d31c34f65e7e08042f3f30f8ab1dbf6b7ef843db30dfce4f95364b20990c378cf21e6255ed63aa3d960de65b1cd58231832132d1f113094be3aa2abaa97ef250893e07921f86b0e2c7e1d16a8633643d48d6d5673a3b5b6fe69669f9d37d78964e3088a9fdc827b0aa54a10e2d8b5bd362b36e3c734810a2a842eeb9d9121929d1de2309ed6f7295c82a0ea22f5f6a3f0dc85b76133fe6374dba86caa2efd9376ecd01f245c33e83175a927f72cf0052e37f9a9f350dec0986d184d623eeba7096ea6e9de0c16c361d7d705caa94185aa868dc844edd00eb636f22c15eee30fe66c0190de7ecbc4bfb2244fde29016ab5377c29b756e0d2be9a07eb04990d604b3c93c3bf85ced776407c357583f2d7b9156b0eb8bb99e2bbff5cf2e21c9ae213be64d48b64402803fc5d4323aba4a7aa378aa5359177406f34437aeedd9392092eda318f66503b938513014a0cb194ad45e2a14984c9edfaabb6b5d3cf95c19a1cc35c7ffaf0d7b7d85a693cd4a14e936c62fa4f8d1e82278f9231c9be51b39fbfbe1846c9f386b15e6b4ab5d9633b370835a8d0d4c88bcea9305f2b922fd2cc2fa103747ee4ca3da4944ef586ff0c763ed6213f4a2cf91362725a0c22ac7e969ed54063a3423500fb2914099a4e60a3e24fba1f1b98ab0989e1f152c1dca5dab7545162ff1b8b5cc1b3637146734a9defe0cb015b059bed19f4fa7535e2c079ac413859e42a30ad3b7735f5b2ab33113d8922a6e8924a32994c7fad21fd97ee0e1228f45a66512fa0890ab5cf53ada4e836d905300f53f425d4b0ff749247ac82169d2412767524c2d2281c8946998969b56ee15b8bc1a04647c4471e16556c81da1988455dd77250b174ceca116a6acb851e75633dd0a61db129b8ccf92cc10ca5d4c452e6b60091a9cdd4fa5998652c53bc85c31b95a38fca48c67e1743c2e4adc7fb8855beedef3df24e8ead80f183a68256474e66bc48253ace3dc7ea6c9471a124e09d411a8e34fd7995b2948c15afc5b721c193243255122b838546e43a1ed5766271189fe4d80a932c21d9debda58f5d1f0638bf956f868b63b934614c3982a060a50c36e0f3cb4e2aa69927704b74c405c7b8bd7958ab802c68209ba90df85fbae0ed0fd026cb0262de1f765287ec9655e82f368a1d51d85291120272819101e41d7afad0a7f11fb6be9e5c47a223844a766662f1b2daef678b58f875f31f32c13ff72664b1028aa9db476eb48770234402bd50de217a873b3ec6efa5b83055bf5f8912e45517faeb201dfddca5e50194f0bf351fe11cb72dd911aebd3eb9a65e7218258e5443053db6e944c1466fe07f248768a8548fc5c020d1c77546a0d51a6b050bb4073cce089de9f3896b434271655bd6673a6438a7d5e6374e11ae389b4a0480884ee9e83f84e0b6d5806de8ddd4a7feef8eeb80c04f736e9c688ab1ded6f4cca46c26c0d8746ef12331a47d2a69dd717ebce65c75aa5e38057127a9597880e160937bd13c0e97f30c390e28197f043783bb2e1a27599572ae3d1ce27bfc8c2e13c41607f96e834b9b8a841e9462f8dca39760ddb1fce13c25a5e0821e2261b6c2c669e19427e3fb52cd952333d16b32a1ddcc17145e9871cc2d58f7626cb4690a5b76e6947ccf4158add0264b980ac34539af58229d3448c364aa44d3da62da888cf11ad361f0190b29671b3ffbf379e7f6afa6bd160a30e7404f68af562b0573af34426e4d053101892d03b28e561735e25fc760d9df0945697a69058da4cdc269af5b9a2175afb0318c7940488e982bd2316c1c4a83fbf1343401261e6f4a0380460ee1b58113395e0a1061fc0c5c851941370d91d3a27b770a1591a0719a5ebcb735cf568fb3fbc1db7bf81cded749fb0e3278719baaae29fa596b3d4991baa7f5865ff4013c9b0185eed4a27c420aea9ae8a4bbab6744fc88f925b8346b7616f254b2ba65c64e7b8d79327749b819a2841c0a3cbbaf351739c77aae7cf73b47ff3bb731dc45f16be504518ebe9b57e495deb128b73465969d3f0233e855b18a97771f5330d0019c80c75fbd653ed97645866f1038953daf10047e3d527e880a335d158af36eaad361fb5d69db5e15758bfc9348772dc8191d1f831a319e30f71c0e2fa52cd28b8a0412fa5a6dd5346d0eb544f089a731f099f9951a33971f6d8b329f92894c280bca639ec5910208c287f885bcf2539815039b68928a41cc62cd514cb0c9d4cc64ca1bfc5c4c8123d6bffc12947bd0a044f841ab504ec2154fb3580ef34af300487391408dd9c806364c8c09942f4804c7514fe350e0565694c980e2b75e3027de2aa6563fa33ad051781d9f286d285a43a84f0fd0bbda689328f2029662522fc9c9399a16035dd0e6a7f50ffe999dfacf4a83b4db1b4f2c258a078ed0180caff0c8bf9c8cc8342b0a6095731df079143af629d4622d3ab31bf7a7f096f6ba1bcdc05d1d7d4ea8739841980623e067cf4e7fcad2762fe233d0e41d1607c2e550fb59d3822d7fe907314414caf6f76aad40cc0b0ae58a0089e4e2733e7ab2d92bf895f788fb02f243b8a8104b77fa92eb1e67d980da5bc0b19210f59709bcec5e8ab3a548248b09fc787a0046fc59eae4164e2a07d7426dacd82443e3651d47e6e7c334b5cb8f30b8085af0b639eadb10b7c82b56a48ede8306957e66e052460c586bad25d75d1413cbf7dce3832d6232527fa091b1f5d0168479ff41f096ad3dbad9248068d4fbba089bc83120708e137de312ad8e285df1682d7778b4d7ea6ac953d09d69712a9eb0a568664b3e314702d1f21b142599789a9750fe3f41c297edae207e1aacbc1f9a9bcd961de341eabadced11ec7eaa1fa70180f4ef6b0342ad03272fa29dbd4f7b2c1920cb1bfc5a2ab69c4404b256e6e2add427e5183edfcf3a4b0208daaaa884973b3c5ad8c20ee10e1bc69853d7a47f91d757fda72ec1e3de367d7bddb65654214565a966bb9c6d744f5205d2af508ed143f544ca4dba7808137d4cea374b22089562f81e898f02240dd8ad9c0ea507eff523c90270b9543c5c0c5352b1be8e3d34c2244486658bdea59955c3c1153584ea1387dcf825fd26192daab7367d7d270bf30cf06a13a64edca97c2db8a8c98e4e11ed46ba5bdc94a4ed5f3dd8c48bcb467f80408e69f3c4deb512d5a8f1b6ca45dc8b26fda462dc9bb669fff889c16f600fa894a774302a2c9ff7951e15cf576efa0f3975fc461bf883f50bfc6742d6965d9030b036678d04cb592e03032eae0dafa202b6986debe20534b8d0337955be0bbcb4baee13545a5b04ba8dffe5f2ed0b24bbcab17aef131fb1d1957a789d33972f587084b602e0b836a8e63513d22aed9a9730afbb5a327b7f71b872a2a51249a92c61730827654188d610dd86d3c8934af04c1a6944d6e35600d341b96f69665b00bb7800b17c518378d44cfcb108746d64a35418679c25491e68e40c212a02732f22b0f6bbf0294acf46b42f020ff4ba4a735bb01e4efe9d2983d940f8d8c4b57424cb70be63023182c625465aa6ff9e82eb36b50349c45eaf2773edab2ccbc752a33ffb60f97309b9f9b55e9868f89ec7af40af5dae3f9f4068975570b1b2f3ec11e05b458b752aeb4e66325740e8dc33c906a9f62161673c6ecebc73f09638f455f5177f790841954ca6aa3b40cc0aecdf001c7c56ce6a27d303fd5d15d5c6ca906e94c0189882d0616f7e0fb864ce1b81496322d8fb968b8c27fcda77d0c45cbaca2812f73a3b21bc5da11ce160d8ac629302c5444f62fe2a9b390328fac67b0fb2e8d8583483017fc5204135dc0ba3353af1a83ce1c30c5d52714bf626aa5d9f326222ad12d876a5f683a43701ee8dffe9d225c10935dc21ee447cb8730e40df528e29359e022e7119faa83cc93dba7eb2e1fb64cd7cccd73135f7cf4177da9e0bf12c2b9ddbea06130b71e2fe868a3f4fc6a129562ee646b1dd9973c661d0f40502ada2f8de66d4522f956cfea162cb2468e93a8e7a336073418c6a78db2fdc226290605b89446461e5bc854b0d8df7057fdf0182c8bd6d9af5606e9cc1c010703fd2d94000718f29581703fa0568353f5c846c698f7f381d3cef19e29c04298bd2a2843c87910f4958db0f59f54ad2c69ecdc5a9a6f9544fc6e4c16119dd47ad49531bb1c1d90e492a193cc1563a1e77c5885dd921feedfadaaa3018a2c50cefbc235118e67b25f6b351f4cb0fb34046d04dd83d7617cb1640380c5d80cd2c0134eb04125d2247c09000de64e7a4f6093496b882cd559d636bc96a3fc5443f2af15bb9d06abc7ac549735426883bf54e75028633a306fc6054d71b8d59c805e8b2fbe1c9e385545ac406ce292b6bc9372d7cd1ae04b7f5398ec3b9d0d924b25b557dc465d6976fc60daabccad633777ecaa2e6b1d8ba7ccdb9d520eaafd23959b2fa2799da50c5ac5d6ceb350356820154de921fca64e710ebe73e72d2712fe1738c4f6c42de872563728c580e5ab9319842590c904b836153c1778ed0babadcd5698580855372b4df931ea8b985b835ce7deb47794f878921af7d33baeaae8c77171440d5eeda73cf79cf590871e1b422277b391be877ff0c4ec36fe3c2aeb4e8f84a37350610c1a478bb93cf9275760d1e61df19142916579f59f3160886180dfc51cc06063fcbfbf2fb0adf44092a969d7992df47a6e3e9342a86902c5796a169de83921cc568830343aa5c6b9dd5cba80adfe4cdb52aa322fc769e8623fab4110d21267c73a9412d7b7da1b151d6a808eca43d1551f592f5d99736ad142f52a077fd176b59e6b71c3eaa6afc4d8d840454fce770ef02f080484931906553321ca8986df64b6b7925117b57650f166fa01f024a1c5b02154dccf188f370df2d91f6596b29f521fe9ecf0ae111406c477da91ff4d1a050d0f6791c8f2aeab1c55a5597ee25ce94298354f1352e940d31e8dd93acd36381a28838c3836dc35a091327f2fefcebcb85ca82b9e71377eb00644e0d695a7a32c9962792d643e7e4c0496ce0cd443bacc09c4c264f3df73c3defe2e66bbe9f3e9011c06077f6eb6fd1cd579efe828878f5923fbbe8fed07c9cb4961e0c990129e8b135a40333bd77505028a8667992ff29fa6ed83aec6520f359c0166dc6e40c264d81ba6c4ab9d824d53853c95788d8e4de4c1aff40960f969db1ea067bc5aa318430e8bf323fb22592df2da9a7096131c9131d518c4361469c47c0aaf4498036ac1e79546a5fb1a6f3fb3a7430640218a00ea936a5c8edbf8683c56365524629ff184be3aafc0cedccb5601e8e1e7fad72a5b395923d343d4335fb338822eaf7f96e2940dbdea890d8411bb807001e45d80bc0b85ac0102a5118d67afd7365f29fd6696e410d8c2ca5b07fc850ea873eaddffbc69b82d8bd6a0abc8ea554dc61706efbf2070cc7b41f519bf95aa83b9e5b8f86d069d2b716aebae33f2fa8333052ca48f64473fcce14beec6f8c3f1ce795164423cb8c27e6c8edea2f65d0ee533bbfb99e610a3ee91e58d72154935e11a6e9c42d2a32b16cf0fc9181754979d6281345d70712ef731588ff3b5921a15f2f6ebebca02db0b7b1040b1ab5dff32ac8fb8ac9c4e237dc47ece43b5b6433ed9258332b0fc2d522946b0d260a1f805e8198de42a1c49cda8e1f4c806e3f7bb2baf2a778ff7dfe3abf7bdd7f17f42b330ba8e3ef21a3f6f75dadec82308c8c93e1a0ba4bedd1ca60109df3f97a7a0228e21091fc1af47ee334493bcd2a6aee9ce04bfe137bf6a004776b8c3dbde7780d3b7344f27c106e2a8d93f76dd51f7909ecdc04c55b3b396ddb41f0b1b0553d329deafb4a46e6ec967c6b09613ba4d5c7c6f9eb195daeada50534c56f69de3387d2082bf325dd8590f081bf4d994851848e67636946a6db9084e86de7a3e5e872849f6676f2d4f133a5bf70abacec991bac73e930c0a26933eaeab5fe48db2e93c95c8019a6a09ca4a1aeec338855f53e2c55816bb0878ce9fc41e5b303b8a9090b38b77f1203decfe3b79961abbaab1f6131d79dc40a3d7c04aee4b445516ed92804511894d7bdffbb57bb61b6ce910d2147517f1c45c0871eac9db90917d7b61a63a00300f46b4cd9b82f1824182f2ec048d5099681fd3fc884a91e17356beb9e9d9f3ec6418bcb309428789c561e752ffbb0c155cc7484189bbbbe8e2eed752d835b60bb9f892249d908671babd4d1cc3efca0329e8fb9354068829efbd6631944dd8d71f5608bd6d7971632b32b8a10f3428652c71ee58da9d22e9e57817515d31832d2eb0dd367c96e4e4b9405ae96b9197d9519abd372b558d38838d8ce4e96fc61c0c225ca468f7433f228757983c94acc642a16c6985bed737211ff36e6aea5a83ba205406e29ff4c18f20e91e83009e26627ce0e6408feacfefaeff079e0d6ab8a87f8c7fe421f3548246c2a69690ef719c8de860cca26128b107e45b163f23c2c2f4e3eec529cbdc45cab1ca222739fb7aa3","isRememberEnabled":true,"rememberDurationInDays":30,"staticryptSaltUniqueVariableName":"ef5aeea5389fcb38dcf9b27da875ba41"};
 
+            // A remembered password swaps the page in straight away. A typed one
+            // holds the page until the door has opened.
+            let holdPage = false, pendingPage = null;
             const templateConfig = {
                 rememberExpirationKey: "staticrypt_expiration",
                 rememberPassphraseKey: "staticrypt_passphrase",
-                replaceHtmlCallback: null,
+                replaceHtmlCallback(html) {
+                    if (holdPage) { pendingPage = html; return; }
+                    document.write(html);
+                    document.close();
+                },
                 clearLocalStorageCallback: null,
             };
 
@@ -827,57 +1142,122 @@ exports.init = init;
 
             const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
             const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+            const $ = (id) => document.getElementById(id);
 
-            // The six portfolio drawers' pictures, the same ones the hi-fi
-            // loading screen fills with (public images, so they load before the password).
-            const HEROES = ["ipsos-flow", "prism", "blood-atlas", "guidelines", "waipo", "sud-infovis"]
-                .map((id) => "/hifi/assets/cases/" + id + ".jpg");
-            const MIN_MS = still ? 0 : 1800; // long enough to read as drawers filling
+            const NAME = "CHLOE MA";
+            const ROOM = "/img/gate/shelf-wall.jpg";   // a still of the hi-fi shelf wall (public, loads before the password)
+            const MIN_MS = still ? 0 : 2600;            // long enough for the name to land letter by letter
 
-            const wall = document.getElementById("wall");
-            const drawers = [...wall.querySelectorAll(".ld")];
-            const pct = document.getElementById("loader-pct");
-            const text = document.getElementById("loader-text");
-            const form = document.getElementById("staticrypt-form");
-            const input = document.getElementById("staticrypt-password");
-            const remember = document.getElementById("staticrypt-remember");
-            const errorEl = document.getElementById("gate-error");
-            const eye = document.getElementById("eye");
-            let busy = false;
+            const stage = $("stage"), nameEl = $("name"), doorway = $("doorway"), opening = $("opening");
+            const room = $("room"), shade = $("shade"), pct = $("loader-pct"), text = $("loader-text");
+            const form = $("staticrypt-form"), input = $("staticrypt-password"), remember = $("staticrypt-remember");
+            const errorEl = $("gate-error"), eye = $("eye"), veil = $("veil");
+            let busy = false, garden = null;
 
-            function draw(shown) {
-                const n = drawers.length;
-                drawers.forEach((d, i) => {
-                    const f = Math.min(Math.max(shown * n - i, 0), 1);
-                    d.style.setProperty("--f", f.toFixed(3));
-                    d.classList.toggle("filling", f > 0 && f < 1);
-                    d.classList.toggle("full", f >= 1);
-                });
-                const v = Math.round(shown * 100);
-                pct.textContent = v + "%";
-                wall.setAttribute("aria-valuenow", String(v));
+            /* ---------- The door, drawn in SVG ---------- */
+            // One leaf, 130 x 370, hinged on its left edge. The right leaf is the
+            // same drawing mirrored. Weathered vertical planks, a Z-brace between
+            // two rails, iron strap hinges and a ring pull.
+            function leafSVG(id, mirror) {
+                const shape = "M0,370 V130 A130,130 0 0 1 130,0 V370 Z";
+                const tones = ["#7b5536", "#6c4a2f", "#80593a", "#71502f"];
+                const planks = tones.map((c, i) => `<rect x="${i * 32.5}" width="32.6" height="370" fill="${c}"/>`).join("");
+                const seams = [32.5, 65, 97.5].map((x) => `<line x1="${x}" x2="${x}" y2="370" stroke="#2a1a0f" stroke-width="1.6"/>`).join("");
+                const rail = (y) => `<rect y="${y}" width="130" height="24" fill="#87613f"/><rect y="${y + 24}" width="130" height="3" fill="rgba(20,10,4,.45)"/>` +
+                    [16, 48, 81, 113].map((x) => `<circle cx="${x}" cy="${y + 7}" r="1.7" fill="#2a1f18"/><circle cx="${x}" cy="${y + 17}" r="1.7" fill="#2a1f18"/>`).join("");
+                const brace = `<polygon points="0,306 0,330 130,224 130,200" fill="#7f5a3b"/><polygon points="0,330 0,333 130,227 130,224" fill="rgba(20,10,4,.4)"/>`;
+                const header = `<path d="M12,130 A118,118 0 0 1 130,12" fill="none" stroke="#87613f" stroke-width="16"/><path d="M20,134 A110,110 0 0 1 130,20" fill="none" stroke="rgba(20,10,4,.35)" stroke-width="2"/>`;
+                const strap = (y) => `<path d="M0,${y - 5} H84 L103,${y} L84,${y + 5} H0 Z" fill="#1d1915"/><path d="M0,${y - 5} H84" stroke="rgba(255,255,255,.12)"/>` +
+                    [10, 32, 56, 78].map((x) => `<circle cx="${x}" cy="${y}" r="2.3" fill="#3b332b"/>`).join("");
+                const ring = `<circle cx="113" cy="268" r="7" fill="#1d1915"/><circle cx="113" cy="281" r="10" fill="none" stroke="#1d1915" stroke-width="3.2"/><path d="M105,285 A10,10 0 0 0 121,285" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="1"/>`;
+                const body = planks + seams + header + rail(200) + rail(330) + brace + strap(212) + strap(342) + ring +
+                    `<rect width="130" height="370" filter="url(#grain-${id})"/>` +
+                    `<rect width="130" height="370" fill="url(#wear-${id})"/><rect width="130" height="370" fill="url(#edge-${id})"/>`;
+                return `<svg viewBox="0 0 130 370" aria-hidden="true">
+                    <defs>
+                        <clipPath id="clip-${id}"><path d="${shape}"/></clipPath>
+                        <filter id="grain-${id}" x="0" y="0" width="1" height="1">
+                            <feTurbulence type="fractalNoise" baseFrequency="0.012 0.3" numOctaves="3" seed="${mirror ? 7 : 3}"/>
+                            <feColorMatrix values="0 0 0 0 0.14  0 0 0 0 0.08  0 0 0 0 0.03  0 0 0 1.5 -0.62"/>
+                        </filter>
+                        <linearGradient id="wear-${id}" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0.55" stop-color="#d9ccb4" stop-opacity="0"/><stop offset="1" stop-color="#d9ccb4" stop-opacity="0.3"/>
+                        </linearGradient>
+                        <linearGradient id="edge-${id}" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0" stop-color="#000" stop-opacity="0.18"/><stop offset="0.2" stop-color="#000" stop-opacity="0"/>
+                            <stop offset="0.85" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.35"/>
+                        </linearGradient>
+                    </defs>
+                    <g ${mirror ? 'transform="translate(130,0) scale(-1,1)"' : ""} clip-path="url(#clip-${id})">${body}</g>
+                </svg>`;
             }
 
-            // Fill the drawers: progress follows the pictures actually loading,
-            // never faster than MIN_MS, and resolves once the last drawer is full.
-            function fill() {
+            // The stone surround: wedge-shaped stones round the arch, a keystone,
+            // squared blocks down each side and a worn step.
+            function frameSVG() {
+                const stones = ["#d9d2c5", "#cfc6b6", "#e2dcd0", "#d3cbbd"];
+                let s = `<defs><filter id="stone" x="0" y="0" width="1" height="1"><feTurbulence type="fractalNoise" baseFrequency="0.09" numOctaves="2" seed="5"/>
+                    <feColorMatrix values="0 0 0 0 0.3  0 0 0 0 0.27  0 0 0 0 0.22  0 0 0 0.9 -0.35"/><feComposite in2="SourceGraphic" operator="in"/></filter></defs><g id="stones">`;
+                const cx = 130, cy = 130, r0 = 131, n = 11;
+                for (let k = 0; k < n; k++) {
+                    const a0 = Math.PI + (k / n) * Math.PI + 0.012, a1 = Math.PI + ((k + 1) / n) * Math.PI - 0.012;
+                    const r1 = k === 5 ? 162 : 154;                      // the keystone sits proud
+                    const p = (r, a) => `${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`;
+                    s += `<path d="M${p(r0, a0)} L${p(r1, a0)} A${r1},${r1} 0 0 1 ${p(r1, a1)} L${p(r0, a1)} A${r0},${r0} 0 0 0 ${p(r0, a0)} Z" fill="${stones[k % 4]}" stroke="#a89d8a" stroke-width="1"/>`;
+                }
+                for (let y = 130, i = 0; y < 370; y += 30, i++) {
+                    const h = Math.min(30, 370 - y), wide = i % 2 ? 24 : 18;
+                    s += `<rect x="${-wide}" y="${y}" width="${wide}" height="${h}" fill="${stones[i % 4]}" stroke="#a89d8a"/>`;
+                    s += `<rect x="260" y="${y}" width="${wide}" height="${h}" fill="${stones[(i + 2) % 4]}" stroke="#a89d8a"/>`;
+                }
+                s += `<rect x="-30" y="370" width="320" height="14" fill="#cbbfab" stroke="#a89d8a"/><rect x="-30" y="370" width="320" height="2" fill="rgba(255,255,255,.4)"/></g>`;
+                s += `<use href="#stones" filter="url(#stone)"/>`;
+                return s;
+            }
+
+            $("leaf-l").innerHTML = leafSVG("l", false);
+            $("leaf-r").innerHTML = leafSVG("r", true);
+            $("frame").innerHTML = frameSVG();
+
+            /* ---------- The name, landing letter by letter ---------- */
+            const letters = [...NAME].map((ch) => {
+                const span = document.createElement("span");
+                span.className = ch === " " ? "sp" : "l";
+                span.textContent = ch === " " ? "" : ch;
+                span.setAttribute("aria-hidden", "true");
+                nameEl.appendChild(span);
+                return span;
+            }).filter((s) => s.className === "l");
+            let landed = 0;
+            function land(upTo) {
+                while (landed < upTo && landed < letters.length) {
+                    const span = letters[landed++];
+                    span.classList.add("in");
+                    // let the letter settle before a vine measures it
+                    if (garden) setTimeout(() => garden.grow(span), still ? 0 : 260);
+                }
+            }
+
+            // Loading follows the room picture and the fonts, never faster than
+            // MIN_MS; the name lands as it goes.
+            function load() {
                 return new Promise((resolve) => {
-                    let loaded = 0;
-                    HEROES.forEach((src, i) => {
-                        const img = new Image();
-                        const done = () => { loaded++; };
-                        img.onload = () => { drawers[i].querySelector(".ld-card").style.backgroundImage = 'url("' + src + '")'; done(); };
-                        img.onerror = done;
-                        img.src = src;
-                    });
+                    let ready = 0;
+                    const parts = 2;
+                    room.onload = room.onerror = () => { ready++; };
+                    room.src = ROOM;
+                    (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => { ready++; });
                     const start = performance.now();
                     let shown = 0;
                     const tick = (now) => {
                         const time = MIN_MS ? Math.min((now - start) / MIN_MS, 1) : 1;
-                        const target = Math.min(time, loaded / HEROES.length);
-                        shown += (target - shown) * (still ? 1 : 0.12);
-                        if (target >= 1 && shown > 0.995) { draw(1); return setTimeout(resolve, still ? 0 : 450); }
-                        draw(shown);
+                        const target = Math.min(time, ready / parts);
+                        shown += (target - shown) * (still ? 1 : 0.1);
+                        land(Math.floor(Math.min(shown * 1.04, 1) * letters.length));
+                        const v = Math.round(shown * 100);
+                        pct.textContent = v + "%";
+                        doorway.setAttribute("aria-valuenow", String(v));
+                        if (target >= 1 && shown > 0.995) { land(letters.length); return setTimeout(resolve, still ? 0 : 900); }
                         requestAnimationFrame(tick);
                     };
                     requestAnimationFrame(tick);
@@ -885,13 +1265,45 @@ exports.init = init;
             }
 
             function showPassword() {
-                text.textContent = "The drawers are full";
+                text.textContent = "Knock, knock";
                 pct.textContent = "";
-                wall.removeAttribute("role");
+                doorway.removeAttribute("role");
                 form.removeAttribute("aria-hidden");
                 form.querySelectorAll("[tabindex='-1']").forEach((el) => el.removeAttribute("tabindex"));
                 form.classList.add("ready");
-                input.focus();
+                input.focus({ preventScroll: window.innerWidth >= 900 });
+            }
+
+            /* ---------- Opening the door ---------- */
+            // The colour the next page opens on, so the last moment fades into it
+            function pageColour(html) {
+                if (/id="intro"/.test(html)) return "#161412";
+                const m = html.match(/body\s*\{[^}]*?background(?:-color)?\s*:\s*(#[0-9a-f]{3,8})/i);
+                return m ? m[1] : "#ffffff";
+            }
+
+            async function walkIn() {
+                document.documentElement.style.overflow = "hidden";
+                document.body.classList.add("leaving");
+                await wait(260);
+                doorway.classList.add("open");
+                await wait(850);
+
+                // Move through the doorway: the door and wall grow past the edges of
+                // the screen while the room grows less, so it reads as depth.
+                const o = opening.getBoundingClientRect(), s = stage.getBoundingClientRect(), r = room.getBoundingClientRect();
+                const vw = window.innerWidth, vh = window.innerHeight;
+                const ox = o.left + o.width / 2, oy = o.top + o.height / 2;
+                const S = Math.max(vw / o.width, vh / o.height) * 1.3;
+                stage.style.transformOrigin = `${ox - s.left}px ${oy - s.top}px`;
+                stage.style.transform = `translate(${vw / 2 - ox}px, ${vh / 2 - oy}px) scale(${S})`;
+                room.style.setProperty("--room", Math.max(vw / (r.width * S), vh / (r.height * S)).toFixed(4));
+                shade.style.opacity = "0";
+                await wait(1500);
+
+                veil.style.background = pageColour(pendingPage);
+                veil.classList.add("on");
+                await wait(400);
             }
 
             input.addEventListener("input", () => { errorEl.textContent = ""; });
@@ -904,17 +1316,24 @@ exports.init = init;
                 input.focus();
             });
 
-            wall.addEventListener("animationend", (e) => { if (e.target === wall) wall.classList.remove("rattle"); });
+            doorway.addEventListener("animationend", () => doorway.classList.remove("rattle"));
 
             window.onload = async function () {
                 const { isSuccessful } = await staticrypt.handleDecryptOnLoad();
                 if (!isSuccessful) {
-                    document.getElementById("staticrypt_loading").classList.add("hidden");
-                    document.getElementById("staticrypt_content").classList.remove("hidden");
-                    if (isRememberEnabled) {
-                        document.getElementById("staticrypt-remember-label").classList.remove("hidden");
+                    $("staticrypt_loading").classList.add("hidden");
+                    $("staticrypt_content").classList.remove("hidden");
+                    if (isRememberEnabled) $("staticrypt-remember-label").classList.remove("hidden");
+                    if (window.introGarden) {
+                        garden = window.introGarden(stage, {
+                            petals: ["#7c6cf0", "#f97316", "#0e9fbf", "#e2557a", "#b8a9fb"],
+                            stem: "#5d8f12",
+                            leaves: ["#6aa11c", "#4d7c0f"],
+                            centre: "#3b2a1a",
+                            reach: 1.6,
+                        });
                     }
-                    await fill();
+                    await load();
                     showPassword();
                 }
             };
@@ -931,22 +1350,21 @@ exports.init = init;
                 }
 
                 busy = true;
-                // Pull every drawer out, one after another, then open
-                for (const d of drawers) {
-                    d.classList.add("open");
-                    if (!still) await wait(50);
-                }
-                if (!still) await wait(200);
-
+                holdPage = true;
                 const { isSuccessful } = await staticrypt.handleDecryptionOfPage(password, remember.checked);
 
                 if (!isSuccessful) {
-                    drawers.forEach((d) => d.classList.remove("open"));
-                    wall.classList.add("rattle");
+                    holdPage = false;
+                    doorway.classList.add("rattle");
                     errorEl.textContent = "That's not the password. Check the spelling; capitals count.";
                     input.select();
                     busy = false;
+                    return;
                 }
+
+                if (!still) await walkIn();
+                document.write(pendingPage);
+                document.close();
             });
         </script>
     </body>

@@ -3,13 +3,16 @@
    lands. Everything is drawn from code on two canvases, one behind the letters
    and one in front, so a stem can pass behind a letter and come out over it.
    Usage: const garden = introGarden(introEl); garden.grow(letterSpan);
+   Options: introGarden(el, { petals: [...], stem, leaves: [...], centre, reach })
+   (reach lengthens the upward stems, so blooms clear smaller lettering)
 ══════════════════════════════════ */
-window.introGarden = function (intro) {
+window.introGarden = function (intro, colours = {}) {
   const quiet = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (quiet || !intro) return { grow() {}, remaining() { return 0; } };
 
-  const PETALS = ['#9b8cf8', '#f97316', '#06b6d4', '#ffffff', '#c4b5fd'];
-  const STEM = '#84cc16', LEAF = ['#84cc16', '#65a30d'], VEIN = 'rgba(22,20,18,0.45)';
+  const PETALS = colours.petals || ['#9b8cf8', '#f97316', '#06b6d4', '#ffffff', '#c4b5fd'];
+  const STEM = colours.stem || '#84cc16', LEAF = colours.leaves || ['#84cc16', '#65a30d'];
+  const CENTRE = colours.centre || '#161412', VEIN = 'rgba(22,20,18,0.45)', REACH = colours.reach || 1;
 
   /* Two layers: back sits under the name (z 0), front over it (z 2) */
   function layer(z) {
@@ -102,7 +105,7 @@ window.introGarden = function (intro) {
       leaves.push({ x: end[0], y: end[1], ang: heading(pts, pts.length - 1), L: size * 0.42, col: pick(LEAF), t0: tEnd, front: true });
     } else if (tip !== 'none') {
       const col = pick(PETALS);
-      let col2 = pick(PETALS); if (col2 === col) col2 = '#f97316';
+      let col2 = pick(PETALS); if (col2 === col) col2 = PETALS[(PETALS.indexOf(col) + 1) % PETALS.length];
       flowers.push({ type: tip, x: end[0], y: end[1], R: size * (0.22 + rnd() * 0.14), rot: rnd() * Math.PI * 2,
         col, col2, t0: tEnd, front: true, sway: rnd() * 10 });    // blooms open above the name, in front of everything
     }
@@ -119,7 +122,7 @@ window.introGarden = function (intro) {
     const up = 1 + (rnd() < 0.55 ? 1 : 0);
     for (let i = 0; i < up; i++) {
       const pts = vine(inside(), top + h * (0.3 + rnd() * 0.25), -Math.PI / 2 + (rnd() - 0.5) * 0.7,
-        h * (0.8 + rnd() * 0.55), 0.35 + rnd() * 0.4, 1 + rnd() * 1.5, rnd() * 6);
+        h * (0.8 + rnd() * 0.55) * REACH, 0.35 + rnd() * 0.4, 1 + rnd() * 1.5, rnd() * 6);
       addStem(pts, lw, now + i * 140, 520 + rnd() * 260, rnd() < 0.85 ? flower() : 'leaf', h);
     }
     // sometimes a short one sneaks out sideways
@@ -200,7 +203,7 @@ window.introGarden = function (intro) {
         for (let k = 0; k < n; k++) { g.save(); g.rotate(k * Math.PI * 2 / n + ring * 0.6); petal(g, rr, rr * 0.55); g.restore(); }
       }
       g.globalAlpha = 1;
-      g.beginPath(); g.arc(0, 0, R * 0.16, 0, Math.PI * 2); g.fillStyle = '#161412'; g.fill();
+      g.beginPath(); g.arc(0, 0, R * 0.16, 0, Math.PI * 2); g.fillStyle = CENTRE; g.fill();
     } else if (f.type === 'daisy') {              // thin petals around a big centre
       const n = 9; g.fillStyle = f.col;
       for (let k = 0; k < n; k++) { g.save(); g.rotate(k * Math.PI * 2 / n); petal(g, R, R * 0.2); g.restore(); }
