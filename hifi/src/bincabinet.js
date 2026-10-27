@@ -19,7 +19,7 @@
 
 import * as THREE from 'three';
 import { Kit, jar } from './cabinet.js';
-import { makeMaterials, weather, mossMaterial, brushedBrass, whiteMarble, woodFinish, painted } from './materials.js';
+import { makeMaterials, weather, mossMaterial, brushedBrass, whiteMarble, woodFinish, painted, knottyPine } from './materials.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const TILE = 0.45;
@@ -229,6 +229,8 @@ export const FINISHES = {
   brass: { name: 'Brushed brass, marble knobs', body: () => brushedBrass(), hardware: '#d8b36a', knob: () => whiteMarble() },
   // pale, creamy and close-grained, the grain pressed flat (the newsstand's maple)
   maple: { name: 'Maple', body: () => woodFinish(C(1.32, 1.24, 1.08), { rough: 0.55, normal: 0.3 }), hardware: '#c9a35a' },
+  // pale knotty pine, the knots dark and the grain swerving round them
+  knotty: { name: 'Knotty pine', body: () => knottyPine(), hardware: '#c9a35a' },
   oak: { name: 'Light oak', body: () => woodFinish(C(1.05, 0.8, 0.55), { rough: 0.62 }), hardware: '#c9a35a' },
   ebony: { name: 'Ebony', body: () => woodFinish(C(0.17, 0.14, 0.13), { rough: 0.42, normal: 0.55 }), hardware: '#d9b25e' },
   sage: { name: 'Sage green paint', body: () => painted('#8b9c7c'), hardware: '#c9a35a' },

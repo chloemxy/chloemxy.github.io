@@ -114,14 +114,14 @@ async function setupBins(scene, camera, renderer) {
   };
 }
 
-// The studio: a potter's-studio wall of irregular open shelving in maple (or
+// The studio: a potter's-studio wall of irregular open shelving in knotty pine (or
 // ?finish=…), crowded with ceramics, glass-lidded bins scattered through it,
 // the middle eight holding the portfolio; warm plaster behind, a white wool
 // carpet underfoot;
 // low sun from the left. After the reference photo's layout and colours.
 function setupStudio(scene, camera) {
   const shot = CONFIG.studioShot;
-  const finish = new URLSearchParams(location.search).get('finish') || 'maple';
+  const finish = new URLSearchParams(location.search).get('finish') || 'knotty';
   const mats = finishMats(finish, { moss: false });
   scene.background = new THREE.Color('#e7dccb');
   // only the eight bins in the two middle columns are kept, four in each,
@@ -133,7 +133,10 @@ function setupStudio(scene, camera) {
     bins: Infinity,
     binAt: (x, y) => Math.abs(x - middle) < 0.6 && y < 1.8,
     sign: (x, y) => Math.abs(x - middle) < 0.6 && y < 2.3 ? (x < middle ? GROUPS.client : GROUPS.open) : null,
-    signStyle: new URLSearchParams(location.search).get('sign') || 'blocks',
+    signStyle: new URLSearchParams(location.search).get('sign') || 'plaque',
+    // every plaque's words at the size the longest label fits
+    signFit: Object.values(GROUPS).map((w) => [].concat(w).join(' ')).sort((a, b) => b.length - a.length)[0],
+    backWood: finish === 'knotty',
   });
   // the case studies in reading order: the left column top to bottom, then the right
   slots.sort((a, b) => a.position.x - b.position.x || b.position.y - a.position.y);

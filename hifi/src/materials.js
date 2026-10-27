@@ -298,6 +298,69 @@ export function whiteMarble() {
 // ---- Finishes for the apothecary wall (bincabinet.js FINISHES)
 
 // a wood: the scanned veneer, tinted to the species
+// knotty pine, drawn rather than scanned: pale honey boards, the grain
+// running down their length and swerving round dark knots, after the
+// reference photo of a pine shelving unit. One tile is 0.45 m square
+// (cabinet.js TILE) and wraps seamlessly.
+// `size` px for `tiles` tiles each way, with `knots` knots across it
+export function knottyPineMap({ seed = 11, size = 1024, knots: count = 5 } = {}) {
+  const W = size, c = document.createElement('canvas');
+  c.width = c.height = W;
+  const g = c.getContext('2d');
+  let s = seed;
+  const r = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
+  g.fillStyle = '#dcb98a'; g.fillRect(0, 0, W, W);
+  // soft lighter and darker streaks along the boards
+  for (let i = 0; i < 40; i++) {
+    g.fillStyle = r() < 0.5 ? 'rgba(255,240,215,0.08)' : 'rgba(160,105,55,0.07)';
+    g.fillRect(r() * W, 0, 10 + r() * 60, W);
+  }
+  // the knots, each drawn again a tile away so the edges wrap
+  const knots = Array.from({ length: count }, () => ({ x: r() * W, y: r() * W, rad: (12 + r() * 16) * (W / 1024) ** 0.5, stretch: 1.15 + r() * 0.6 }));
+  const near = (x, y) => knots.flatMap((k) => [-W, 0, W].flatMap((ox) => [-W, 0, W].map((oy) => ({ ...k, x: k.x + ox, y: k.y + oy }))));
+  const all = near();
+  // grain lines: each runs top to bottom, pushed sideways round the knots
+  for (let x = 0; x < W; x += 3 + r() * 5) {
+    const a = 0.08 + r() * 0.3, wide = r() < 0.14;
+    g.strokeStyle = `rgba(${150 + r() * 30},${92 + r() * 25},${45 + r() * 20},${wide ? a * 1.4 : a})`;
+    g.lineWidth = wide ? 2 + r() * 2 : 0.8 + r() * 0.9;
+    g.beginPath();
+    for (let y = -4; y <= W + 4; y += 8) {
+      let dx = Math.sin(y / W * Math.PI * 2 * 2 + x * 0.01) * 3;
+      for (const k of all) {
+        const ex = x - k.x, ey = (y - k.y) / k.stretch, d2 = ex * ex + ey * ey, R = k.rad * 4;
+        if (d2 < R * R * 9) dx += Math.sign(ex || 1) * k.rad * 2.2 * Math.exp(-d2 / (R * R));
+      }
+      if (y < 0) g.moveTo(x + dx, y); else g.lineTo(x + dx, y);
+    }
+    g.stroke();
+  }
+  for (const k of all) {
+    if (k.x < -60 || k.x > W + 60 || k.y < -60 || k.y > W + 60) continue;
+    // rings of darker wood round the knot, then the knot itself
+    for (let i = 3; i >= 1; i--) {
+      g.strokeStyle = `rgba(150,90,40,${0.12 + 0.06 * (3 - i)})`; g.lineWidth = 2;
+      g.beginPath(); g.ellipse(k.x, k.y, k.rad * (1 + i * 0.55), k.rad * k.stretch * (1 + i * 0.7), 0, 0, Math.PI * 2); g.stroke();
+    }
+    // a soft brown knot, darkest in a small heart, not a hole
+    const grad = g.createRadialGradient(k.x, k.y, 0, k.x, k.y, k.rad * 1.15);
+    grad.addColorStop(0, '#4a2a12'); grad.addColorStop(0.3, '#6e4220'); grad.addColorStop(0.65, '#9a6634'); grad.addColorStop(1, 'rgba(175,115,60,0)');
+    g.fillStyle = grad;
+    g.beginPath(); g.ellipse(k.x, k.y, k.rad * 1.15, k.rad * 1.15 * k.stretch, 0, 0, Math.PI * 2); g.fill();
+  }
+  return texture(c, { srgb: true });
+}
+
+export function knottyPine() {
+  const nor = scans.ashNor.clone();
+  nor.center.set(0.5, 0.5); nor.rotation = Math.PI / 2; nor.needsUpdate = true;
+  return new THREE.MeshStandardMaterial({
+    color: '#ffffff', vertexColors: true, // each piece keeps its own tone (cabinet.js)
+    map: knottyPineMap(), roughness: 0.72,
+    normalMap: nor, normalScale: new THREE.Vector2(0.25, 0.25),
+  });
+}
+
 export function woodFinish(tint, { normal = 0.5, rough = 0.7 } = {}) {
   return scanned({ tint, normal, rough });
 }

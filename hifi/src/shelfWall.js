@@ -13,7 +13,8 @@
 import * as THREE from 'three';
 import { Kit } from './cabinet.js';
 import { BIN } from './bincabinet.js';
-import { signPieces } from './signs.js';
+import { signPieces, plaqueFace } from './signs.js';
+import { knottyPineMap } from './materials.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const TAU = Math.PI * 2;
@@ -27,7 +28,7 @@ export const DEPTH = 0.42; // deep enough for the bins' trays
 const T = 0.03;        // uprights
 const BT = 0.022;      // shelf boards
 const BASE = 0.08;     // the plinth board's top
-const TOP = 3.32;      // the crown board's underside
+const TOP = 2.33;      // the crown board's underside: level with the tops of the name drawers
 
 // The columns' inner widths, left to right; 'B' is a bin column (exactly
 // one bin wide). Each bin column lists its cells from the bottom: a number
@@ -70,9 +71,104 @@ const SHAPES = {
   urn: { h: 0.3, w: 0.24, pts: [[0, 0], [0.07, 0], [0.11, 0.08], [0.12, 0.16], [0.09, 0.25], [0.06, 0.28], [0.065, 0.3]] },
 };
 
+// ---- Green plants in clay pots, among the ceramics: a snake plant's
+// upright blades, a pilea's round leaves on fine stems, a fern's arching
+// fronds, or a pothos trailing over the shelf's front edge
+
+const GREENS = ['#3f6b35', '#4f7a3c', '#5f8f4e', '#6e9a48', '#2f5a2e'];
+const leafMats = GREENS.map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.6, side: THREE.DoubleSide }));
+const stemMat = new THREE.MeshStandardMaterial({ color: '#6b7f3a', roughness: 0.7 });
+const soilMat = new THREE.MeshStandardMaterial({ color: '#3b2a1e', roughness: 1 });
+const leafGeo = new THREE.SphereGeometry(1, 12, 8);              // scaled flat into a leaf
+const bladeGeo = new THREE.ConeGeometry(1, 1, 6, 1).translate(0, 0.5, 0);
+
+function plant(r, maxH) {
+  const g = new THREE.Group();
+  const leaf = () => leafMats[Math.floor(r() * leafMats.length)];
+  // the pot: a small turned jar with soil in the top
+  const ps = 0.75 + r() * 0.3, potH = SHAPES.jar.h * ps, potR = 0.072 * ps;
+  g.add(lathe(SHAPES.jar.pts, ps, clay(CLAY[Math.floor(r() * CLAY.length)], r)));
+  const soil = new THREE.Mesh(new THREE.CylinderGeometry(potR * 0.68, potR * 0.68, 0.004, 32), soilMat);
+  soil.position.y = potH - 0.012;
+  g.add(soil);
+  const top = potH - 0.01, room = Math.max(0.06, maxH - top - 0.02);
+  const kind = r();
+  if (kind < 0.28) {
+    // snake plant: stiff upright blades, a little splayed
+    const n = 8 + Math.floor(r() * 5);
+    for (let i = 0; i < n; i++) {
+      const b = new THREE.Mesh(bladeGeo, leaf());
+      const h = Math.min(room, 0.34) * (0.5 + r() * 0.5);
+      b.scale.set(0.018 + r() * 0.01, h, 0.004);
+      b.position.set((r() - 0.5) * potR, top, (r() - 0.5) * potR);
+      b.rotation.set((r() - 0.5) * 0.5, r() * Math.PI, (r() - 0.5) * 0.5);
+      g.add(b);
+    }
+  } else if (kind < 0.55) {
+    // pilea: round leaves held out on fine stems
+    const n = 16 + Math.floor(r() * 8), reach = Math.min(room * 0.8, 0.2);
+    for (let i = 0; i < n; i++) {
+      const a = r() * TAU, tilt = 0.2 + r() * 0.9, len = reach * (0.5 + r() * 0.5);
+      const end = V(Math.sin(tilt) * Math.cos(a) * len, top + Math.cos(tilt) * len, Math.sin(tilt) * Math.sin(a) * len);
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.0012, 0.0016, len, 5), stemMat);
+      stem.position.set(end.x / 2, (top + end.y) / 2, end.z / 2);
+      stem.lookAt(end.x, end.y, end.z); stem.rotateX(Math.PI / 2);
+      g.add(stem);
+      const l = new THREE.Mesh(leafGeo, leaf());
+      const rad = 0.026 + r() * 0.018;
+      l.scale.set(rad, 0.002, rad);
+      l.position.copy(end);
+      l.rotation.set((r() - 0.5) * 1.2, r() * TAU, (r() - 0.5) * 1.2);
+      g.add(l);
+    }
+  } else if (kind < 0.8) {
+    // fern: fronds arching up and out, leaflets along each
+    const n = 11 + Math.floor(r() * 5), reach = Math.min(room * 0.9, 0.26);
+    for (let i = 0; i < n; i++) {
+      const a = r() * TAU, len = reach * (0.6 + r() * 0.4), lift = 0.5 + r() * 0.5;
+      for (let k = 1; k <= 9; k++) {
+        const u = k / 9, out = Math.sin(u * 1.4) * len * 0.75, up = (Math.sin(u * Math.PI * 0.85) * lift) * len * 0.8;
+        const l = new THREE.Mesh(leafGeo, leaf());
+        const sz = 0.022 * (1 - u * 0.55);
+        l.scale.set(sz * 1.6, 0.0015, sz * 0.55);
+        l.position.set(Math.cos(a) * out, top + up, Math.sin(a) * out);
+        l.rotation.set(0, -a + Math.PI / 2, (u - 0.4) * 0.8);
+        g.add(l);
+      }
+    }
+  } else {
+    // pothos: a few leaves on top, vines spilling forward over the shelf edge
+    for (let i = 0; i < 12; i++) {
+      const l = new THREE.Mesh(leafGeo, leaf());
+      l.scale.set(0.032, 0.002, 0.025);
+      l.position.set((r() - 0.5) * potR * 1.6, top + 0.01 + r() * 0.03, (r() - 0.5) * potR * 1.6);
+      l.rotation.set((r() - 0.5) * 0.8, r() * TAU, (r() - 0.5) * 0.8);
+      g.add(l);
+    }
+    const vines = 2 + Math.floor(r() * 2);
+    for (let v = 0; v < vines; v++) {
+      const side = (r() - 0.5) * 0.12, drop = 0.12 + r() * 0.16;
+      const curve = new THREE.CatmullRomCurve3([V(side * 0.3, top, potR * 0.5), V(side * 0.7, top + 0.01, DEPTH * 0.35), V(side, -0.01, DEPTH * 0.55), V(side * 1.2, -drop, DEPTH * 0.6)]);
+      g.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 24, 0.0013, 4), stemMat));
+      for (let k = 2; k <= 12; k++) {
+        const p = curve.getPoint(k / 12);
+        const l = new THREE.Mesh(leafGeo, leaf());
+        const sz = 0.024 * (1 - k / 30);
+        l.scale.set(sz, 0.0018, sz * 0.8);
+        l.position.copy(p);
+        l.rotation.set(1.1 + (r() - 0.5) * 0.6, r() * TAU, (r() - 0.5) * 0.6);
+        g.add(l);
+      }
+    }
+    g.userData.facing = true; // keep the vines towards the front
+  }
+  return { g, w: Math.max(potR * 2, 0.1) };
+}
+
 // one piece (or a little group) for a cell; sits on y = 0, centred; fits
-// within `maxH` high. Returns it and its width.
+// within `maxH` high; about a third are green plants. Returns it and its width.
 function ceramic(r, maxH) {
+  if (maxH > 0.2 && r() < 0.3) return plant(r, maxH);
   const g = new THREE.Group();
   const pick = r();
   const colour = () => CLAY[Math.floor(r() * CLAY.length)];
@@ -134,7 +230,7 @@ function ceramic(r, maxH) {
 // the rest become open shelves.
 // `sign(x, y)`, if given, can return a word (or words, one per row) for the
 // open cell at the top of a bin column, spelled out in `signStyle` (signs.js).
-export function shelfWall(scene, mats, { back = '#e2cba6', seed = 7, bins = 16, binAt = null, sign = null, signStyle = 'blocks' } = {}) {
+export function shelfWall(scene, mats, { back = '#e2cba6', backWood = false, seed = 7, bins = 16, binAt = null, sign = null, signStyle = 'blocks', signFit = null } = {}) {
   const r = seeded(seed);
   const k = new Kit(31);
   const wood = mats.wall;
@@ -162,7 +258,17 @@ export function shelfWall(scene, mats, { back = '#e2cba6', seed = 7, bins = 16, 
   plasterTex.repeat.set(4, 2);
   // it runs on past the shelving either side, for wide screens
   plasterTex.repeat.set(10, 2);
-  const plaster = new THREE.Mesh(new THREE.PlaneGeometry(total + 12, TOP + 0.4), new THREE.MeshStandardMaterial({ map: plasterTex, roughness: 0.95 }));
+  // or (`backWood`) panelled in the shelving's own wood, a shade darker, so
+  // its knots and grain show across the back of every cell
+  let backMat = new THREE.MeshStandardMaterial({ map: plasterTex, roughness: 0.95 });
+  if (backWood && mats.wall.map) {
+    // its own, larger sheet (1.35 m square, many knots) so the pattern doesn't
+    // visibly repeat cell to cell
+    const map = knottyPineMap({ seed: 23, size: 2048, knots: 26 });
+    map.repeat.set((total + 12) / 1.35, (TOP + 0.4) / 1.35);
+    backMat = new THREE.MeshStandardMaterial({ map, color: '#e3d6c4', roughness: 0.8, normalMap: mats.wall.normalMap, normalScale: new THREE.Vector2(0.2, 0.2) });
+  }
+  const plaster = new THREE.Mesh(new THREE.PlaneGeometry(total + 12, TOP + 0.4), backMat);
   plaster.position.set(0, (TOP + 0.4) / 2, -DEPTH - 0.005);
   plaster.receiveShadow = true;
   group.add(plaster);
@@ -185,10 +291,42 @@ export function shelfWall(scene, mats, { back = '#e2cba6', seed = 7, bins = 16, 
       const { g, w } = ceramic(r, y1 - y0 - 0.03);
       if (!g.children.length || at + w > x1 - 0.03) break;
       g.position.set(at + w / 2, y0, -DEPTH / 2 + (r() - 0.5) * 0.06);
-      g.rotation.y = r() * TAU;
+      g.rotation.y = g.userData.facing ? (r() - 0.5) * 0.6 : r() * TAU;
       things.push(g);
       at += w + 0.03 + r() * 0.08;
       if (r() < 0.3) break; // some cells hold just one or two pieces
+    }
+  };
+
+  // a slim drawer filling a cell DH high: a plain wooden front flush with
+  // the shelving, no knob, and a brass plaque nearly its full width with the
+  // words engraved large enough to read across the room
+  const plaqueMetal = new THREE.MeshStandardMaterial({ color: '#c9a256', metalness: 0.7, roughness: 0.32 });
+  // the plaque is gilded tiles painted with flowers (signs.js plaqueFace),
+  // lit by a brass picture light along its top; every plaque sets its words
+  // at the size that fits `signFit`, the longest, so they all match
+  const slimDrawer = (words, x0, x1, y, DH) => {
+    const g = 0.004, w = x1 - x0, cx = (x0 + x1) / 2;
+    k.beam(V(x0 + g, y + DH / 2, -0.012), V(x1 - g, y + DH / 2, -0.012), DH - 2 * g, 0.022, wood, V(0, 1, 0));
+    const pw = w - 0.03, ph = Math.min(0.12, DH - 0.05), py = y + 0.012 + ph / 2;
+    const text = [].concat(words).join(' ');
+    const plaque = new THREE.Mesh(new THREE.BoxGeometry(pw, ph, 0.006), [plaqueMetal, plaqueMetal, plaqueMetal, plaqueMetal,
+      new THREE.MeshStandardMaterial({ map: plaqueFace(text, pw / ph, signFit ?? text), metalness: 0.45, roughness: 0.4 }), plaqueMetal]);
+    plaque.position.set(cx, py, 0.003);
+    things.push(plaque);
+    // the picture light: a brass tube over the plaque on two short arms,
+    // glowing warm along its underside
+    const lightY = py + ph / 2 + 0.014, tubeL = pw * 0.94;
+    const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, tubeL, 24).rotateZ(Math.PI / 2), plaqueMetal);
+    tube.position.set(cx, lightY, 0.026);
+    const glow = new THREE.Mesh(new THREE.PlaneGeometry(tubeL * 0.96, 0.006).rotateX(Math.PI / 2),
+      new THREE.MeshBasicMaterial({ color: '#fff1c8' }));
+    glow.position.set(cx, lightY - 0.0092, 0.026);
+    things.push(tube, glow);
+    for (const sx of [-0.3, 0.3]) {
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.024, 10).rotateX(Math.PI / 2), plaqueMetal);
+      arm.position.set(cx + sx * pw, lightY, 0.013);
+      things.push(arm);
     }
   };
 
@@ -219,12 +357,16 @@ export function shelfWall(scene, mats, { back = '#e2cba6', seed = 7, bins = 16, 
       board(x0, x1, y + BT);
       y += BT;
     }
-    if (TOP - y > 0.12) {
-      // over a column of portfolio bins, a sign (signs.js) instead of pots
-      const words = sign?.((x0 + x1) / 2, y);
-      if (words) things.push(...signPieces(signStyle, words, x0, x1, y, r, -DEPTH / 2 + 0.06, wood));
-      else display(x0, x1, y, TOP);
-    }
+    const words = TOP - y > 0.12 && sign?.((x0 + x1) / 2, y);
+    if (words && signStyle === 'plaque') {
+      // over a column of portfolio bins, the wall's top row: a slim drawer
+      // with a brass plaque naming the column
+      const DH = TOP - y; // the two columns end a little apart; their drawers both run up to the crown
+      slimDrawer(words, x0, x1, y, DH);
+    } else if (words) {
+      // or a sign (signs.js) standing on the shelf instead of pots
+      things.push(...signPieces(signStyle, words, x0, x1, y, r, -DEPTH / 2 + 0.06, wood));
+    } else if (TOP - y > 0.12) display(x0, x1, y, TOP);
   });
 
   // the bin cells nearest the middle take the bins (they're the ones in

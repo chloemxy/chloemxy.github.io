@@ -6,6 +6,7 @@
 //   woodtype  tall printer's wood type, inked letters on end grain
 //   cutout    freestanding 3D letters in glazed clay, like the pots around them
 //   board     a hand-lettered board leaning against the back of the shelf
+//   plaque    a slim drawer with a gilded, flower-painted plaque under a picture light (built by shelfWall.js, using plaqueFace)
 // Each builder gets the words (top row first), the cell's span x0..x1, the
 // shelf's height y and the wall's seeded random, and returns meshes
 // (or a group that fills in once its typeface has loaded).
@@ -15,7 +16,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
-export const SIGN_STYLES = ['blocks', 'lego', 'tiles', 'woodtype', 'cutout', 'board'];
+export const SIGN_STYLES = ['plaque', 'blocks', 'lego', 'tiles', 'woodtype', 'cutout', 'board'];
 
 // ---- A painted face: a canvas texture with a letter (or words) on it,
 // drawn again once its typeface has loaded
@@ -118,26 +119,34 @@ function lego(rows, x0, x1, y, r, z) {
 // ---- tiles: cream letter tiles with little scores, in a wooden rack
 
 const SCORE = { A: 1, E: 1, I: 1, O: 1, U: 1, L: 1, N: 1, S: 1, T: 1, R: 1, D: 2, G: 2, B: 3, C: 3, M: 3, P: 3, F: 4, H: 4, V: 4, W: 4, Y: 4, K: 5, J: 8, X: 8, Q: 10, Z: 10 };
-function tiles(rows, x0, x1, y, r, z, wood) {
-  const gap = 0.003, s = sizeFor(rows, x0, x1, gap, 0.07), t = s * 0.22, lean = -0.22;
+function tiles(rows, x0, x1, y, r, z) {
+  const gap = 0.003, s = sizeFor(rows, x0, x1, gap, 0.07), t = s * 0.22, lean = -0.2;
   const tile = new RoundedBoxGeometry(s, s, t, 2, 0.003);
   const ivory = new THREE.MeshStandardMaterial({ color: '#efe1bd', roughness: 0.45 });
+  const wood = new THREE.MeshStandardMaterial({ color: '#a8743f', roughness: 0.6 });
   const out = [];
-  const rackH = s * 0.32, rowH = s + rackH + 0.01;
-  // one rack per row, the lower ones nearer the front
-  rows.forEach((word, i) => {
-    const j = rows.length - 1 - i, width = word.length * (s + gap) + 0.02;
-    const rz = z + 0.06 - j * 0.0, ry = y + j * rowH;
-    const rack = new THREE.Mesh(new THREE.BoxGeometry(width, rackH, s * 0.55), wood);
-    rack.position.set((x0 + x1) / 2, ry + rackH / 2, rz);
-    const lip = new THREE.Mesh(new THREE.BoxGeometry(width, rackH * 0.55, 0.006), wood);
-    lip.position.set((x0 + x1) / 2, ry + rackH + rackH * 0.27, rz + s * 0.27);
-    out.push(rack, lip);
+  const rackH = s * 0.32, rise = s * 0.82, depth = s * 0.6, step = depth + 0.01;
+  // one rack per row, tiered like seats: the upper ones further back, each
+  // standing on a block of wood
+  const tilesAt = [];
+  [...rows].reverse().forEach((word, j) => {
+    const width = word.length * (s + gap) + 0.02, cx = (x0 + x1) / 2;
+    const rz = z + 0.06 - j * step, ry = y + j * rise;
+    if (j) {
+      const riser = new THREE.Mesh(new THREE.BoxGeometry(width, j * rise, depth), wood);
+      riser.position.set(cx, y + (j * rise) / 2, rz);
+      out.push(riser);
+    }
+    const rack = new THREE.Mesh(new RoundedBoxGeometry(width, rackH, depth, 2, 0.003), wood);
+    rack.position.set(cx, ry + rackH / 2, rz);
+    out.push(rack);
+    tilesAt.push({ ry: ry + rackH * 0.55, rz });
   });
-  out.push(...layout(rows, x0, x1, { s, gap, rowH, place: (ch, x, dy) => {
+  out.push(...layout(rows, x0, x1, { s, gap, rowH: 0, place: (ch, x, dy, i, j) => {
     const map = letterFace('T' + ch, ch, { bg: '#efe1bd', fg: '#2a2118', font: '700 80px Archivo, Helvetica, sans-serif', sub: String(SCORE[ch] ?? 1) });
     const m = new THREE.Mesh(tile, sixSides(new THREE.MeshStandardMaterial({ map, roughness: 0.45 }), ivory));
-    m.position.set(x, y + dy + rackH * 0.6 + s / 2 * Math.cos(lean), z + 0.06 + s / 2 * Math.sin(-lean) * 0.4);
+    const { ry, rz } = tilesAt[j];
+    m.position.set(x, ry + (s / 2) * Math.cos(lean), rz - depth * 0.1 + (s / 2) * Math.sin(-lean));
     m.rotation.x = lean;
     return m;
   } }));
@@ -171,15 +180,20 @@ function cutout(rows, x0, x1, y, r, z) {
   const colour = CLAYS[Math.floor(r() * CLAYS.length)];
   const mat = new THREE.MeshPhysicalMaterial({ color: colour, roughness: 0.4, clearcoat: 0.5, clearcoatRoughness: 0.3 });
   loadFont().then((font) => {
-    const n = Math.max(...rows.map((w) => w.length));
-    const size = Math.min(0.1, (x1 - x0 - 0.06) / (n * 0.72)), lineH = size * 1.15;
-    [...rows].reverse().forEach((word, j) => {
+    // set at 0.1 m, then all the rows shrunk alike until the longest fits
+    const size = 0.1;
+    const geos = [...rows].reverse().map((word) => {
       const geo = new TextGeometry(word, { font, size, depth: size * 0.3, curveSegments: 6, bevelEnabled: true, bevelThickness: size * 0.03, bevelSize: size * 0.02, bevelSegments: 2 });
       geo.computeBoundingBox();
       const b = geo.boundingBox;
       geo.translate(-(b.max.x + b.min.x) / 2, -b.min.y, -(b.max.z + b.min.z) / 2);
+      return { geo, w: b.max.x - b.min.x };
+    });
+    const k = Math.min(1, (x1 - x0 - 0.06) / Math.max(...geos.map((g) => g.w))), lineH = size * k * 1.1;
+    geos.forEach(({ geo }, j) => {
+      geo.scale(k, k, k);
       const m = new THREE.Mesh(geo, mat);
-      m.position.set((x0 + x1) / 2, y + j * lineH, z + 0.02 - j * 0.05);
+      m.position.set((x0 + x1) / 2, y + j * lineH, z + 0.02 - j * 0.02);
       m.rotation.y = (r() - 0.5) * 0.08;
       m.castShadow = m.receiveShadow = true;
       g.add(m);
@@ -208,6 +222,117 @@ function board(rows, x0, x1, y, r, z, wood) {
   sign.position.set((x0 + x1) / 2, y + (h / 2) * Math.cos(tilt), z - 0.08 + (h / 2) * -Math.sin(tilt));
   sign.rotation.x = -tilt;
   return [sign];
+}
+
+// ---- plaque: the face of a gilded sign, `aspect` wide to 1 high, after
+// a gold-leaf exit sign: a row of gilded tiles painted with peonies, leaves
+// and sprigs in coral, blue and green, the words in red across them, lit
+// from above by a picture light. The words are set at the size that fits
+// `fit` (the longest label), so every plaque's lettering matches.
+
+export function plaqueFace(text, aspect, fit = text) {
+  const W = 1024, H = Math.round(W / aspect);
+  const FONT = (px) => `500 ${px}px Archivo, "Helvetica Neue", Helvetica, sans-serif`;
+  let seed = [...text].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
+  const r = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+  // the painting is fixed once; only the lettering is redrawn when the font arrives
+  const art = document.createElement('canvas');
+  art.width = W; art.height = H;
+  const p = art.getContext('2d');
+
+  // gold leaf: overlapping square sheets, each a slightly different gold
+  const lg = p.createLinearGradient(0, 0, W, H);
+  lg.addColorStop(0, '#c9973a'); lg.addColorStop(0.5, '#e4c26a'); lg.addColorStop(1, '#b8892f');
+  p.fillStyle = lg; p.fillRect(0, 0, W, H);
+  for (let i = 0; i < 260; i++) {
+    const sz = 30 + r() * 60;
+    p.fillStyle = `rgba(${200 + r() * 55},${150 + r() * 60},${50 + r() * 40},${0.08 + r() * 0.12})`;
+    p.fillRect(r() * W - sz / 2, r() * H - sz / 2, sz, sz);
+  }
+  for (let i = 0; i < 1600; i++) {   // the leaf's crackle and grit
+    p.fillStyle = r() < 0.5 ? 'rgba(90,55,10,0.25)' : 'rgba(255,240,190,0.3)';
+    p.fillRect(r() * W, r() * H, 1 + r() * 2, 1);
+  }
+
+  // painted flowers, in the manner of chinoiserie wallpaper
+  const leaf = (x, y, len, ang, colour) => {
+    p.save(); p.translate(x, y); p.rotate(ang);
+    p.beginPath(); p.moveTo(0, 0);
+    p.quadraticCurveTo(len * 0.5, -len * 0.28, len, 0); p.quadraticCurveTo(len * 0.5, len * 0.28, 0, 0);
+    p.fillStyle = colour; p.fill();
+    p.strokeStyle = 'rgba(30,40,40,0.55)'; p.lineWidth = 1.5; p.stroke();
+    p.beginPath(); p.moveTo(0, 0); p.lineTo(len * 0.9, 0); p.strokeStyle = 'rgba(240,235,210,0.5)'; p.lineWidth = 1; p.stroke();
+    p.restore();
+  };
+  const stem = (x0, y0, x1, y1) => {
+    p.beginPath(); p.moveTo(x0, y0); p.quadraticCurveTo((x0 + x1) / 2 + (r() - 0.5) * 60, (y0 + y1) / 2, x1, y1);
+    p.strokeStyle = 'rgba(70,90,60,0.8)'; p.lineWidth = 2.5; p.stroke();
+  };
+  const peony = (x, y, rad) => {
+    for (let ring = 3; ring >= 0; ring--) {
+      const n = 7 + ring * 2, rr = rad * (0.35 + ring * 0.22);
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2 + ring * 0.4 + r() * 0.2;
+        p.save(); p.translate(x + Math.cos(a) * rr * 0.55, y + Math.sin(a) * rr * 0.55); p.rotate(a);
+        p.beginPath(); p.ellipse(0, 0, rr * 0.55, rr * 0.38, 0, 0, Math.PI * 2);
+        p.fillStyle = ['#e8a487', '#d4694d', '#c4503a', '#a8382a'][ring];
+        p.fill(); p.strokeStyle = 'rgba(110,35,25,0.55)'; p.lineWidth = 1.3; p.stroke();
+        p.restore();
+      }
+    }
+    p.beginPath(); p.arc(x, y, rad * 0.14, 0, Math.PI * 2); p.fillStyle = '#e9c34f'; p.fill();
+  };
+  const blossom = (x, y, rad, colour) => {
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI * 2;
+      p.beginPath(); p.arc(x + Math.cos(a) * rad, y + Math.sin(a) * rad, rad * 0.75, 0, Math.PI * 2);
+      p.fillStyle = colour; p.fill(); p.strokeStyle = 'rgba(120,60,40,0.4)'; p.lineWidth = 1; p.stroke();
+    }
+    p.beginPath(); p.arc(x, y, rad * 0.4, 0, Math.PI * 2); p.fillStyle = '#c98b2e'; p.fill();
+  };
+  const LEAVES = ['#4f7fa8', '#6f9cc0', '#5f8a62', '#7aa07a', '#3f6f8f'];
+  const spray = (cx, cy, scale) => {
+    for (let i = 0; i < 9; i++) {
+      const a = r() * Math.PI * 2, d = scale * (0.4 + r() * 0.9);
+      stem(cx, cy, cx + Math.cos(a) * d, cy + Math.sin(a) * d);
+      leaf(cx + Math.cos(a) * d * 0.6, cy + Math.sin(a) * d * 0.6, scale * (0.35 + r() * 0.3), a + (r() - 0.5), LEAVES[Math.floor(r() * LEAVES.length)]);
+    }
+  };
+  // the big flowers on the end tiles; only small sprigs behind the words
+  spray(W * 0.07, H * 0.6, H * 0.38); peony(W * 0.07, H * 0.5, H * 0.21);
+  spray(W * 0.93, H * 0.45, H * 0.38); peony(W * 0.93, H * 0.55, H * 0.2);
+  for (let i = 0; i < 8; i++) {
+    const x = W * (0.22 + r() * 0.56), y = H * (r() < 0.5 ? 0.08 + r() * 0.12 : 0.82 + r() * 0.12);
+    if (r() < 0.5) leaf(x, y, H * (0.12 + r() * 0.14), r() * Math.PI * 2, LEAVES[Math.floor(r() * LEAVES.length)]);
+    else blossom(x, y, H * (0.03 + r() * 0.025), r() < 0.5 ? '#f3e2cf' : '#e9b2a0');
+  }
+
+  // the tiles: five across, their seams cut dark with a lit edge
+  for (let i = 1; i < 5; i++) {
+    const x = Math.round((W * i) / 5);
+    p.fillStyle = 'rgba(55,35,10,0.7)'; p.fillRect(x - 2, 0, 3, H);
+    p.fillStyle = 'rgba(255,235,180,0.45)'; p.fillRect(x + 1, 0, 1, H);
+  }
+  // the picture light's wash: bright along the top, falling off downward
+  const wash = p.createLinearGradient(0, 0, 0, H);
+  wash.addColorStop(0, 'rgba(255,245,215,0.38)'); wash.addColorStop(0.45, 'rgba(255,245,215,0)'); wash.addColorStop(1, 'rgba(40,20,0,0.25)');
+  p.fillStyle = wash; p.fillRect(0, 0, W, H);
+  p.strokeStyle = 'rgba(60,35,10,0.6)'; p.lineWidth = 6; p.strokeRect(3, 3, W - 6, H - 6);
+
+  return face('P' + text + '|' + fit + aspect.toFixed(2), W, H, (g) => {
+    g.drawImage(art, 0, 0);
+    // the words, in red, at the size that fits the longest label
+    let px = Math.round(H * 0.6);
+    const set = () => { g.font = FONT(px); if ('letterSpacing' in g) g.letterSpacing = `${Math.round(px * 0.06)}px`; };
+    set();
+    // between the end tiles' flowers (measured with the spacing, which measureText may leave out)
+    const wide = () => g.measureText(fit).width + ('letterSpacing' in g ? 0 : fit.length * px * 0.06);
+    while (wide() > W * 0.7 && px > 20) { px -= 2; set(); }
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = 'rgba(60,10,10,0.45)'; g.fillText(text, W / 2 + 3, H / 2 + 7);   // a soft shadow under the paint
+    g.fillStyle = '#b3141c'; g.fillText(text, W / 2, H / 2 + 4);
+    g.strokeStyle = 'rgba(90,8,12,0.8)'; g.lineWidth = 2; g.strokeText(text, W / 2, H / 2 + 4);
+  }, [FONT(80)]);
 }
 
 const BUILDERS = { blocks, lego, tiles, woodtype, cutout, board };
