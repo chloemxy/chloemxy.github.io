@@ -1,4 +1,4 @@
-// The loading screen: a little wall of six drawers, the portfolio's, that
+// The loading screen: a little wall of eight drawers, the portfolio's, that
 // fill one by one as the scene loads, each one's hero picture sliding up
 // behind its glass, the drawer it's filling pulled out a touch. It is the
 // progress bar: a drawer for each share of the load, the percentage beside.

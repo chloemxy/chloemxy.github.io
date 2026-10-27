@@ -2,54 +2,52 @@
  * shared.js — Portfolio Global Components
  * ─────────────────────────────────────────
  * Edit here → changes apply to every page that loads this script.
+ * Looks come from tokens.css, bar.css and shared.css. Motion (motion.dev),
+ * loaded before this file, adds spring animation where it's available.
  *
  * Functions:
- *   initSubNav({ title, href })   — injects the case-study nav pill
+ *   initBar({ home })             — injects the global top bar and the menu (every lo-fi page)
+ *   initSubNav({ title, href })   — old name for initBar, kept so case-study pages don't change
  *   initSidenav({ ids, darkIds }) — wires up the side nav dots + dark-mode switching
  *   initScrollProgress()          — drives the orange progress bar
  *   initReveal()                  — reveal-on-scroll for .reveal elements
  */
 
+const prefersStill = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const motion = !prefersStill && window.Motion ? window.Motion : null;
+
 /* ══════════════════════════════════
-   SUB-PAGE NAV
-   Injects the shared pill nav used on every case-study page.
-   Only the title changes per page — everything else is global.
+   GLOBAL BAR + MENU
+   The same bar as the hi-fi site (see bar.css): CHLOE, the Lo-fi / Hi-fi
+   switch and a Menu button, MA. The menu slides in from the right.
 ══════════════════════════════════ */
-function initSubNav({ title, href } = {}) {
-  // Case studies are shared by both versions of the site: send "Portfolio" and
-  // the switch back to whichever version the visitor came from.
+function initBar({ home } = {}) {
+  // Case studies are shared by both versions of the site: send CHLOE, the menu
+  // and the switch back to whichever version the visitor came from.
   let fi = 'lofi';
   try { if (localStorage.getItem('portfolio.fi') === 'hifi') fi = 'hifi'; } catch (e) {}
-  if (!href) href = fi === 'hifi' ? 'hifi/' : 'index.html';
+  if (!home) home = fi === 'hifi' ? 'hifi/' : 'index.html';
   const lofiCurrent = fi === 'lofi' ? ' aria-current="page"' : '';
   const hifiCurrent = fi === 'hifi' ? ' aria-current="page"' : '';
+  // The menu's section links always go to the lo-fi homepage, which has them
+  const sections = 'index.html';
 
-  // ── Nav pill ──────────────────────────────────────────────────────────────
-  const nav = document.createElement('nav');
-  nav.innerHTML = `
-    <a href="index.html" class="nav-brand" aria-label="Chloe Ma, home">Chloe Ma</a>
-    <span class="nav-divider"></span>
-    <span class="nav-case"><b>${title}</b></span>
-    <a href="${href}" class="nav-back-btn">
-      <svg viewBox="0 0 13 13"><path d="M10 6.5H3M6 3.5L3 6.5l3 3"/></svg>
-      Portfolio
-    </a>
-    <div class="fi-toggle" role="group" aria-label="Site version">
-      <a href="index.html"${lofiCurrent}>Lo-fi</a>
-      <a href="hifi/"${hifiCurrent}>Hi-fi</a>
+  const bar = document.createElement('header');
+  bar.className = 'site-bar';
+  bar.innerHTML = `
+    <a href="${home}" class="site-bar__mark" aria-label="Chloe Ma, home">CHLOE</a>
+    <div class="site-bar__tools">
+      <nav class="site-bar__switch" aria-label="Site version">
+        <a href="index.html"${lofiCurrent}>Lo-fi</a><a href="hifi/"${hifiCurrent}>Hi-fi</a>
+      </nav>
+      <button type="button" class="site-bar__icon" id="menuToggle" aria-label="Menu" aria-expanded="false" aria-controls="menuPanel">
+        <svg class="site-bar__burger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+          <line class="b1" x1="5" y1="7" x2="19" y2="7"/><line class="b2" x1="5" y1="12" x2="19" y2="12"/><line class="b3" x1="5" y1="17" x2="19" y2="17"/>
+        </svg>
+      </button>
     </div>
-    <button class="nav-hamburger" id="menuToggle" aria-label="Open menu">
-      <span></span><span></span><span></span>
-    </button>
+    <span class="site-bar__mark site-bar__mark--end" aria-hidden="true">MA</span>
   `;
-
-  // ── Site version switch, top right on desktop (same as the hi-fi site) ────
-  const fiSwitch = document.createElement('div');
-  fiSwitch.className = 'fi-switch';
-  fiSwitch.setAttribute('role', 'group');
-  fiSwitch.setAttribute('aria-label', 'Site version');
-  fiSwitch.innerHTML = `<a href="index.html"${lofiCurrent}>Lo-fi</a><a href="hifi/"${hifiCurrent}>Hi-fi</a>`;
-  document.body.appendChild(fiSwitch);
 
   // ── Menu overlay ──────────────────────────────────────────────────────────
   const overlay = document.createElement('div');
@@ -67,49 +65,55 @@ function initSubNav({ title, href } = {}) {
         <ul class="menu-links-list">
           <li><a href="https://www.linkedin.com/in/chloexyma" target="_blank" rel="noopener">LinkedIn</a></li>
           <li><a href="#" target="_blank" rel="noopener">Resume</a></li>
-          <li><a href="mailto:chloe@goinvo.com">Email</a></li>
+          <li><a href="mailto:chloexy.ma@gmail.com">Email</a></li>
         </ul>
       </div>
       <div>
         <p class="menu-col-label">Portfolio</p>
         <ul class="menu-nav-list">
-          <li><a href="${href}#about"><span class="menu-dot dot-orange"></span>  About</a></li>
-          <li><a href="${href}#stack"><span class="menu-dot dot-cyan"></span>    Stack</a></li>
-          <li><a href="${href}#work"><span class="menu-dot dot-purple"></span>   Work</a></li>
-          <li><a href="${href}#contact"><span class="menu-dot dot-lime"></span>  Contact</a></li>
+          <li><a href="${sections}#about"><span class="menu-dot dot-orange"></span>About</a></li>
+          <li><a href="${sections}#stack"><span class="menu-dot dot-cyan"></span>Stack</a></li>
+          <li><a href="${sections}#work"><span class="menu-dot dot-purple"></span>Work</a></li>
+          <li><a href="${sections}#contact"><span class="menu-dot dot-lime"></span>Contact</a></li>
         </ul>
       </div>
     </div>
     <div class="menu-bottom">
       <p class="menu-touch-label">Get in touch</p>
-      <a href="mailto:chloe@goinvo.com" class="menu-touch-email">chloe@goinvo.com</a>
+      <a href="mailto:chloexy.ma@gmail.com" class="menu-touch-email">chloexy.ma@gmail.com</a>
     </div>
   `;
 
-  // Inject all three (overlay, panel, then nav — nav ends up first in DOM)
-  document.body.prepend(overlay, panel, nav);
+  document.body.prepend(overlay, panel, bar);   // bar ends up first in the DOM
+  document.body.classList.add('has-bar');       // pages start below the bar (shared.css)
 
-  // ── Toggle logic ──────────────────────────────────────────────────────────
-  const toggle = nav.querySelector('#menuToggle');
-  function openMenu()  {
-    panel.classList.add('open'); overlay.classList.add('open'); toggle.classList.add('open');
+  // ── Open / close ──────────────────────────────────────────────────────────
+  const toggle = bar.querySelector('#menuToggle');
+  const isOpen = () => panel.classList.contains('open');
+  function openMenu() {
+    panel.classList.add('open'); overlay.classList.add('open');
+    toggle.setAttribute('aria-expanded', 'true');
     document.body.style.overflow = 'hidden';
+    // the links follow the panel in, one after another
+    if (motion) {
+      motion.animate(panel.querySelectorAll('li, .menu-bottom'),
+        { opacity: [0, 1], x: [28, 0] },
+        { type: 'spring', bounce: 0.2, duration: 0.7, delay: motion.stagger(0.04, { startDelay: 0.12 }) });
+    }
   }
   function closeMenu() {
-    panel.classList.remove('open'); overlay.classList.remove('open'); toggle.classList.remove('open');
+    panel.classList.remove('open'); overlay.classList.remove('open');
+    toggle.setAttribute('aria-expanded', 'false');
     document.body.style.overflow = '';
   }
-  toggle.addEventListener('click', () => panel.classList.contains('open') ? closeMenu() : openMenu());
+  toggle.addEventListener('click', () => isOpen() ? closeMenu() : openMenu());
   overlay.addEventListener('click', closeMenu);
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
-
-  // ── Deepen shadow on scroll ───────────────────────────────────────────────
-  window.addEventListener('scroll', () => {
-    nav.style.boxShadow = window.scrollY > 60
-      ? '0 12px 40px rgba(22,20,18,0.28)'
-      : '0 8px 32px rgba(22,20,18,0.18)';
-  }, { passive: true });
+  panel.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && isOpen()) { closeMenu(); toggle.focus(); } });
 }
+
+/* Old name: case-study pages call initSubNav({ title }); the title used to sit in the nav pill */
+function initSubNav({ href } = {}) { initBar({ home: href }); }
 
 /* ══════════════════════════════════
    SIDE NAVIGATION
@@ -248,10 +252,28 @@ function initScrollProgress() {
    REVEAL ON SCROLL
 ══════════════════════════════════ */
 function initReveal() {
+  const els = document.querySelectorAll('.reveal');
+  // With Motion: a spring rise, staggered when several arrive together.
+  // reveal-d1/d2/d3 still add their extra delay.
+  if (motion) {
+    document.documentElement.classList.add('has-motion');
+    const extra = el => el.classList.contains('reveal-d3') ? 0.32 : el.classList.contains('reveal-d2') ? 0.2 : el.classList.contains('reveal-d1') ? 0.1 : 0;
+    let batch = 0, batchTimer = null;
+    motion.inView(els, entry => {
+      const el = entry.target || entry;
+      const order = batch++;
+      clearTimeout(batchTimer);
+      batchTimer = setTimeout(() => { batch = 0; }, 60);
+      motion.animate(el, { opacity: [0, 1], y: [32, 0] },
+        { type: 'spring', bounce: 0.18, duration: 0.9, delay: extra(el) + Math.min(order, 6) * 0.06 })
+        .then(() => el.classList.add('in'));
+    }, { amount: 0.1, margin: '0px 0px -6% 0px' });
+    return;
+  }
   const io = new IntersectionObserver(entries => {
     entries.forEach(e => {
       if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
     });
   }, { threshold: 0.1, rootMargin: '0px 0px -6% 0px' });
-  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+  els.forEach(el => io.observe(el));
 }

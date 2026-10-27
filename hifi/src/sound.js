@@ -10,11 +10,18 @@ let ctx = null, out = null, muted = false;
 const VOLUME = 0.5;
 const button = document.getElementById('sound');
 
+// A speaker icon: sound waves while it's on, a cross once muted. The label
+// stays "Sound"; aria-pressed says whether it's on.
+const SPEAKER = '<path d="M4 9h3l5-4v14l-5-4H4z" fill="currentColor" stroke="none"/>';
+const WAVES = '<path d="M15.5 9.2a4 4 0 0 1 0 5.6M18.3 6.6a8 8 0 0 1 0 10.8"/>';
+const CROSS = '<path d="M16 9.5l5 5M21 9.5l-5 5"/>';
+
 function render() {
   if (!button) return;
   const on = !muted;
-  button.textContent = on ? 'Sound on' : 'Sound off';
+  button.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">${SPEAKER}${on ? WAVES : CROSS}</svg>`;
   button.setAttribute('aria-pressed', String(on));
+  button.title = on ? 'Sound on' : 'Sound off';
 }
 
 function unlock() {

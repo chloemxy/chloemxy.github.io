@@ -31,8 +31,8 @@ export const CONFIG = {
   // on the wall (m): the two portfolio columns in the middle, a column and
   // a half either side, a band of carpet below. Always its full height; a
   // narrower screen crops the sides, but never into `keep`, the two
-  // portfolio drawers, which stay whole however narrow.
-  studioShot: { azimuth: 0, elevation: 0, eye: 1.6, fov: 27.5, focus: [-0.285, 0.95], view: [-1.85, -0.17, 1.28, 2.07], keep: [-0.94, -0.05, 0.41, 1.76] },
+  // portfolio columns and their signs, which stay whole however narrow.
+  studioShot: { azimuth: 0, elevation: 0, eye: 1.6, fov: 27.5, focus: [-0.285, 1.2], view: [-1.85, -0.17, 1.28, 2.72], keep: [-0.94, -0.05, 0.41, 2.62] },
 
   // what stands behind the bin cabinet: 'studio' (the bins scattered through
   // a wall of open shelving, a zen garden in front), 'cabin' (a bright wooden cabin with

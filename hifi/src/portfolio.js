@@ -130,16 +130,21 @@ export const flat = [];
 
 const linen = { kind: 'velvet', colour: '#d9cdb9', flat: true };
 
-// The six drawers, in reading order (top row first, left to right). `lede` is the
-// case study's own headline, word for word, and `summary` the line under
-// it, for the card that comes up when the drawer opens.
+// The eight drawers, in two columns with a sign of letter blocks over each:
+// client work on the left, open-source and personal work on the right, each
+// read top to bottom. `group` says which column. `lede` is the case study's
+// own headline, word for word, and `summary` the line under it, for the card
+// that comes up when the drawer opens.
+export const GROUPS = { client: 'CLIENT', open: ['OPEN', 'SOURCE'] };
 export const projects = [
-  { id: 'ipsos-flow', name: 'Ipsos Flow', meta: 'Enterprise UX · 2024–2026', href: 'ipsos-flow.html', bed: linen, lede: 'From 15 tools to one', summary: 'Two years leading design on one operational platform for a research company working in 50+ countries.' },
-  { id: 'prism', name: 'PRISM', meta: 'Health communication · 2026', href: 'prism.html', bed: linen, lede: 'A second opinion for health handouts', summary: 'A free, open-source tool, made with Sonia Seto, that checks patient materials against 23 published frameworks.' },
-  { id: 'blood-atlas', name: 'The Blood Atlas', meta: 'Health data · GoInvo · 2026', href: 'blood-atlas.html', bed: linen, lede: 'What is your blood telling you?', summary: 'An open-source GoInvo prototype, made with Suchi Sundarraman, that maps 6,000+ blood tests to body systems and everyday concerns.' },
-  { id: 'waipo', name: 'Waipo?', meta: 'Graphic novel · 2021', href: 'waipo.html', bed: linen, lede: 'A Story of Alzheimer’s', summary: 'A 20-page graphic memoir about Alzheimer’s disease across three generations of my family.' },
-  { id: 'sud-infovis', name: 'Substance Use Disorders InfoVis', meta: 'Public health · MITRE · 2024', href: 'sud-infovis.html', bed: linen, soon: true, summary: 'US substance use disorder trends, made readable for policy and public health audiences.' },
-  { id: 'ai-certification', name: 'AI Certification in Healthcare', meta: 'Policy design · 2024', href: 'ai-certification.html', bed: linen, soon: true, summary: 'A framework for certifying AI tools used in clinical care.' },
+  { id: 'ipsos-flow', group: 'client', name: 'Ipsos Flow', meta: 'Enterprise UX · 2024–2026', href: 'ipsos-flow.html', bed: linen, lede: 'From 15 tools to one', summary: 'Two years leading design on one operational platform for a research company working in 50+ countries.' },
+  { id: 'ai-certification', group: 'client', name: 'AI Certification in Healthcare', meta: 'Policy design · 2024', href: 'ai-certification.html', bed: linen, soon: true, summary: 'A framework for certifying AI tools used in clinical care.' },
+  { id: 'guidelines', group: 'client', name: 'Guidelines.com', meta: 'Product design · Orphic Health · 2026', href: 'guidelines.html', bed: linen, lede: 'Clinical answers, cited to the source', summary: 'A redesign concept where clinicians ask in their own words and get answers cited to the exact guideline paragraph.' },
+  { id: 'sud-infovis', group: 'client', name: 'Substance Use Disorders InfoVis', meta: 'Public health · MITRE · 2024', href: 'sud-infovis.html', bed: linen, soon: true, summary: 'US substance use disorder trends, made readable for policy and public health audiences.' },
+  { id: 'blood-atlas', group: 'open', name: 'The Blood Atlas', meta: 'Health data · GoInvo · 2026', href: 'blood-atlas.html', bed: linen, lede: 'What is your blood telling you?', summary: 'An open-source GoInvo prototype, made with Suchi Sundarraman, that maps 6,000+ blood tests to body systems and everyday concerns.' },
+  { id: 'prism', group: 'open', name: 'PRISM', meta: 'Health communication · 2026', href: 'prism.html', bed: linen, lede: 'A second opinion for health handouts', summary: 'A free, open-source tool, made with Sonia Seto, that checks patient materials against 23 published frameworks.' },
+  { id: 'waipo', group: 'open', name: 'Waipo?', meta: 'Graphic novel · 2021', href: 'waipo.html', bed: linen, lede: 'A Story of Alzheimer’s', summary: 'A 20-page graphic memoir about Alzheimer’s disease across three generations of my family.' },
+  { id: 'artwork', group: 'open', name: 'Personal Art', meta: 'Personal work · Illustration', href: 'artwork.html', bed: linen, cta: 'See the artwork', summary: 'A collection of illustrations, portrait commissions, and personal pieces made outside of client work.' },
 ];
 
 // What each drawer's book holds: its hero picture (cropped to 16:10, the
@@ -176,6 +181,8 @@ const cases = {
   ] },
   'sud-infovis': { hero: 'assets/cases/sud-infovis.jpg', details: [] },
   'ai-certification': { hero: 'assets/cases/ai-certification.jpg', details: [] },
+  guidelines: { hero: 'assets/cases/guidelines.jpg', details: [] },
+  artwork: { hero: 'assets/cases/artwork.jpg', details: [] },
 };
 // and each book's cover cloth
 const CLOTH = ['#5a1f1b', '#2f4a3a', '#23344d', '#7d6236', '#3d2a3f', '#4b3326'];

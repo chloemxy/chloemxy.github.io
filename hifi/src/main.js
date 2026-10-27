@@ -6,7 +6,7 @@ import { HerbDrawer, setAnisotropy } from './items.js';
 import { buildCabinet } from './cabinet.js';
 import { Reader } from './reader.js';
 import { Bin } from './bins.js';
-import { projects } from './portfolio.js';
+import { projects, GROUPS } from './portfolio.js';
 import { buildBinCabinet } from './bincabinet.js';
 import { BinReader } from './binReader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
@@ -124,11 +124,18 @@ function setupStudio(scene, camera) {
   const finish = new URLSearchParams(location.search).get('finish') || 'maple';
   const mats = finishMats(finish, { moss: false });
   scene.background = new THREE.Color('#e7dccb');
-  // only the six bins low in the two middle columns are kept, one for each
-  // case study; every other bin cell is an open shelf of ceramics
-  const { slots, focus } = shelfWall(scene, mats, { bins: Infinity, binAt: (x, y) => Math.abs(x + 0.265) < 0.6 && y < 1.5 });
-  // the case studies in reading order: top row first, left to right
-  slots.sort((a, b) => b.position.y - a.position.y || a.position.x - b.position.x);
+  // only the eight bins in the two middle columns are kept, four in each,
+  // with a sign of letter blocks on the shelf above: CLIENT over the left
+  // column, OPEN SOURCE over the right. Every other bin cell is an open
+  // shelf of ceramics.
+  const middle = -0.265; // between the two columns
+  const { slots, focus } = shelfWall(scene, mats, {
+    bins: Infinity,
+    binAt: (x, y) => Math.abs(x - middle) < 0.6 && y < 1.8,
+    sign: (x, y) => Math.abs(x - middle) < 0.6 && y < 2.3 ? (x < middle ? GROUPS.client : GROUPS.open) : null,
+  });
+  // the case studies in reading order: the left column top to bottom, then the right
+  slots.sort((a, b) => a.position.x - b.position.x || b.position.y - a.position.y);
   const bins = slots.map((slot, i) => new Bin(projects[i] ?? { id: `bin-${i + 1}`, name: '', items: [] }, slot, mats, i));
   const items = bins.slice(0, projects.length);
   // a planted bed of moss, ferns and grasses round the rocks, or raked sand

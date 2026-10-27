@@ -2,100 +2,14 @@
  * shared.css — Portfolio Global Components
  * ─────────────────────────────────────────
  * Edit here → changes apply to every page that links this file.
- * Covers: nav pill, sub-page nav, scroll progress, sidenav, reveal.
+ * Covers: menu panel, scroll progress, sidenav, footer, reveal, page transitions.
+ * Colours and motion come from tokens.css; the top bar lives in bar.css.
  * Page-specific styles (hero, sections, etc.) stay in each page's <style>.
  */
 
-/* ══════════════════════════════════
-   NAV — shared pill base
-══════════════════════════════════ */
-nav {
-  position: fixed; top: 24px; left: 50%; transform: translateX(-50%);
-  z-index: 800;
-  background: #161412; color: #fff;
-  border-radius: 999px;
-  padding: 12px 16px 12px 24px;
-  display: flex; align-items: center; gap: 24px;
-  white-space: nowrap;
-  box-shadow: 0 8px 32px rgba(22,20,18,0.18);
-  transition: box-shadow 0.4s ease;
-}
-.nav-brand { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; }
-a.nav-brand { color: inherit; text-decoration: none; border-radius: 4px; }
-a.nav-brand:hover { opacity: 0.8; }
-a.nav-brand:focus-visible { outline: 2px solid #E36216; outline-offset: 4px; }
-
-/* Lo-fi / Hi-fi switch inside the nav pill */
-.fi-toggle {
-  display: inline-flex; padding: 4px; gap: 4px;
-  border-radius: 999px; background: rgba(255,255,255,0.08);
-}
-.fi-toggle a {
-  display: inline-flex; align-items: center; height: 28px; padding: 0 12px;
-  border-radius: 999px; font-size: 12px; font-weight: 600; letter-spacing: 0.02em;
-  color: rgba(255,255,255,0.65); text-decoration: none;
-  transition: background 0.2s ease, color 0.2s ease;
-}
-.fi-toggle a:hover { color: #fff; }
-.fi-toggle a[aria-current="page"] { background: #fff; color: #161412; }
-.fi-toggle a:focus-visible { outline: 2px solid #E36216; outline-offset: 2px; }
-
-/* Desktop: the switch sits top right, in the same place and style as on the
-   hi-fi site (square, hairline border, tracked uppercase, black when chosen).
-   On narrow screens it stays inside the nav pill instead. */
-.fi-switch {
-  position: fixed; top: 12px; right: 32px; z-index: 800;
-  display: flex; height: 40px;
-  border: 1px solid rgba(0,0,0,0.34); background: #fff;
-  transition: opacity 0.4s ease;
-}
-.fi-switch a {
-  display: inline-flex; align-items: center; padding: 0 16px;
-  font-size: 12px; font-weight: 400; line-height: 1.4; letter-spacing: 0.14em; text-transform: uppercase;
-  color: #000; text-decoration: none;
-  transition: background 0.2s ease, color 0.2s ease;
-}
-.fi-switch a + a { border-left: 1px solid rgba(0,0,0,0.34); }
-.fi-switch a:hover { background: #efefed; }
-.fi-switch a[aria-current="page"] { background: #000; color: #fff; }
-.fi-switch a:focus-visible { outline: 2px solid #000; outline-offset: 2px; }
-body.intro-running .fi-switch { opacity: 0; pointer-events: none; }
-@media (min-width: 761px) { nav .fi-toggle { display: none; } }
-@media (max-width: 760px) { .fi-switch { display: none; } }
-
-/* ── Sub-page nav additions (case study pages) ── */
-.nav-divider { width: 1px; height: 16px; background: rgba(255,255,255,0.15); flex-shrink: 0; }
-.nav-case {
-  font-size: 12px; font-weight: 500; letter-spacing: 0.14em;
-  color: rgba(255,255,255,0.45); overflow: hidden; text-overflow: ellipsis; max-width: 200px;
-}
-.nav-case b { color: #E36216; font-weight: 600; }
-.nav-back-btn {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.65);
-  background: rgba(255,255,255,0.1); border-radius: 999px; padding: 8px 16px;
-  transition: background 0.25s, color 0.25s; flex-shrink: 0;
-}
-.nav-back-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
-.nav-back-btn svg { width: 13px; height: 13px; stroke: currentColor; stroke-width: 2; fill: none; }
-
-/* ── Hamburger button (all pages) ── */
-.nav-hamburger {
-  width: 40px; height: 40px; border-radius: 50%;
-  background: rgba(255,255,255,0.12); border: none; cursor: pointer;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 8px;
-  flex-shrink: 0; transition: background 0.25s;
-}
-.nav-hamburger:hover { background: rgba(255,255,255,0.22); }
-.nav-hamburger span {
-  display: block; width: 16px; height: 1.5px;
-  background: rgba(255,255,255,0.85); border-radius: 2px;
-  transition: all 0.3s ease;
-}
-.nav-hamburger.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
-.nav-hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
-.nav-hamburger.open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+/* Pages start below the fixed top bar (bar.css) */
+body.has-bar { padding-top: var(--bar-h); }
+html:has(body.has-bar) { scroll-padding-top: var(--bar-h); }   /* #about etc. land below it */
 
 /* ══════════════════════════════════
    MENU PANEL (all pages)
@@ -110,8 +24,8 @@ body.intro-running .fi-switch { opacity: 0; pointer-events: none; }
 .menu-panel {
   position: fixed; top: 0; right: 0; bottom: 0; z-index: 750;
   width: 480px; max-width: calc(100vw - 48px);
-  background: #1a1714;
-  padding: 48px 40px 48px 48px;
+  background: var(--c-night-2);
+  padding: calc(var(--bar-h) + 32px) 40px 48px 48px; /* clears the top bar */
   display: flex; flex-direction: column; justify-content: space-between;
   transform: translateX(100%);
   transition: transform 0.5s cubic-bezier(0.22,1,0.36,1);
@@ -137,11 +51,11 @@ body.intro-running .fi-switch { opacity: 0; pointer-events: none; }
 }
 .menu-nav-list li a:hover { opacity: 0.75; }
 .menu-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.dot-orange { background: #f97316; box-shadow: 0 0 8px rgba(249,115,22,0.6); }
-.dot-blue   { background: #3b82f6; box-shadow: 0 0 8px rgba(59,130,246,0.6); }
-.dot-cyan   { background: #06b6d4; box-shadow: 0 0 8px rgba(6,182,212,0.6); }
-.dot-purple { background: #a855f7; box-shadow: 0 0 8px rgba(168,85,247,0.6); }
-.dot-lime   { background: #84cc16; box-shadow: 0 0 8px rgba(132,204,22,0.6); }
+.dot-orange { background: var(--c-orange); box-shadow: 0 0 8px rgba(249,115,22,0.6); }
+.dot-blue   { background: var(--c-blue); box-shadow: 0 0 8px rgba(59,130,246,0.6); }
+.dot-cyan   { background: var(--c-cyan); box-shadow: 0 0 8px rgba(6,182,212,0.6); }
+.dot-purple { background: var(--c-purple); box-shadow: 0 0 8px rgba(168,85,247,0.6); }
+.dot-lime   { background: var(--c-lime); box-shadow: 0 0 8px rgba(132,204,22,0.6); }
 .menu-bottom { padding-top: 40px; border-top: 1px solid rgba(255,255,255,0.1); }
 .menu-touch-label {
   font-size: 12px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase;
@@ -154,8 +68,8 @@ body.intro-running .fi-switch { opacity: 0; pointer-events: none; }
    SCROLL PROGRESS BAR
 ══════════════════════════════════ */
 .scroll-progress {
-  position: fixed; top: 0; left: 0; height: 2px; width: 0;
-  background: #E36216; z-index: 999; transition: width 0.1s linear;
+  position: fixed; top: var(--bar-h); left: 0; height: 2px; width: 0;
+  background: var(--c-accent); z-index: 999; transition: width 0.1s linear;
 }
 
 /* ══════════════════════════════════
@@ -255,7 +169,7 @@ body.intro-running .fi-switch { opacity: 0; pointer-events: none; }
 }
 .sn-item.sn-active .sn-dot {
   border-color: transparent;
-  background: var(--sn-color, #9b8cf8);
+  background: var(--sn-color, var(--c-violet));
   box-shadow: 0 0 10px var(--sn-glow, rgba(155,140,248,0.6));
   opacity: 1;
   transform: scale(1.2);
@@ -282,7 +196,7 @@ body.intro-running .fi-switch { opacity: 0; pointer-events: none; }
 ══════════════════════════════════ */
 footer {
   padding: 32px 48px;
-  background: #161412;
+  background: var(--c-night);
   border-top: 1px solid rgba(255,255,255,0.07);
 }
 .foot-inner {
@@ -307,6 +221,8 @@ footer {
               transform 0.85s cubic-bezier(0.22,1,0.36,1);
 }
 .reveal.in { opacity: 1; transform: translateY(0); }
+/* Motion (shared.js) springs these in itself */
+.has-motion .reveal { transition: none; }
 .reveal-d1 { transition-delay: 0.1s; }
 .reveal-d2 { transition-delay: 0.2s; }
 .reveal-d3 { transition-delay: 0.32s; }
@@ -372,13 +288,8 @@ footer {
    RESPONSIVE
 ══════════════════════════════════ */
 @media (max-width: 640px) {
-  nav { top: 16px; padding: 10px 10px 10px 18px; gap: 10px; }
-  .nav-case, .nav-divider { display: none; }
-  nav { gap: 8px; }
-  .nav-back-btn { padding: 8px 12px; }
-  .fi-toggle a { padding: 0 8px; }
   footer { padding: 32px 24px; }
-  .menu-panel { padding: 40px 32px; }
+  .menu-panel { padding: calc(var(--bar-h) + 24px) 32px 40px; }
   .menu-cols { grid-template-columns: 1fr; gap: 32px; }
 }
 @media (max-width: 900px) {
