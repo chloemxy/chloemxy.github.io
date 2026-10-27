@@ -1,32 +1,32 @@
 import * as THREE from 'three';
-import { CONFIG } from './config.js?v=20261027180954';
-import { herbs, binContents, curios, jars } from './content.js?v=20261027180954';
-import { loadFonts, loadGrain } from './paint.js?v=20261027180954';
-import { HerbDrawer, setAnisotropy } from './items.js?v=20261027180954';
-import { buildCabinet } from './cabinet.js?v=20261027180954';
-import { Reader } from './reader.js?v=20261027180954';
-import { Bin } from './bins.js?v=20261027180954';
-import { projects, GROUPS } from './portfolio.js?v=20261027180954';
-import { woodSheet } from './materials.js?v=20261027180954';
-import { GRAINS } from './woodGrains.js?v=20261027180954';
-import { buildBinCabinet } from './bincabinet.js?v=20261027180954';
-import { BinReader } from './binReader.js?v=20261027180954';
+import { CONFIG } from './config.js?v=20261027185754';
+import { herbs, binContents, curios, jars } from './content.js?v=20261027185754';
+import { loadFonts, loadGrain } from './paint.js?v=20261027185754';
+import { HerbDrawer, setAnisotropy } from './items.js?v=20261027185754';
+import { buildCabinet } from './cabinet.js?v=20261027185754';
+import { Reader } from './reader.js?v=20261027185754';
+import { Bin } from './bins.js?v=20261027185754';
+import { projects, GROUPS } from './portfolio.js?v=20261027185754';
+import { woodSheet } from './materials.js?v=20261027185754';
+import { GRAINS } from './woodGrains.js?v=20261027185754';
+import { buildBinCabinet } from './bincabinet.js?v=20261027185754';
+import { BinReader } from './binReader.js?v=20261027185754';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { setMaterialAnisotropy, loadScans } from './materials.js?v=20261027180954';
-import { makePost } from './post.js?v=20261027180954';
-import { daySky } from './sky.js?v=20261027180954';
-import { meadow, cloudShadowAt } from './meadow.js?v=20261027180954';
-import { videoBackdrop, shadowCatcher } from './videoBackdrop.js?v=20261027180954';
-import { cabin } from './cabin.js?v=20261027180954';
-import { apothecaryWall } from './apothecaryWall.js?v=20261027180954';
-import { shelfWall } from './shelfWall.js?v=20261027180954';
-import { zenGarden } from './zenGarden.js?v=20261027180954';
-import { plantedGarden } from './plantedGarden.js?v=20261027180954';
-import { carpet } from './carpet.js?v=20261027180954';
-import { finishMats } from './bincabinet.js?v=20261027180954';
+import { setMaterialAnisotropy, loadScans } from './materials.js?v=20261027185754';
+import { makePost } from './post.js?v=20261027185754';
+import { daySky } from './sky.js?v=20261027185754';
+import { meadow, cloudShadowAt } from './meadow.js?v=20261027185754';
+import { videoBackdrop, shadowCatcher } from './videoBackdrop.js?v=20261027185754';
+import { cabin } from './cabin.js?v=20261027185754';
+import { apothecaryWall } from './apothecaryWall.js?v=20261027185754';
+import { shelfWall } from './shelfWall.js?v=20261027185754';
+import { zenGarden } from './zenGarden.js?v=20261027185754';
+import { plantedGarden } from './plantedGarden.js?v=20261027185754';
+import { carpet } from './carpet.js?v=20261027185754';
+import { finishMats } from './bincabinet.js?v=20261027185754';
 
-import { renderScale } from './post.js?v=20261027180954';
-import { loader, nextFrame } from './loader.js?v=20261027180954';
+import { renderScale } from './post.js?v=20261027185754';
+import { loader, nextFrame } from './loader.js?v=20261027185754';
 const canvas = document.getElementById('scene');
 const loading = document.getElementById('loading');
 
@@ -219,6 +219,9 @@ function setupStudio(scene, camera) {
 
   // and the low sun through the windows, laid across the wall
   windowLight(scene);
+  // a narrower shaft of it, low enough to slip under the shelf above and
+  // fall straight onto the two painted signs over the portfolio drawers
+  windowLight(scene, { from: new THREE.Vector3(-1.7, 2.3, 2.6), to: new THREE.Vector3(-0.25, 1.95, -0.42), intensity: 170, angle: 0.3, colour: '#ffe0ad' });
 
   const shotFocus = (x, y) => new THREE.Vector3(x, y, 0);
   return {
@@ -269,7 +272,7 @@ async function start() {
   camera.fov = shot.fov;
 
   const post = makePost(renderer, scene, camera, setup.post);
-  window.cabinet = { scene, camera, reader, post, design, film: setup.film }; // handy in the devtools console
+  window.cabinet = { scene, camera, renderer, reader, post, design, film: setup.film }; // handy in the devtools console
 
   focus.updateWorldMatrix(true, true);
   const viewDir = new THREE.Vector3(
@@ -376,7 +379,7 @@ async function start() {
 // whose cookie is the windows' panes, so bright window-shaped patches, cut
 // by the glazing bars' shadows, fall across the shelf wall, the light
 // slanting down into the cells.
-function windowLight(scene, { from = new THREE.Vector3(-3.4, 3.3, 3.1), to = new THREE.Vector3(-0.2, 1.1, -0.3), colour = '#ffe4bd', intensity = 160 } = {}) {
+function windowLight(scene, { from = new THREE.Vector3(-3.4, 3.3, 3.1), to = new THREE.Vector3(-0.2, 1.1, -0.3), colour = '#ffe4bd', intensity = 160, angle = 0.62 } = {}) {
   const c = document.createElement('canvas');
   c.width = c.height = 512;
   const g = c.getContext('2d');
@@ -391,7 +394,7 @@ function windowLight(scene, { from = new THREE.Vector3(-3.4, 3.3, 3.1), to = new
   }
   const cookie = new THREE.CanvasTexture(c);
   cookie.colorSpace = THREE.SRGBColorSpace;
-  const spot = new THREE.SpotLight(colour, intensity, 14, 0.62, 0.25, 2);
+  const spot = new THREE.SpotLight(colour, intensity, 14, angle, 0.25, 2);
   spot.position.copy(from);
   spot.target.position.copy(to);
   spot.map = cookie;

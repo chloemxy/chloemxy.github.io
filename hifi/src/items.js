@@ -7,9 +7,9 @@
 // up from the list), so twenty cards don't all paint while the page loads.
 
 import * as THREE from 'three';
-import { tween, ease } from './anim.js?v=20261027180954';
-import { makeDrawerBody, DRAWER, CARD } from './cabinet.js?v=20261027180954';
-import { CARD_STOCK, paintLabel, paintCardFront, paintCardBack } from './paint.js?v=20261027180954';
+import { tween, ease } from './anim.js?v=20261027185754';
+import { makeDrawerBody, DRAWER, CARD } from './cabinet.js?v=20261027185754';
+import { CARD_STOCK, paintLabel, paintCardFront, paintCardBack } from './paint.js?v=20261027185754';
 
 let anisotropy = 4;
 export function setAnisotropy(n) { anisotropy = n; }

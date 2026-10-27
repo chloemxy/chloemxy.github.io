@@ -11,12 +11,12 @@
 // are built into. The shelving's face is at z = 0, its back at -DEPTH.
 
 import * as THREE from 'three';
-import { Kit } from './cabinet.js?v=20261027180954';
-import { BIN } from './bincabinet.js?v=20261027180954';
-import { signPieces, plaqueFace, castPlaque, platePlaque, stylePlaque, paintedPlaque, PLAQUE_KINDS } from './signs.js?v=20261027180954';
-import { woodSheet, limestoneMap, pearlTileMap, zelligeMaps, brushedBrass } from './materials.js?v=20261027180954';
+import { Kit } from './cabinet.js?v=20261027185754';
+import { BIN } from './bincabinet.js?v=20261027185754';
+import { signPieces, plaqueFace, castPlaque, platePlaque, stylePlaque, paintedPlaque, PLAQUE_KINDS } from './signs.js?v=20261027185754';
+import { woodSheet, limestoneMap, pearlTileMap, zelligeMaps, brushedBrass } from './materials.js?v=20261027185754';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { PLANT_MODELS, placePlant } from './plantModels.js?v=20261027180954';
+import { PLANT_MODELS, placePlant } from './plantModels.js?v=20261027185754';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const TAU = Math.PI * 2;
@@ -30,6 +30,7 @@ export const DEPTH = 0.42; // deep enough for the bins' trays
 const T = 0.03;        // uprights
 const BT = 0.022;      // shelf boards
 const BASE = 0.08;     // the plinth board's top
+const SIGN_H = 0.2;    // the cell above the portfolio drawers that holds their sign
 const TOP = 2.33;      // the crown board's underside: level with the tops of the name drawers
 
 // The columns' inner widths, left to right; 'B' is a bin column (exactly
@@ -38,7 +39,9 @@ const TOP = 2.33;      // the crown board's underside: level with the tops of th
 // Mostly bins: five bin columns, two of them side by side, with just a few
 // narrow display columns of short shelves between.
 const COLUMNS = [
-  0.3, ['B', 'B', 0.26, 'B', 'B', 0.3], 0.34, ['B', 0.28, 'B', 'B', 'B'], ['B', 'B', 'B', 0.26, 'B'],
+  // the two side by side hold the portfolio: identical, four drawers each in
+  // matching rows, the sign right above them ('S'), then open shelves
+  0.3, ['B', 'B', 0.26, 'B', 'B', 0.3], 0.34, ['B', 'B', 'B', 'B', 'S'], ['B', 'B', 'B', 'B', 'S'],
   0.3, ['B', 0.3, 'B', 'B', 0.26, 'B'], 0.34, ['B', 'B', 0.28, 'B', 'B'],
 ];
 // the pattern repeats out to either side, three times over (about 20 m), so
@@ -303,6 +306,15 @@ export function shelfWall(scene, mats, { back = '#e2cba6', backWood = false, bac
     place(second, flip > 0 ? left + first.w + gap + second.w / 2 : left + second.w / 2, y0);
   };
 
+  // hand-painted sign tiles (signs.js paintedPlaque) filling the back of an
+  // open cell, set into the wall in place of the zellige there
+  const signTiles = (words, x0, x1, y, h) => {
+    const text = titleCaseWords([].concat(words).join(' '));
+    const plate = paintedPlaque(text, x1 - x0 - 0.002, h - 0.002, titleCaseWords(signFit ?? text));
+    plate.position.set((x0 + x1) / 2, y + h / 2, -DEPTH - 0.005);
+    things.push(plate);
+  };
+
   // a slim drawer filling a cell DH high: a plain wooden front flush with
   // the shelving, no knob, and a brass plaque nearly its full width with the
   // words engraved large enough to read across the room
@@ -409,17 +421,23 @@ export function shelfWall(scene, mats, { back = '#e2cba6', backWood = false, bac
       return;
     }
     // a bin column: bin cells exactly one bin high, display cells between
-    let y = BASE;
+    let y = BASE, signed = false;
     for (const cell of col) {
-      const h = cell === 'B' ? BIN.H : cell;
+      const h = cell === 'B' ? BIN.H : cell === 'S' ? SIGN_H : cell;
       if (y + h + BT > TOP) break;
       if (cell === 'B') binCells.push({ x0, x1, y, h });
-      else display(x0, x1, y, y + h);
+      else if (cell === 'S') {
+        // the sign cell: over a portfolio column, its sign set into the tiled
+        // back; in the other copies of the pattern, just a shelf
+        const words = sign?.((x0 + x1) / 2, y);
+        if (words && plaqueKind === 'painted') { signTiles(words, x0, x1, y, h); signed = true; }
+        else display(x0, x1, y, y + h);
+      } else display(x0, x1, y, y + h);
       y += h;
       board(x0, x1, y + BT);
       y += BT;
     }
-    const words = TOP - y > 0.12 && sign?.((x0 + x1) / 2, y);
+    const words = !signed && TOP - y > 0.12 && sign?.((x0 + x1) / 2, y);
     if (words && signStyle === 'plaque') {
       // over a column of portfolio bins, the wall's top row: a slim drawer
       // with a brass plaque naming the column
@@ -493,7 +511,7 @@ export function shelfWall(scene, mats, { back = '#e2cba6', backWood = false, bac
       uv.setXY(i, (pos.getX(i) - grid.ox) / sheet, (pos.getY(i) + plaster.position.y - grid.oy) / sheet);
     }
     uv.needsUpdate = true;
-    group.userData.tileGrid = { size: +grid.size.toFixed(4), uprights: `${grid.cols}/${ups.length}`, shelves: `${grid.rows}/${shelves.length}` };
+    group.userData.tileGrid = { size: grid.size, ox: grid.ox, oy: grid.oy, uprights: `${grid.cols}/${ups.length}`, shelves: `${grid.rows}/${shelves.length}` };
   }
 
   const built = k.build('shelving');
