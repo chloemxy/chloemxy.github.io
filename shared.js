@@ -27,7 +27,7 @@ function initSubNav({ title, href } = {}) {
   // ── Nav pill ──────────────────────────────────────────────────────────────
   const nav = document.createElement('nav');
   nav.innerHTML = `
-    <a href="index.html?intro" class="nav-brand" aria-label="Chloe Ma, replay the intro">Chloe Ma</a>
+    <a href="index.html" class="nav-brand" aria-label="Chloe Ma, home">Chloe Ma</a>
     <span class="nav-divider"></span>
     <span class="nav-case"><b>${title}</b></span>
     <a href="${href}" class="nav-back-btn">

@@ -5,43 +5,43 @@
         <title>Chloe Ma — Portfolio</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="robots" content="noindex" />
-        <meta name="theme-color" content="#ffffff" />
+        <meta name="theme-color" content="#161412" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-            href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=Libre+Caslon+Text&display=swap"
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Libre+Caslon+Text&display=swap"
             rel="stylesheet"
         />
 
         <style>
-            /* The way in: an old arched barn door with the name over it. Flowers
-               grow out of the name while the page loads; the right password
-               swings the door open and the view moves through the doorway to
-               the shelf wall inside. White paper, black ink, hairline rules. */
+            /* The way in, on the dark sheet the lo-fi intro used to play on:
+               stars, the illustration filling in as the page loads, and CHLOE MA
+               flipping into place with flowers growing out of it. Then the
+               password; the right one moves the view into the illustration and
+               on to the site. (The intro on its own is kept in archive/loading-dark.html.) */
             :root {
-                --paper: #ffffff;
-                --ink: #000000;
-                --body: rgba(0, 0, 0, 0.7);
-                --mute: rgba(0, 0, 0, 0.6);
-                --hair: rgba(0, 0, 0, 0.14);
-                --border: rgba(0, 0, 0, 0.34);
-                --slot: #efefed;
-                --error: #9b2c1f;
+                --paper: #161412;
+                --ink: #ffffff;
+                --body: rgba(255, 255, 255, 0.72);
+                --mute: rgba(255, 255, 255, 0.6);
+                --hair: rgba(255, 255, 255, 0.14);
+                --border: rgba(255, 255, 255, 0.34);
+                --slot: rgba(255, 255, 255, 0.08);
+                --error: #ff9b85;
 
                 --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
                 --space-5: 24px; --space-6: 32px; --space-7: 48px;
                 --text-xs: 12px; --text-sm: 14px; --text-md: 16px; --text-lg: 20px;
                 --control: 48px;
 
-                --display: "Archivo", -apple-system, Helvetica, Arial, sans-serif;
+                --text: "Inter", -apple-system, Helvetica, Arial, sans-serif;
                 --brand: "Libre Caslon Text", Georgia, serif;
                 --out: cubic-bezier(0.16, 1, 0.3, 1);
-                --swing: cubic-bezier(0.5, 0, 0.15, 1);
                 --push: cubic-bezier(0.62, 0, 0.25, 1);
 
-                /* one unit of the door drawing (320 x 410): as big as the screen allows,
-                   leaving room for the password beside it */
-                --u: min(calc((100svh - 112px) / 410), calc((100vw - 480px) / 320));
+                --bar: 64px;
+                /* wide enough for CHLOE MA on one line beside the password column */
+                --name-size: clamp(56px, min(9vw, calc((82vw - 384px) / 5.4)), 140px);
             }
 
             * { box-sizing: border-box; }
@@ -49,14 +49,12 @@
             html, body { margin: 0; background: var(--paper); }
             body {
                 color: var(--ink);
-                font: 400 var(--text-sm)/1.5 var(--display);
-                font-stretch: 92%;
-                letter-spacing: 0.04em;
+                font: 400 var(--text-sm)/1.5 var(--text);
                 -webkit-font-smoothing: antialiased;
             }
             .label {
-                font: 400 var(--text-xs)/1.4 var(--display);
-                letter-spacing: 0.14em;
+                font: 500 var(--text-xs)/1.4 var(--text);
+                letter-spacing: 0.08em;
                 text-transform: uppercase;
             }
             :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
@@ -64,95 +62,94 @@
             /* A blank sheet while a remembered password unlocks the page */
             .staticrypt-spinner-container { min-height: 100vh; min-height: 100svh; }
 
+            /* Same bar as the hi-fi site: the name split across both ends */
             .bar {
-                position: fixed; top: 0; left: 0; right: 0; height: 64px; z-index: 5;
-                display: flex; align-items: center; justify-content: space-between;
+                position: fixed; top: 0; left: 0; right: 0; height: var(--bar); z-index: 5;
+                display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--space-3);
                 padding: 0 var(--space-6);
                 background: var(--paper);
                 border-bottom: 1px solid var(--hair);
                 transition: opacity 400ms var(--out);
             }
             .bar .mark { font: 400 24px/1 var(--brand); letter-spacing: 0.01em; }
+            .bar .mark:last-child { justify-self: end; }
             .bar .label { color: var(--mute); }
 
             .gate {
+                position: relative; overflow: hidden;
                 min-height: 100vh; min-height: 100svh;
-                display: grid; justify-content: center; align-content: center; justify-items: center;
-                grid-template-columns: auto; gap: var(--space-5);
-                padding: 88px var(--space-4) var(--space-7);
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) 320px;
+                grid-template-rows: minmax(0, 1fr) auto;
+                column-gap: 64px; row-gap: var(--space-5);
+                padding: calc(var(--bar) + var(--space-5)) 9vw calc(10vh + 24px);
             }
-            @media (min-width: 900px) {
-                .gate { grid-template-columns: auto 320px; column-gap: 64px; align-items: center; padding-bottom: var(--space-5); }
+            .gate > canvas { transition: opacity 500ms var(--out); }
+
+            /* ---------- Stars ---------- */
+            .spark { position: absolute; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 500ms var(--out); }
+            .spark.on { animation: starAppear var(--d, 500ms) cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+            .spark.pop { z-index: 3; animation: sparkPop 520ms cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+            @keyframes starAppear {
+                0%   { opacity: 0;    transform: scale(0.2)  rotate(-16deg); }
+                55%  { opacity: 1;    transform: scale(1.09) rotate(5deg); }
+                78%  { opacity: 0.88; transform: scale(0.96) rotate(1deg); }
+                100% { opacity: 0.9;  transform: scale(1)    rotate(2deg); }
+            }
+            @keyframes sparkPop {
+                0%   { opacity: 0; transform: scale(0.2) rotate(-18deg); }
+                30%  { opacity: 1; transform: scale(1.08) rotate(4deg); }
+                60%  { opacity: 0.7; transform: scale(0.95) rotate(1deg); }
+                100% { opacity: 0; transform: scale(0.55) rotate(10deg); }
             }
 
-            /* ---------- The name and the door ---------- */
-            .stage {
-                position: relative;
-                transition: transform 1700ms var(--push);
-                will-change: transform;
+            /* ---------- The illustration, filling in as the page loads ---------- */
+            .art { grid-column: 1; grid-row: 1; position: relative; z-index: 1; min-height: 0; display: grid; place-items: center; }
+            .illus {
+                display: block; height: auto;
+                /* as big as the space above the name allows (the picture is 959 x 726) */
+                width: min(100%, 640px, calc((100svh - var(--bar) - 10vh - 72px - var(--name-size) * 0.9) * 1.321));
+                border-radius: 14px;
+                box-shadow: 0 32px 80px rgba(0, 0, 0, 0.55);
+                clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+                transition: transform 1600ms var(--push), border-radius 1600ms var(--push);
             }
-            .stage > canvas { transition: opacity 500ms var(--out); }
-            /* painted across the door, so the flowers grow up the planks */
+
+            /* ---------- The name ---------- */
             .name {
-                position: absolute; z-index: 1; left: 0; right: 0; top: calc(184 * var(--u));
-                display: flex; justify-content: center; margin: 0;
-                font: 800 calc(36 * var(--u))/0.9 var(--display); font-stretch: 100%;
+                grid-column: 1; grid-row: 2; align-self: end;
+                position: relative; z-index: 1;
+                display: flex; flex-wrap: nowrap; white-space: nowrap; align-items: flex-end; margin: 0;
+                font: 700 var(--name-size)/0.9 var(--text);
                 letter-spacing: -0.045em; text-transform: uppercase;
-                color: #f3ead7; text-shadow: 0 calc(2 * var(--u)) 0 rgba(40, 20, 8, 0.55);
                 transition: opacity 500ms var(--out);
             }
-            .name .l { display: inline-block; opacity: 0; transform: translateY(-0.3em); transition: opacity 240ms, transform 560ms cubic-bezier(0.34, 1.56, 0.64, 1); }
-            .name .l.in { opacity: 1; transform: none; }
-            .name .sp { width: 0.28em; }
+            .name .l { display: inline-block; color: rgba(255, 255, 255, 0.28); transition: color 120ms ease; }
+            .name .l.in { color: #fff; }
+            .name .sp { display: inline-block; width: 0.28em; }
 
-            .doorway { position: relative; z-index: 0; width: calc(320 * var(--u)); height: calc(410 * var(--u)); }
-            .doorway.rattle { animation: rattle 380ms var(--out); }
-            .frame { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; overflow: visible; }
-            .opening {
-                position: absolute; z-index: 1;
-                left: calc(30 * var(--u)); top: calc(26 * var(--u));
-                width: calc(260 * var(--u)); height: calc(370 * var(--u));
-                border-radius: calc(130 * var(--u)) calc(130 * var(--u)) 0 0;
-                overflow: hidden; background: #2a1d14;
-                perspective: calc(900 * var(--u));
+            .foot {
+                position: absolute; bottom: 40px; left: 48px; right: 48px; z-index: 1;
+                display: flex; justify-content: space-between; align-items: flex-end;
+                font-size: 12px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase;
+                color: rgba(255, 255, 255, 0.65);
+                transition: opacity 400ms var(--out);
             }
-            /* the room behind the door: the hi-fi shelf wall */
-            .room {
-                position: absolute; left: 50%; top: 50%;
-                width: calc(700 * var(--u)); max-width: none; height: auto;
-                transform: translate(-50%, -50%) scale(var(--room, 1));
-                transition: transform 1700ms var(--push);
-            }
-            .shade {
-                position: absolute; inset: 0;
-                background: radial-gradient(ellipse 70% 60% at 50% 55%, rgba(30, 18, 8, 0.15), rgba(20, 12, 6, 0.8));
-                transition: opacity 1400ms var(--out);
-            }
-            .leaf { position: absolute; top: 0; width: 50%; height: 100%; transition: transform 1400ms var(--swing); }
-            .leaf svg { display: block; width: 100%; height: 100%; transition: filter 1400ms var(--swing); }
-            .leaf.l { left: 0; transform-origin: 0 50%; }
-            .leaf.r { right: 0; transform-origin: 100% 50%; }
-            /* swinging inward, away from the viewer */
-            .doorway.open .leaf.l { transform: rotateY(82deg); }
-            .doorway.open .leaf.r { transform: rotateY(-82deg); }
-            .doorway.open .leaf svg { filter: brightness(0.5); }
-            .doorway.open .shade { opacity: 0.35; }
 
-            @keyframes rattle {
+            /* ---------- Loading, then the password ---------- */
+            .panel { grid-column: 2; grid-row: 1 / 3; align-self: end; position: relative; z-index: 3; width: 100%; transition: opacity 400ms var(--out); }
+            .panel.shake { animation: shake 380ms var(--out); }
+            @keyframes shake {
                 0%, 100% { transform: translateX(0); }
                 25% { transform: translateX(-6px); }
                 50% { transform: translateX(5px); }
                 75% { transform: translateX(-3px); }
             }
-
-            /* ---------- Loading, then the password ---------- */
-            .panel { width: min(320px, 100%); transition: opacity 400ms var(--out); }
             .loader-line {
                 display: flex; gap: var(--space-3); align-items: baseline; margin: 0 0 var(--space-5);
-                font: 400 var(--text-lg)/1.2 var(--display);
+                font: 500 var(--text-lg)/1.2 var(--text);
             }
             .loader-pct { min-width: 4ch; color: var(--mute); font-variant-numeric: tabular-nums; font-size: var(--text-sm); }
-            @media (max-width: 899px) { .loader-line { justify-content: center; } }
 
             form {
                 opacity: 0; transform: translateY(8px);
@@ -160,52 +157,62 @@
             }
             form.ready { opacity: 1; transform: none; }
             .lede { margin: 0 0 var(--space-4); color: var(--body); }
-            .field-label { display: block; margin-bottom: var(--space-2); }
+            .field-label { display: block; margin-bottom: var(--space-2); color: var(--mute); }
             .field { display: flex; }
             .field input {
                 flex: 1; min-width: 0; height: var(--control);
                 padding: 0 var(--space-4);
                 border: 1px solid var(--border); border-right: 0; border-radius: 0;
-                background: var(--paper); color: var(--ink);
-                font: 400 var(--text-md) var(--display); letter-spacing: 0.08em;
+                background: transparent; color: var(--ink);
+                font: 400 var(--text-md) var(--text); letter-spacing: 0.08em;
             }
             .field input:focus { outline: none; border-color: var(--ink); }
             .field input:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
             .eye {
                 flex: none; height: var(--control); padding: 0 var(--space-4);
                 border: 1px solid var(--border); border-radius: 0;
-                background: var(--paper); color: var(--ink); cursor: pointer;
+                background: transparent; color: var(--ink); cursor: pointer;
             }
             .eye:hover { background: var(--slot); }
-            .error { min-height: 20px; margin: var(--space-2) 0 0; font-size: var(--text-xs); color: var(--error); letter-spacing: 0.04em; }
+            .error { min-height: 20px; margin: var(--space-2) 0 0; font-size: var(--text-xs); color: var(--error); letter-spacing: 0.02em; }
             .remember {
                 display: inline-flex; align-items: center; gap: var(--space-2);
                 min-height: 44px; color: var(--body); cursor: pointer;
             }
-            .remember input { width: 16px; height: 16px; margin: 0; accent-color: var(--ink); cursor: pointer; }
+            .remember input { width: 16px; height: 16px; margin: 0; accent-color: #fff; cursor: pointer; }
             .enter {
                 display: block; width: 100%; height: var(--control); margin-top: var(--space-2);
                 border: 1px solid var(--ink); border-radius: 0;
                 background: var(--ink); color: var(--paper); cursor: pointer;
                 transition: background 200ms var(--out), color 200ms var(--out);
             }
-            .enter:hover { background: var(--paper); color: var(--ink); }
+            .enter:hover { background: transparent; color: var(--ink); }
             .help { margin: var(--space-5) 0 0; padding-top: var(--space-4); border-top: 1px solid var(--hair); color: var(--mute); }
             .help a { color: var(--ink); text-underline-offset: 3px; }
 
-            /* On the way in: everything but the door steps aside */
-            .leaving .bar, .leaving .panel, .leaving .name, .leaving .stage > canvas { opacity: 0; }
+            /* On the way in: everything but the illustration steps aside */
+            .leaving .bar, .leaving .panel, .leaving .name, .leaving .foot, .leaving .spark, .leaving .gate > canvas { opacity: 0; }
+            .leaving .spark { animation: none; }
             .veil { position: fixed; inset: 0; z-index: 10; opacity: 0; pointer-events: none; transition: opacity 380ms ease; }
             .veil.on { opacity: 1; }
 
             @media (max-width: 899px) {
-                :root { --u: min(calc((100vw - 32px) / 320), calc((100svh - 120px) / 410)); }
-                .bar { height: 56px; padding: 0 var(--space-4); }
-                .gate { padding-top: 56px; }
+                :root { --bar: 56px; --name-size: clamp(44px, 13vw, 96px); }
+                .bar { padding: 0 var(--space-4); }
+                .bar .mark { font-size: 20px; }
+                .gate {
+                    grid-template-columns: minmax(0, 1fr); grid-template-rows: auto;
+                    padding: calc(var(--bar) + var(--space-5)) var(--space-4) var(--space-6);
+                }
+                .art, .name, .panel { grid-column: 1; grid-row: auto; }
+                .illus { width: 100%; max-width: 520px; }
+                .panel { max-width: 400px; margin-top: var(--space-3); }
+                .foot { position: static; z-index: 1; margin-top: var(--space-6); }
             }
             @media (prefers-reduced-motion: reduce) {
-                .doorway.rattle { animation: none; }
-                form, .name .l { transition: none; }
+                .panel.shake, .spark.on { animation: none; }
+                .spark { opacity: 0.9; }
+                form, .name .l, .illus { transition: none; }
             }
         </style>
     </head>
@@ -215,23 +222,17 @@
 
         <div id="staticrypt_content" class="hidden">
             <header class="bar">
-                <span class="mark">MA</span>
+                <span class="mark" aria-hidden="true">CHLOE</span>
                 <span class="label">By invitation</span>
+                <span class="mark" aria-hidden="true">MA</span>
             </header>
 
-            <main class="gate">
-                <div class="stage" id="stage">
-                    <h1 class="name" id="name" aria-label="Chloe Ma"></h1>
-                    <div class="doorway" id="doorway" role="progressbar" aria-label="Opening up" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-                        <div class="opening" id="opening">
-                            <img class="room" id="room" alt="" />
-                            <div class="shade" id="shade"></div>
-                            <div class="leaf l" id="leaf-l"></div>
-                            <div class="leaf r" id="leaf-r"></div>
-                        </div>
-                        <svg class="frame" id="frame" viewBox="-30 -26 320 410" aria-hidden="true"></svg>
-                    </div>
+            <main class="gate" id="gate">
+                <div class="art">
+                    <img class="illus" id="illus" alt="" role="progressbar" aria-label="Opening up" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" />
                 </div>
+
+                <h1 class="name" id="name" aria-label="Chloe Ma"></h1>
 
                 <div class="panel" id="panel">
                     <p class="loader-line"><span class="loader-text" id="loader-text">Opening up</span><span class="loader-pct" id="loader-pct">0%</span></p>
@@ -260,11 +261,13 @@
                             Remember me on this device
                         </label>
 
-                        <button type="submit" class="enter label" tabindex="-1">Open the door</button>
+                        <button type="submit" class="enter label" tabindex="-1">Come in</button>
 
                         <p class="help">No password? Ask <a href="mailto:chloexy.ma@gmail.com" tabindex="-1">chloexy.ma@gmail.com</a></p>
                     </form>
                 </div>
+
+                <div class="foot" aria-hidden="true"><span>©2026</span><span>/Designing since 2018</span></div>
             </main>
             <div class="veil" id="veil"></div>
         </div>
@@ -525,6 +528,9 @@ window.introGarden = function (intro, colours = {}) {
 
 </script>
         <script>
+          // Wrapped so none of these names outlive the password page: the unlocked
+          // page is written into this same window and declares its own.
+          (() => {
             // these variables will be filled when generating the file - the template format is 'variable_name'
             const staticryptInitiator = ((function(){
   const exports = {};
@@ -1124,10 +1130,10 @@ exports.init = init;
 })());
             const templateError = "Bad password!",
                 isRememberEnabled = true,
-                staticryptConfig = {"staticryptEncryptedMsgUniqueVariableName":"db97ac504648c91701b06b193fbf46414b180e3eead57eac03c074d70cd35740cfed2ed4cca214a217c35413deb2c29b0b14d2f83f4cc2adf59ccb92c640bb21123395d4bc5acc0cac2fa66d8c2126e2af6c4bf7dc16df113ce4d17446991bf756d92060d68afbfd83fa7495761d7a9cf4a7edded771b0f8a10064a29974709c27c920f6c645ea157d28b1f0a794445651dec829bc46dd265b94867d9c7cadf6f5a11846747ed74d88df60795d6398c4f69abcbac7e01474a989ffa3b050ebdc1b2cc81324f40e997bf94b2afc5bd11243d15772c15fa22492906cbcbc6a18849e1c7620fc2365e29b55fd7c1f7cfcd62be09882ffcb47f06983b2c4041b6e70e238868d49966236de5f0a6c7a67292dd92ee8b258c1ec37db2866fe8073f23ab53436cf0c813ebed6a8e5ba2c51115882a1c05d8b10f70787ba960ab94aaedc48547329794cc522c98c0f0e20bb4287dc81bffaef789adb91538bb1c88281ff684f342942739a547f9062a9a3e6683878ad49cb4fd0c380b8c524a8f34f93a0905981f59b368f9c58caba913bae0efeab5dc1978ad8014861f9d6be083d9d6e2db0cc15ff060329f8251ad2ec6c490a34908c4c4885e59c32ae3d61d83c39c2db66d7e701cc96de42a0cb4f4a40fe67a7fd6149c6edd76a0d5f1839e083ed970ae9e7e846ad8f0a22b2da237c205a08abb94e60dc274fecc92058f08066b98bdaa904ec6264de54b7bd9ad9a2db00c179f214ccb876acb53095a785c7faba061d10a4fbf02abed9d013396fb6d75c7f23aae45b1e9953b2fc956f07c2999d8944b7555b4fed85184f8217320656f5b81e3c9d2e6a134afa8358ccd397cd0d934583d9aaf439f03421d1f29b9909c154d0547831205163e9776925e2e791c5cc6098be245bf856cf66f68a0c04a7b8e737f45538c9e2a88057bf56119edfb2da1a6ae551cb905ffe4f4a1320a2453cbf94520c72cc597b7e485aa44728ba7d8286f16f28880f3b5eebba97eb8d9f176207b54159475bf8a9117dad9ae5adc2ad8d8fee2f908038e3891c64061ffeb6aacf09c63942dff8f928c2c1828f40635db58a598a33ca346c2111dffb36b14bb714d2e428c7f930568730c20cddd759434923ce4602b6b3381cebf859accc625d8544afb3b493f8ecbdb20396ecb266374d1a15fcf5e50210805e6f3bc8d376966c0444fc8b54547f3f61405ee2e9bee795fe2e64ad17ed65c4517876d7e802cbb198bc6c0679c76127c3f146644db31ca93e344f5d12da7c080d28331f8a3df3e2a78b02e23fbdf46feb0be970f2ba1b2369f67760bda7868d2c048464fdad57b5228d0c31abc565d4e44423bffa3f972780419466db21aa508218fd882243fd2d3b6b5a230cb823a29d0c665923177d26c08efd9ac285a300c6790ef48b8bf05a6eb1a80074f44bb2adf4e51a34f01dcfc89070c40e91bef44cb4087e51cab358d171ca5ae942c5ded6aa0c6c91fb41c51c360573fd820c2d04466ea8a8667fc6e575032d6e5431d3f147fe4523e173f34b7eb29c4a4438e4885f65321aca0a02bb01c32365d4a07acaec6383a72f139b879b56f807efc89095eb923346214a3688f2224eb80f6edde8eec827cb326472e73b1b2a8343152ee17e2e012e4b5bd8b0ba7569a85f4a02de99202878e6d3eda72c07d3cb8ec1920fab59398cf1f46d598e1be6ad027c51b270641c111df7a0146e49753cf1b56550c8ecc511ca3e6c59254ff50a48bfc68f788cb6afdb970a659d452a22b21cd6ff7847865a1950051fe712e2eed5a76f6722d18f6879f4bfc8b65289759b6ab7223c114f1d3fecb6072f1160e0dd2550b05ce44824c0c52d2c0474cf2138ffc5270ed4a647e72ece25d5676fb770d00684b60ee5edce0a55cade10065fddcf4058ba19248211d40af13bc7b1283ef37bce11335ba25dab0968c7d65280870302fe24081344ca988af794cb2721b3b586f825816d9d98dbf556e9f3948b79ff7ff01b309184a8ec4357e13c04f3cc46897fa2750c8387a8843f6279d5d386fa9f6bc9ff17a700406248ec7f2dc1017432840dfd14655322fbf00125591689ab02e02ef46770484b73a05edc13c4dbd25cf9a1bc10cab311040e88c743c64488c75132ae31e7685778b045f1a820578908e89bdeecb6cb89bd1fd6b7e3d05afaf88ba55e40cc610a30f3f034748ad5e2d297d6ee3316ee0f9c182ba96a91488ec36f2128664fd5b2c0107dac5ed8f425fde1951f6f5aedc71397573c9c2c5b8c50127207584c8e92f5dff4e9e25878b906ac9724fb9f0cf29461d192751e4bc4e738f86194234158b1777537f1a2809e55304b042f069175ee451c4898bdcbc33c05a9d7043837d4ce49b4d7d688f4c0071902e196c74ec17ba5fe96c8b2fffcef1bb97652bac426053c4f06bfb833c4ec5218b9f0c2c6aa0406a24b8c2bea49ea12e9de081ee6c7bc0527b9a71a3c37ce27d27fe0d6130b68ae77a0a80f0a81004548321b9eaac62623f24a3c58133b4842677e9f06f9a6cb3cd544c7e39686f078cb4f60fd4cd258f44741083285d022462184840c843e5e8549e22a1e4aae7999cea4edaecb81129fb88596980107ef8a805eb001effce2c9276e1b1c3360197157b31209b3038f45c737464fafbbfcb2fbc43f9b83ef897b370ca662760cd5b40b563d84ef94fbb225677f63138a1ad4a990c5c34629a43d0f62a73bcfcdfbe0ecf6b9855c9ea83a40c808c0eea1c8c270973087eebcefb2c989410d2ee82c0ce3fda3d2ad16c84582bc83296663d0c7521dbd91765d1fd11162f5db606d3eb3eeee7a3b446c98333e81c176558842aabdfbd6610d2300202aa1bd2c9e9a8de42d5862d20e5c63b3895377d17d1533a59bf3b88138c802bce97a5d627537bdd60ee36240b8d31a93f88478211c9034595de4172ca417be53028a7c93576eae064f7977d37c5b58ffdd178ba2bd5b86d26b08405187095475c0e75264c1c7068979cbbb17f497e760ac52da65fb4f03ce49b452239c4fc460375069871ca14ac196d47366a5bf0052f1829b496c49cb0efe426b1dd1b41e9a7297a0bbf013912e3006f696472b63701ba3d5321c5ba373782c5bda235bd5e4e6551f9279f3bf70e1fbb8c4d83596ba16ee0609d402eefde3caec60b7f6ba64d66ebb90dd44fb87bbc9916d6d94021cbc61a8dd1df438b258c287afefaa29440e8ffe24e1319240879b2bc298aa895d9c2d7a1d36a238023d3f4d08f0ae1472830c6a592ea595f28364aa56a7494de1712a0cf8ab49e38777b79d3310928e827094527369672f74c74d9c73934b6e59f13af3e12dafcacff3fd5d0e402c66c8093be3dc606df9391bb193a391a290b1c46eee428205060623630d04023b41614787c4ad2f30ade8434cd2a6a4ea654a62d0633a4691106f10e07571b586f0498dea0b9c65b4cd1def865dd416cd1c2088432bcc2bbbd1918767b02facccf3a3f9180e044d2c83508d105705a2e0e25ad22d2219b28f5d5bd05709ed7bd9bd9fa0811b5a2357fe2d0da591450994813d00cf74680da87c2e229179b820465e41d86a2f5bdcefcec7f20dd7f48a788dba846885f50df8988032af79aa6e598671848c6872e527eb43d6a093331cd5d8ecdf74eaed928789188cc8775937a14b4aa5175ca224558a76d6b81dd7f943e67df435b535e4d8833aff1b4cd2db18b01b2b9b4121f40043ae45729f8d3c13a7e3dc9b138773f59ba83c144ca30b303e0b4669a7e97f12189a06ed94543c266708916869bb017b3a22bcf9b37e2e84f182c4df13788a55e89d852de14db969bfeb68edbf99df4749b44eddc0b5c5b75d569afec35099739e9d7ca9d80b1f01adbb874211d6455149903ab5863f7d16c744a7fca778d0fb7c68c20f8c61b9c0229bfac14c32c0ba334913eb79acc6a52c317a83c437054a1c6a2a5dd2d55774e8a9196b1c567714f1eae9af3d3c42bb45dbe595169c784bba0702b676980b4f4e6680b08ff12b29c0ffedb983f46586664e9d638254589caf871cef410eca0482d9ca50ec353bb92d56f2f28691fe33dd003cef9b96bbe69cee0443c09139ac53cc793f8bbef50ae69f1bd1392acb81850d21ce62d2997bfa9508ea2218d64b524e8e99a355d560598676b8ba74639c0d853e3346e1e6e508c644537a03f1afc7873707635b9cbf852ff836fe2fce089a21c29ef7374cf0a24b1d735117cc28741d1e54cb6efe621e301d1b4f3bca9e0a7924b1023a8759187029c7b4912a0b6d11afb45ab4467c5b27ab4c46dec12b26020ccd2d480816c3b322ba10d98d1a494f8591fb6f81d7ee058a4fe6b0f3e7488ad610c129798f8e6203bcdf005721eec858a40ff902d739d507071f2e29d3ef0071203851fee2638bf055031512fef10cafb5f613e78210cb8e43d4f6870b1b42fa2cc6d8df246de3492963598592211f661e11c570cb9d8fa1b5549bd97749e937e68e69af90682ae0418e51c749c41f430aba93987e3c8579ca7317d662725cf4b7764f074c48e624cb8959a37a79f1a04910ae8724192251e1d448eba630d861080bd6ba4ebeb6a78cb5e2fc892d4cca10ccfe22d0ef8595bfda86f1c2fbe329fd5d633b80e2025225706f799d16e9afa33e7753675143b76bf0777cc5bac135d446cc7fc27c1108b9f33e28c6705f83cc0fa4e7edb4bdfa834cbb67cec3288d07dc49297e250a3e5bfe4a2f0e869b8ce159fc99c547bc25954383c3b5387c36f68bbc12f05f1353e76fd144ea8cd970426bfc8a9bbcf00db8476841526a791a19dccfaf3c45460b0ff77fb182ae77147e345221f61800afec22af9bd715a329fd7ac494e85a7bcf2c8b4eb3a1da2ea54e3a012d9f393a02443045a2321adf28ce52470b9a6f53d87e59df36ff4035c1159c6e6eca152f68e49228574b5807599facbe8be55b2a1c6cea99a8a460bc99f1413a030fc88f5c0788d9f1b09f3e820d89ffc10475af7ec0f053e0f4db2141e45e9c0b4a09ea3fd7a3387977d8da013280adf8ccd3b6b2edfb25edd8e51016a0f661dc28bd0f108515b3a32b1586b1a2f1074b31c29f201764fd0d2a0196bcc980496e66e70487758e04124de7b0fde2529ebc94d68695aee7f2ece65169b93462b73a589a64f3495b7318dcca9958d74b34d228902d3011b6a59b720c47468767a46d7cc73c71eaed461c560c3ca3c0a089bb2acce193319beca53ffa301a0ec416edb45a166432de2f3ea3d8c30a8c11d23852844764f4f2f677ddd0ff91e6222d93988382feca17a9e005854451291c9e62c3a7857220684b4bb909e95b6049d41145cbb53174c88aeb1ac05b94d95672db294f62e25f4794ebf7c5bcab30ff3a635c0c184786a93be8d1a106ee51dd2e7fc35a315c2219f3bcbf08d23f66a96172a8143bc923ae55ecdb5fec8d5e0e53811c13e68a1512636a0c5bb3a24be40a7d0e2d9d7536421451eacc5a4048a29b2c660374a82b7006a17a08fbd98f9913a31bae65a08a08f153e5c1e1938165cca167832ac5ac0fbfff0568ab22513b27d6dbbbdc76f4806f31ab35c29eea33fe2c7ebf2cd68ec58780756aa9de95fdab278d7318130c147503705898cc8e3858ce459991ec94390573cd19810840f8e5cbed58911b04e5797f871048a318446fd23edbd3edc3a1461c52dff524f383be4bf679cc762fda9bca6fb89911c5a338ec07fd910be5177fa5f8b8568f421f594df981d14dd394b894a52b6ef72c635f1df4d21f40a0e61646bb3bc5ed5df37319fb4a2fae3c4dbd9f42b4ca1ad78f662e6d6c0cad11d871016ea09b782096511ea34f3eb4277f41bebf9c23874eed88c4717bf4123d6b22498bc3a72fc91c2545488bd326aaf7c49efc865c71ea7790c24ebe17d8f3394860d41d24470ad4cc4cd3c80b82785e0968c12798e8f1c558dd2c52aa8f8b218cd07e0bc6a58274d6fec46574d8273d43713b48db6a5cbd14b143ddaacff7199074b93c8762fba6ee6bdc990c04aab6dbb58c8aad2e1a4714e36fe95178965bf8e3a6d142514272aa2bccd961add6c5d4be8c73bcb9cbffdbccfc90090d12e99ad06e0f84ee073ad26486fac6adc63370868b673a565181292743ab4a40ecae30494c55e1d9da23221d26fe2bd8f2558b6a211bf7f4ca1be8b19852c92ae235b85e3d8b206c6e471d11856c952eadd8d8d4fa91ff409ac7b2a264741f2931717cca6bec342f34158925de298d46e6d7c9e50c4d3a2c1e90d8861a774c3a55d77214ab679398724b14017d1fc614b7f9846c118c340eeeeb494a1f73f1bd7ab7b80af52da9de3288a1bc09f94dc4be3ca3ec4b33ad09d9c2de73a3f1c850f79693b17ec154ea3654977fb72ece94ad6a232c1df39d51348c9193cc371e7d453c5e7ad00e22e97bc9fad19713126da3c2cf0f6c0d028d85211cec9fd952c7dbb72f9d7e16b043a20145aa35ecb35c33127892a82d29eb582ad5cab4ef283042d2abf6eebcb67cc0121270c31a5c6bff35669e4d322aad6ceae26b88204f19c8a8a6ea1f8c305f9c1af6a3e608e9d964cd0e197f4e6071bbec6e6401e4cc1c81efaf92ed0b364923187e3cfb6cfb01a358b7f4a6ae02506d348444d3911446b2b6ab00e6fad517f80d1524a444fd148b67fe93cbfa6a22a4965f34983fa1b59233795c4dd1a8eafa32be25fc92ce5354f8444a66983e50c09f85b9548d0739d324ca280bb96f06723078a875747a29cfd12725b91a239b4a47a4ed8b0b61f05f8b2681372ddbad47d9ceb80771291113274876638eee99392d0df1a4caa99e29ab21d016a2ae837f04235079429dfdeb57e70e840ac189b9e6825c5f3fc673bf1e9809db92581418e5a34ce30f952ecb24dae9722021b82c89c182c6ff2e07ffc69bae04e6ba3bc52885edc0870c139eec6cdda47d1f814af1ad85b7a464ce523f61c4c11add88d3a8b1f5867835b92f4f70e8bffbd5b32eb8446167d9a98ed468ccfadc05277d000ac4e8892d2c19fde552aeeffc7fc84edf35a1ee1fca5da91bc375f352cda5ce05110a58111c624cf165ae676b705bc9b48c0f010bd6d26d39508d23c177fb10a07b7b4b2fa145eaea24f23651e941e1a3910bebe3cee5ea2823d9d0ec83b90e1c8b422a68b30125edee2dbffe52e722b6deb36a2817a7a78a04e34f668fc7eb9b2994b184c685dc74869a86aedae96e4b19584e20ef44a6772bdacffaa7d1dba7a1f36283a0719f6b2c4f662912cd98d0ee8c40c2c7bcd1ca4263e4bdd8b859fb23c1a8351e3e0cca502c9073fb25c84dafd6a9834bdb08ee6e073e2e2379155cb839897957e978524639b794166f684d84a07e60bfa66b25a34a412c2b1f3eccafe6ada13af954e4267e04d64ccf38b648b6955b51b540849a8175e96af4a4cedbcb7c9e1c65d1edfb6d41e614b1bcc85265f13657ec36985b7bcd172cd44025af728b4e0d199454a1758d919ce61de4991e5c870093a17f716a15d75f8d95173a5fd5294e342cc4178bfd52db8a66c0c5e258673f61d290080917435986f21aec90b1bc09712cb409b2183dfb382d7b5d6415d1ff7d2f9ea469dfbb704f4f541cc1b99d44f84150cd4919e00f28387f3d6414d98fdf2d402b445e9691fa40713514b3c41c450af5eeca6ca91da059d6854f6d68cb5b6ea68fe78cc542fbbef20cbf85f02672993ed8375e48089a65a32a2f55c29bb5785dac68ccd41d379a47eacebc8d75142db999b510ee73898d2363ba8008e6e7c5365cff498cc199095d720349b6fd36beb41a07576a8f86757c7fc3e60b2508975b52fbeac2ac1f37335d459d1b940940b2e42e8fc9bd7d9d34a5285c7daa03ac0562a4192c3d8375cdb5cd5ca05322910970d5bd0738c4a1300106bb45a47d7b6ef9f9733fc2c2ab99231f0501778186e1743cb28671fa397a20e776e94f4363dd6febbb273f302bb6521a2a641adfd45ba0b9798b3e0327c77cb1f82990775a3899437441a6989d37648d5833f08373d09cbb4cb566b0e281a5aee3978ea984f4145602143fbe5ab97c5a2db8cb860ed4f8a8f1ff7170d89b86bb99569052d99da6ee8fcf58e3c1fbc0b3238b31df0470963d8e8cc12431e4c3c4350a3bd0bbbc8f2589","isRememberEnabled":true,"rememberDurationInDays":30,"staticryptSaltUniqueVariableName":"ef5aeea5389fcb38dcf9b27da875ba41"};
+                staticryptConfig = {"staticryptEncryptedMsgUniqueVariableName":"bc3778a280ee7459386538cf9a4e34f1102fefd59f26a9e9da009e27a7f6d69080e309476d6d1c59492fa478a7e639f8e655a84ec21e5caa1d34188142ddfef546a84e08a09191059ac98ca68eba6e117c62bd4586818b8f920f6fdd34956d29d4588dcb41c07b007501cebd5e042b8ab22cf425dedc21145adbe38d3d8ce426c06528110fabd135290b801a261d8a4535d164070deecfde90ada661f91da1bdc92bbb9268d3e60ba6c01c276b713d1c1dbc6234deba8c1ccc6a5f4564e03bb028720bf8af3906c8c49f029b01bf3ea204dd969b6d1df1e587886d4eb8f692ee7aa0dd558e46f3b218edd63e0157fa8f9f0abc96a38eddef548329bb6ac63d359c7d31562de8ac8ecd9e8aa8d41e4f22fccbae5cff0f25620117a2cf907457a1243dfbc42aebd5be815cb887ce3503a180374b22172771660b2fb594ccbfe7289f62828d3aec4673c21bab7d3ded447cbe137e507da4292a3a58672f45517813b883aee9709d504bcc928ffd040e5c327e74bbc1c16d16f0280332ff260c7b08acde5ae3873efa5275506eb127a0071c1d71cfceff1dd55ae6580dffa449c7596069c9e83048e3e94b50da6b4b37d6421ce358378f5cf495fd6135ad732f203e1be3f460ba5b65fc7909910251d315e27c6f025cf5b3182e368154ae25166e517604610ade3fc16bf04a70f11bd5fe19618bac1eb95485d2e53ac3788f10bb625eceb9c6bbd87dc6ca1f2b22e6895520fcd4a59bb93777ec3238f3377870fbf4ac8993052c96aefb6550cc7c5893e5692342ca0321a70d3c688c9cba43fffa66b0cd0403b77fe0b1cf99fa9cac5ad2a9af280212f32779c41da1eb9b8871f070921b76ab4fa10c9e3dae35d858f3dbc48d88a3cec48aba908cdafaf8cd69928ee30a31d9020ee57c57e02b4a5a8a961c209f9f6f0a6ea056510978a7368688834b9a20dbc6601068f9d9dbc18268ab0eb1319096df343f91cbbc28f9baf7161c19fb99c1540f5260d86576e25481554c4cca44f6e5af8cf058f48009c69f46b84cc4325c39b6e208b02f3c462546f07886a227911499087bba31e075bf6c4bbbee08052bc181a69ea93a9bcccef782ecd763bd6ccc29e1eb69b8bd67958108b4c8b366ae9344664f5d462b119a5bb40751b6a503489c1dfa94d32c3790e043184753f0fb8d649f2220e620f50e53a244bd64c07f5bcb7a611a8957a489896a63776a51bc11505d27a84491fec670d469081b31f34ed0b9b821f1026d312c4be6b3115d2422914a0fb47a94dd137ec8fa19ec11c4656c7fe878f7ba2ba6bb04c80cf75b76b6210fa3cf6558879caf3a6724070ca08d8a828e1360727155a1a1c5569de63319853cefaef51bdde532ecde385bb9c1e7a6d84a54c91914e121a244a425905ef3955469707e8d2362fdb4e5995c068cc00e83db705d7c3afc1b504a3b15b76e2c6486633c3d5bc2d2e33117ff61dfac64f7c6974c84f5eca95e6fcbf13b3bd6386822afa3dafc614ecabd87804875aac83d60415881219226ef6336b445232c10bc25f04cf74d438174f00bd07085dfe44b3b864210a8946c36e629c77e5112e4d4a204cacfa16044cfdbd1c9b9a7abdce2d012b400760d63dddd531c1793d8e0d78015fc93147f415f6143d7f2f344277b6058a0ed0d8efdb653b9e6a3d5917fb36c1721c5440cfa1ad34f9582741b077865f5de0ed5bff7c388a652e5fa3e66b99cd5d097813cb12cb467cefcc234ad7bd02c2b5a1e56f9e918c10c72ed157ed32079020a6e3beab81ac0c15c2ec911ca1e7016c26b19c94b09fd1b00ede89fd6b0fba2f74e931391b538306a221df35b3739b6ed94f74fb2298ed23c00e0699dcf2b7426832fd1c8501ef216bc1fb53073a1de0fb6a9c8aacc6fd313622fae79383dacf4d9a865f06e55db118f6c9eecb92d4747c722ef8eef8cdd92ad8911320a9758f809fcda21d06f11b4bca2828b0f8920341e9dbee409d4eb64334eba6572dfac55c20cbba649008dab5140641165f185f884fb6ca49f22ad2ffb4997472d93f4f835debfd8d26767d00fa5e4ae9b74c7c2bd9f776cffd8cf2f6409922a1defeaf0cf3a46cfd2a6987c76907736cfc083ac1edfa050b9657d74151dd4825ce0ccd983fde8a7bcc7cb07fadb6081406fd21f592fd08525f18725709d571ad0392eeed1d8cc2feb7b008a426eba094034001e0e652579e211baf78936aac163ad5d60e818e0e6dcaece2a90338d98e07a9f692ca51d3df757d4bee1fd9fd94e4d914d9035ecec5fb5502451e8a5acbdbf736c0853ab24243a87837474041481f044a9bf4de05be63b5acf81906dbec704984df179f619924639df9415ac897bb09e44ef53531e32f307952b6c31d053ad7530f3045975227d2842ce9e6ea7de147a0532867edb2eb09a3cdf91acd61640fb1e77420a37ad2d979c112bc6db7ec1cde4c008f58e692b49ea51147ee63569566b054abc3ef291d3acf5fa32868061a65bbfad55c416ba7ccc558b0435e9ac1e7f8466011e2a7c6466259b4f8960a0077c6c33d8c75fc6b80f366dc536dc7209993c9cad82a5a8b7dbf8dd968ac4acc57f06bd55b8e906a919dc0766ff0a97dc269c6de661a367ac1ababcdd50043b6251d4b4b3bc36385d0299675b2e060f5f0a0089b52b16a85f1a96fff4758fdb390c2cee4507302a6902cbc244cd4ac6d0a42a115f612733ab6a96e93aee39cd28ce36d730e6cc48fdda3e8ea1dbef757bad4e521eb900b7143e35685de536359cd149e62e3b1fd40ad26e313f46d0c2c3be47d7205d9f3fd82a3581252631823f82fd58acae4f502b97d9b545a65faf0119e2fc88a9509a16078b24f4fc3ab29eeb7b3db5f827b721308218bf9e489c62a59c32129c4f7b1c60c6c2321ecb987ece3545feb33ca17c2d87e031a554a029dcb1dc99cd57c89dc7ff13ef16c3ab3409592430a5df3395b32c410df736e85745f76266025f5f758fe2c04d53fd3c4f52b4273e3b937dfeefce44b0bac267b851fd62f17b58d4c0015aa3fac06f3b783e0b715c87235a11051f532b14525f4af4fd57cefd7d92f5f2e1210044d5c036c15b8a50dda8d25807431e9e38d3753304046a4acecd3f27443c54975c3e5fc68e2a62311d2623c536c5dd7855da4700ff17b6ebd599b5c38212670782bcbd8883b59cbff33d70d09e6741f405d03ea892a598e5c78864a3bd9c9d5ce669fad5aaa8d88dc25f82c0040425c9f6f074b95ff87605becb242cf1996603081981472221a24e81ab9d43a9f95fb6f382732613065ac5d116a8ef01e9cd3432e232fac0605f3f2c7588f07fd1f0edad526484b21fc81b5a89469811e31c6c5b6fdbc0e04af0c722a19616a362a021ba3593db081e5f86d5347e76a170a36d769c6988e1919e96b92a36636ccd8d01f18990b258b58bea29419145ec6387df0ce104fbf71a7813a9047c4017569de63988845aeb0257c105640373e498b18fc6c546bce30b84712879c178d5da59fe279754a934e524f06c45718401892e913e64ab9aa85f45f587b260212360c5fd9a29dd24c1e41698b2513f4ec6e1caf51848712c71c86921a2483969d158d24a690bdd80c7e347cd7dc146f835dd2f05efd7a3e82bc139ba381d46361973e1e48bc9676ca89e089a571306206955cb7fbf676ad43484a330744782d73668f0e3d024b052661c6eec68896ab4af16609e7b1d61458d1c6f6dec4010725dfa7ebc56c31aadf16fc2fb61db115542e194c725bc168b6adedc2ef57504a27d11e2575bb84fbb3a306dff16417abe62fe8d09724aac2ce825637f3dfff876f428d1b1ff1ecbd88e11287e99ccd234cc75c50c77b3b5423a1a486c250d982c04c6e01792c0199ffd1408e4869ae6c426559106233b258b15029932058bceb3ddd4cc16bcc5fc0c546bbbb8d7767b003d610db4c0b30964c81e8e12ab0ab5b7334c522a2446bcbfc5def183155f23a07263390afa10df74dbbd17194239fdbcf6a39e7e60c7f27ee646416c7fee881fa2c86d5c91b2ee85ced379b7642fa2c251ac2fe71f5f0f6599414311f326f94aadc9d39af8efed257c6226045ad45fe4ba633171533e6487ee727cebb9ee80bd561d715d548a996f7e4639b0c5174cc911507ba1ef0d0e6e7e85929f587a8c2ab34a652f139889f660b0b6b984e0bd09b057fb1ab2e0885dd8a641f3ca0fee4f3c469c89c4fc3281421ec0a38545f5aac7fdefebfa092c2da5b7863ee682ef496897706d8a14021abfb1819836fef9016eccf5aca43ad1d7d2703473bd8674cf436fb11ee307904e775387036c150415f08ebdb86806e39df274c2481bfac6c35eba99d3f9bc774022c4bc52ff4304e034c617186db66031db1a549a65d4fb3dd8c9efb09eec86282e76fbbe5afc544b19fab3c24ebbe0434cfa4f0cf6b514fb132a67f1b5f7cde6b6ae79e8ae60cab5ed2d56a367cc0b060d4dc4cb485f0639e39d3ed12392f4536b490626ea0a7f6fb41df8ce8ce24d2afdd143a1c4eced8aa208559acb23131b5072716d1532094192902596316bc645419d3538fa9793b2c97223c461d5a01a4fb61ce21e9767b48600979e31828d35e5da258fcf192753af138d7afb2cb4826c2a3ea27276bef68c641caa16d40fb4906b64e7dd55a4014fa5c9d31f42b7dd3ea1d03b0323b6d5be6564e9e234f6e57cb785241b3854ffc6d2018050803f4527c8ed12ddf7e0dc82391e1688547d71054153c99bd8091970de1026712f11d061d1da1b09f3439bdda68cee8e86ab580914c6f033c9a083c038de54c5d69874fc106a953ae33878b911d2ab540f11ae890e2c3b4e72352d68bbb19edcd53b1ef9026f7c95fbf510df5c77aace64f56a9a570eed8f2ad0840277c0201eb8c304180aa6f0daca3bf6885c960d8edaa64f5b39432737795ef6d1f66ebac82c384c889a91b7c0cf56af1a4e6a479fc4050841e93da23d140d3e1bb37d27e58decda5eb4a9f4849f3a8adb7e81e10928350b5cdb40f088b7a2cf20edc90ed6f18d30b18fe5fdf17f2cb501d7ec7fa1731153ae920385a9a99d1c80dadb4029c208ebb63a6aa4701d81168adb4928279bf5f962df59e641ddec86cc92f9ff15a11586bc15f78b8e934d8a44df2ef7392963fb63d4efadfa4bd58f119fac1f988a74bcbcf3c4ee3d57fae8813f19d89258ae6e227988ceefd03850125eb6b67f00e3ceda90dabf7928c3a50afe0d528b2c4dc1ff0a9b7d6743b1235c4502f11e74f147044d1e0ffd3b84e19f48eefa90790d197040789f2f7780b9175fcd3c40463aea50ac321b7c2e157fc98824250cd23dfcba1d8b51ae999167e15592a3c4883cf216068e3046470fd0a4d7a6238de0397e152366e3f0812a3e00e66edf2b6047c0c90ad520c74b626bc9ead3703eb2391cd8ea73a166cb6267f9ed3ac50b299c12f363ec1220dacf79fa42bf281afdefb8faed3d6403b231e9f51c6bc009c353442198784b78a23fd0af3eded4c2444ff10a0a6e441d4a834ee7dbc45c601e395fde2920a220558c73eaf81690cd5714bdfed7ec27617dd0bd03ad8699ae59140f7d1c372579f63612413082c4e2ce660c758173c3142218a3b92d2a5bcecb18dd86a14ac99d36b7b19ea3ffaed7a8ffa103b291e1be183a3edfdc52a004f49f2f0bdbe1edd290c1515e38450dbadb24c6c8e94fd9ebe5e5dc330be5e4b34cdbeaabd5569796afb686a73d046a82f85e9382b676a6934b2897b0e5e2f5eb2e0db97591a14a748a0daa22f20dc060d266f1a3bc9b54148a79201e226a51855a8eb15e6a1609aa996b82e5af83486c63c4396fca8625a4921b8c050262a0598a2b4a9828ebcbabad3f45aafa9d6ba552344d024fa68eb0d29b244383a9d7327bce2c74fa806ed6440cbf3a51be5851af1762dca0d84a44b1968c2d1c3cce37c8f32709c1537052c52dd832f1f7ed9857ffe6305d90a4b2f2d7b73a8f89da7b4ea661024fc4eec3868647103d5e9726b868786f96b2f695f279d37bb2a18e4029ce10aaf794dcca41a85f47d8c3fcc443c182a4b32309fd56aa8ec486e863823aa604a4b1d285f5233fbe0424655083ec1cd318e6b0605eb074feea8e15862c29ac719ee283c5ffd8c4e611a8eeb319b4c29550751b4df5825abd680d76ff06c7f8041bc8a150ea35410399eb280217ee0c7cd651c23d702bcffdef2ca327e9ae648ee4054b9ba5c9e52dd03d4e17f3bc7efac90cd8dc9d265cfb6676e68f477eb1f668af564b44e370d61157de021f364e94b026603c0f59a3eb87a6508dddf5b34ae245dab069fded54d4e0beaa27afbb65924960c34f4645f4216b45b9306481b9bfc619d64266e23181792a6ab2abdcec8aefe4fe8d7bed5cd1837c3f9eee37712a7579a58171c6ab20bc5e7a3e1e8308e74835734ce30a696752197823c1ec1a817175a421a7925088bd4b2eefb36d26fb06a11407477f7e4411525bbcaa7afceb1e97c3328eb363f8c14a857277707f3a516cf637ee56ce0b96b1cada3e3fd5e72b4873412b5067cedb16f71b54f7d723270c653489038c8730e9e2dd2d5b7a834be41fea2497cb0758164a3869888fcb07acd8b82aa29eeee7c178638f780a4b1c691a4ef2f2a4a724a85a9827769238d08d2c7f5f62db48f696c6c457d6d06e197d1171629094317e6d6b8e7ed3bf814cc477af3b69cc3424217e1ecedd614156a99b9cad31a88e03bc69f4d6375813e3d02f762610c78fbb62499e6c144cb4460e7451d9a675a0a24be371f9d48fb43b633626143122b2b1f32eeaf16698b7c9604a684ba88288128194b2bcec181521aaba816dbcbf91c6b320b022df93bc1f838197b76c7d5d7a3853cb157c3b295d238abe2f3c2e725c17300acea7d45eb2653268d2a203fc01ca8b81408a89f096097f000633b6994f3cbf71074fe201b221a3214423fb0a2fbee47bf76e3595d0a9747791343405eea60f9444604e5a68049c6a64638720554d269609541456168eecc68bdb4ddc7ab7e595dab244419e7ed5aae7c7560bcebe2d876cda29cfc57b509d4da1b2b1e681aa4a4e3ff7a05b38680464915b79cc504ef6a96dee8a34fa46f2f5fc23fe33b65a47c0ae668dd1628dbb8d02ffb0fab8353fc64ea1803b2ac09d9a8376968f4e474305dd80bd2029a26f733343d52fedf153ae8bb727b5c0d0f5ae4166c254684be2a78abac14a8c3977d25a14b9dae4ce1dadaf366488d1a2cb69f77cede9f02aa89615d66ea07b6978d9081a20ce18edbbfdc27bd228be9cfb20c3a67e205cd5864ca1085d30b3edd12c2cdba79f990e3286d24d107a38c17ea24c881c829fe778fb04b9860267a5d57dba5312cdc36c3ba9af6c988397fabbdec3cd4070a175ce1c80505870542a96487ba5d5b7e787b07f7868e2085c5b4f43cda603f29fe240692aaa091d2c4af63ce915762d58eb9ee0ddf29ee996b45141a2aeab6f61c70fa80b8e3ee1f9dfcc34f6011708795f1d3b903e1cb413f3a416d076ff7e7ce84e775e47eca43f7966b0d63fc7d677eb788d26c8e17e71f27aedec4894524422a5e8bdb390d436ed54ea144de856966c916f4562f1d5025e3a92b1dd9cc75043cf2fb83a026f87e0ac49970fab59112faeab7b52de0fc40acf8e393a1646ac6d959b5cb05af8f1726135ca52e664a232267aefdd6007bf28b604f72e2db7373b1b6d443d8da1a43c80bfd3c7d1fedf1cb6f3e56c4f628d6e85dc0b82b39041e9470093887c3a0a93290d84be9b0122b7182270b6de55ce1fb251717a8ec0aea69d5008f4b9ae3ef725c6c3df7979098b80a50344474e97b84b41afafdb2ebb9a90e63f41fff7d223d0507c1fc7fbe84e5d494f620464057b43076ddcd3b166c15ab10335581fc3e13d96822f1006d0aa9002ef45954f2dd270c1b21cbc6c60590d87b8033d099924734a637a816fdb18cf69188fa41b7252d4ab78d987ee38716f83c3c89be549a1562af6f374682f2db70d63c0cb402a5ede434ba440e5b0dae319f6e7c22fae0520e1bc374a6d0e8221a2febccc9c180ca89cf72bb022e82cad13f4701dea43aa825568db2d356d044d36027e33b23c3a7da5465cc3f073b4a8789184dd7c03921ef35132303e6681f9085d2fd96f2816057ef59da0872f8e91b0f865a16acacae8f361fd2a6d27682321e8c9c935c305ffe831262bb761a21e70c15b869e09ed5f6491c75dfd8e8b21813338535f2b77c14449132dd017ebc6e6c93752e508dd2ac7a2a1d7cde220a331c47229fc7739925aac","isRememberEnabled":true,"rememberDurationInDays":30,"staticryptSaltUniqueVariableName":"ef5aeea5389fcb38dcf9b27da875ba41"};
 
             // A remembered password swaps the page in straight away. A typed one
-            // holds the page until the door has opened.
+            // holds the page until the way in has played.
             let holdPage = false, pendingPage = null;
             const templateConfig = {
                 rememberExpirationKey: "staticrypt_expiration",
@@ -1147,119 +1153,142 @@ exports.init = init;
             const $ = (id) => document.getElementById(id);
 
             const NAME = "CHLOE MA";
-            const ROOM = "/img/gate/shelf-wall.jpg";   // a still of the hi-fi shelf wall (public, loads before the password)
-            const MIN_MS = still ? 0 : 2600;            // long enough for the name to land letter by letter
+            const ILLUS = "/img/home/Growup_crop.png";  // public, so it loads before the password
+            const MIN_MS = still ? 0 : 2600;             // long enough for the name to flip into place
 
-            const stage = $("stage"), nameEl = $("name"), doorway = $("doorway"), opening = $("opening");
-            const room = $("room"), shade = $("shade"), pct = $("loader-pct"), text = $("loader-text");
+            const gate = $("gate"), nameEl = $("name"), illus = $("illus"), panel = $("panel");
+            const pct = $("loader-pct"), text = $("loader-text");
             const form = $("staticrypt-form"), input = $("staticrypt-password"), remember = $("staticrypt-remember");
             const errorEl = $("gate-error"), eye = $("eye"), veil = $("veil");
             let busy = false, garden = null;
 
-            /* ---------- The door, drawn in SVG ---------- */
-            // One leaf, 130 x 370, hinged on its left edge. The right leaf is the
-            // same drawing mirrored. Weathered vertical planks, a Z-brace between
-            // two rails, iron strap hinges and a ring pull.
-            function leafSVG(id, mirror) {
-                const shape = "M0,370 V130 A130,130 0 0 1 130,0 V370 Z";
-                const tones = ["#7b5536", "#6c4a2f", "#80593a", "#71502f"];
-                const planks = tones.map((c, i) => `<rect x="${i * 32.5}" width="32.6" height="370" fill="${c}"/>`).join("");
-                const seams = [32.5, 65, 97.5].map((x) => `<line x1="${x}" x2="${x}" y2="370" stroke="#2a1a0f" stroke-width="1.6"/>`).join("");
-                const rail = (y) => `<rect y="${y}" width="130" height="24" fill="#87613f"/><rect y="${y + 24}" width="130" height="3" fill="rgba(20,10,4,.45)"/>` +
-                    [16, 48, 81, 113].map((x) => `<circle cx="${x}" cy="${y + 7}" r="1.7" fill="#2a1f18"/><circle cx="${x}" cy="${y + 17}" r="1.7" fill="#2a1f18"/>`).join("");
-                const brace = `<polygon points="0,306 0,330 130,224 130,200" fill="#7f5a3b"/><polygon points="0,330 0,333 130,227 130,224" fill="rgba(20,10,4,.4)"/>`;
-                const header = `<path d="M12,130 A118,118 0 0 1 130,12" fill="none" stroke="#87613f" stroke-width="16"/><path d="M20,134 A110,110 0 0 1 130,20" fill="none" stroke="rgba(20,10,4,.35)" stroke-width="2"/>`;
-                const strap = (y) => `<path d="M0,${y - 5} H84 L103,${y} L84,${y + 5} H0 Z" fill="#1d1915"/><path d="M0,${y - 5} H84" stroke="rgba(255,255,255,.12)"/>` +
-                    [10, 32, 56, 78].map((x) => `<circle cx="${x}" cy="${y}" r="2.3" fill="#3b332b"/>`).join("");
-                const ring = `<circle cx="113" cy="268" r="7" fill="#1d1915"/><circle cx="113" cy="281" r="10" fill="none" stroke="#1d1915" stroke-width="3.2"/><path d="M105,285 A10,10 0 0 0 121,285" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="1"/>`;
-                const body = planks + seams + header + rail(200) + rail(330) + brace + strap(212) + strap(342) + ring +
-                    `<rect width="130" height="370" filter="url(#grain-${id})"/>` +
-                    `<rect width="130" height="370" fill="url(#wear-${id})"/><rect width="130" height="370" fill="url(#edge-${id})"/>`;
-                return `<svg viewBox="0 0 130 370" aria-hidden="true">
-                    <defs>
-                        <clipPath id="clip-${id}"><path d="${shape}"/></clipPath>
-                        <filter id="grain-${id}" x="0" y="0" width="1" height="1">
-                            <feTurbulence type="fractalNoise" baseFrequency="0.012 0.3" numOctaves="3" seed="${mirror ? 7 : 3}"/>
-                            <feColorMatrix values="0 0 0 0 0.14  0 0 0 0 0.08  0 0 0 0 0.03  0 0 0 1.5 -0.62"/>
-                        </filter>
-                        <linearGradient id="wear-${id}" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0.55" stop-color="#d9ccb4" stop-opacity="0"/><stop offset="1" stop-color="#d9ccb4" stop-opacity="0.3"/>
-                        </linearGradient>
-                        <linearGradient id="edge-${id}" x1="0" y1="0" x2="1" y2="0">
-                            <stop offset="0" stop-color="#000" stop-opacity="0.18"/><stop offset="0.2" stop-color="#000" stop-opacity="0"/>
-                            <stop offset="0.85" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.35"/>
-                        </linearGradient>
-                    </defs>
-                    <g ${mirror ? 'transform="translate(130,0) scale(-1,1)"' : ""} clip-path="url(#clip-${id})">${body}</g>
-                </svg>`;
+            function starSVG(size, color) {
+                const p = (d) => `<path d="${d}" fill="${color}"/>`;
+                return `<svg width="${size}" height="${size}" viewBox="0 0 72 72" fill="none" aria-hidden="true">` +
+                    p("M36 4C36 4 38.5 26 36 36C33.5 26 36 4 36 4Z") + p("M36 68C36 68 33.5 46 36 36C38.5 46 36 68 36 68Z") +
+                    p("M4 36C4 36 26 33.5 36 36C26 38.5 4 36 4 36Z") + p("M68 36C68 36 46 38.5 36 36C46 33.5 68 36 68 36Z") + `</svg>`;
             }
 
-            // The stone surround: wedge-shaped stones round the arch, a keystone,
-            // squared blocks down each side and a worn step.
-            function frameSVG() {
-                const stones = ["#d9d2c5", "#cfc6b6", "#e2dcd0", "#d3cbbd"];
-                let s = `<defs><filter id="stone" x="0" y="0" width="1" height="1"><feTurbulence type="fractalNoise" baseFrequency="0.09" numOctaves="2" seed="5"/>
-                    <feColorMatrix values="0 0 0 0 0.3  0 0 0 0 0.27  0 0 0 0 0.22  0 0 0 0.9 -0.35"/><feComposite in2="SourceGraphic" operator="in"/></filter></defs><g id="stones">`;
-                const cx = 130, cy = 130, r0 = 131, n = 11;
-                for (let k = 0; k < n; k++) {
-                    const a0 = Math.PI + (k / n) * Math.PI + 0.012, a1 = Math.PI + ((k + 1) / n) * Math.PI - 0.012;
-                    const r1 = k === 5 ? 162 : 154;                      // the keystone sits proud
-                    const p = (r, a) => `${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`;
-                    s += `<path d="M${p(r0, a0)} L${p(r1, a0)} A${r1},${r1} 0 0 1 ${p(r1, a1)} L${p(r0, a1)} A${r0},${r0} 0 0 0 ${p(r0, a0)} Z" fill="${stones[k % 4]}" stroke="#a89d8a" stroke-width="1"/>`;
-                }
-                for (let y = 130, i = 0; y < 370; y += 30, i++) {
-                    const h = Math.min(30, 370 - y), wide = i % 2 ? 24 : 18;
-                    s += `<rect x="${-wide}" y="${y}" width="${wide}" height="${h}" fill="${stones[i % 4]}" stroke="#a89d8a"/>`;
-                    s += `<rect x="260" y="${y}" width="${wide}" height="${h}" fill="${stones[(i + 2) % 4]}" stroke="#a89d8a"/>`;
-                }
-                s += `<rect x="-30" y="370" width="320" height="14" fill="#cbbfab" stroke="#a89d8a"/><rect x="-30" y="370" width="320" height="2" fill="rgba(255,255,255,.4)"/></g>`;
-                s += `<use href="#stones" filter="url(#stone)"/>`;
-                return s;
-            }
-
-            $("leaf-l").innerHTML = leafSVG("l", false);
-            $("leaf-r").innerHTML = leafSVG("r", true);
-            $("frame").innerHTML = frameSVG();
-
-            /* ---------- The name, landing letter by letter ---------- */
-            const letters = [...NAME].map((ch) => {
-                const span = document.createElement("span");
-                span.className = ch === " " ? "sp" : "l";
-                span.textContent = ch === " " ? "" : ch;
-                span.setAttribute("aria-hidden", "true");
-                nameEl.appendChild(span);
-                return span;
-            }).filter((s) => s.className === "l");
-            let landed = 0;
-            function land(upTo) {
-                while (landed < upTo && landed < letters.length) {
-                    const span = letters[landed++];
-                    span.classList.add("in");
-                    // let the letter settle before a vine measures it
-                    if (garden) setTimeout(() => garden.grow(span), still ? 0 : 260);
+            /* ---------- Stars across the dark sheet ---------- */
+            // [top, left, size, colour, delay ms, duration ms]
+            const STARS = [
+                ["9%", "7%", 58, "rgba(155,140,248,0.95)", 0, 580],
+                ["14%", "78%", 34, "rgba(255,255,255,0.9)", 65, 495],
+                ["42%", "91%", 50, "rgba(6,182,212,0.85)", 115, 560],
+                ["6%", "48%", 18, "rgba(255,255,255,0.75)", 30, 425],
+                ["70%", "11%", 40, "rgba(255,255,255,0.85)", 85, 515],
+                ["63%", "68%", 26, "rgba(249,115,22,0.9)", 145, 450],
+                ["28%", "35%", 16, "rgba(255,255,255,0.65)", 70, 395],
+                ["88%", "83%", 46, "rgba(168,85,247,0.85)", 45, 540],
+                ["22%", "58%", 30, "rgba(255,255,255,0.8)", 105, 450],
+                ["80%", "42%", 20, "rgba(132,204,22,0.85)", 155, 415],
+                ["52%", "22%", 42, "rgba(255,255,255,0.85)", 125, 495],
+                ["4%", "90%", 22, "rgba(255,255,255,0.7)", 185, 430],
+                ["75%", "57%", 14, "rgba(6,182,212,0.7)", 20, 360],
+                ["36%", "82%", 36, "rgba(155,140,248,0.8)", 80, 470],
+            ];
+            function scatterStars() {
+                for (const [top, left, size, colour, delay, dur] of STARS) {
+                    const el = document.createElement("div");
+                    el.className = "spark";
+                    el.style.top = top;
+                    el.style.left = left;
+                    el.style.setProperty("--d", dur + "ms");
+                    el.innerHTML = starSVG(size, colour);
+                    gate.insertBefore(el, gate.firstChild);
+                    setTimeout(() => el.classList.add("on"), still ? 0 : delay);
                 }
             }
+            // Three quick sparkles round the picture once it has filled
+            function popSparkles() {
+                if (still) return;
+                const art = illus.getBoundingClientRect(), g = gate.getBoundingClientRect();
+                [[0.86, 0.12, 54, "rgba(255,255,255,0.85)", 0], [0.78, 0.52, 32, "rgba(155,140,248,0.9)", 60], [0.52, 0.8, 22, "rgba(6,182,212,0.85)", 110]]
+                    .forEach(([fx, fy, size, colour, delay]) => setTimeout(() => {
+                        const el = document.createElement("div");
+                        el.className = "spark pop";
+                        el.style.left = art.left - g.left + art.width * fx - size / 2 + "px";
+                        el.style.top = art.top - g.top + art.height * fy - size / 2 + "px";
+                        el.innerHTML = starSVG(size, colour);
+                        gate.appendChild(el);
+                        setTimeout(() => el.remove(), 540);
+                    }, delay));
+            }
 
-            // Loading follows the room picture and the fonts, never faster than
-            // MIN_MS; the name lands as it goes.
+            /* ---------- The name, flipping into place letter by letter ---------- */
+            const FLAPS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#@!$%&";
+            const flap = () => FLAPS[Math.floor(Math.random() * FLAPS.length)];
+            function flipName() {
+                return new Promise((resolve) => {
+                    const letters = [];
+                    for (const ch of NAME) {
+                        const span = document.createElement("span");
+                        span.className = ch === " " ? "sp" : "l";
+                        span.setAttribute("aria-hidden", "true");
+                        nameEl.appendChild(span);
+                        if (ch !== " ") letters.push([span, ch]);
+                    }
+                    if (still) {
+                        letters.forEach(([span, ch]) => { span.textContent = ch; span.classList.add("in"); });
+                        return resolve();
+                    }
+                    // Like a split-flap board: flaps start fast and slow down before each letter lands
+                    const CYCLES = 12, gap = (k) => 28 + 560 * Math.pow(k / CYCLES, 3.2);
+                    let settled = 0;
+                    letters.forEach(([span, ch], i) => {
+                        let cycle = 0;
+                        span.textContent = flap();
+                        const flipOnce = () => {
+                            if (++cycle < CYCLES) {
+                                span.textContent = flap();
+                                span.style.color = `rgba(155,140,248,${(0.15 + (cycle / CYCLES) * 0.55).toFixed(2)})`;
+                                setTimeout(flipOnce, gap(cycle));
+                            } else {
+                                span.textContent = ch;
+                                span.style.color = "";
+                                span.classList.add("in");
+                                if (garden) garden.grow(span);
+                                if (++settled === letters.length) resolve();
+                            }
+                        };
+                        setTimeout(flipOnce, i * 60);
+                    });
+                });
+            }
+
+            /* ---------- Loading: the picture fills in left to right ---------- */
+            // A wavy edge sweeps across the picture as the page loads, flattening out as it nears the end.
+            function fillTo(p, now) {
+                if (p >= 1) { illus.style.clipPath = "none"; return; }
+                const pts = ["0% 0%"], STEPS = 36, amp = 5 * (1 - p * p), t = now / 1000;
+                for (let i = 0; i <= STEPS; i++) {
+                    const wave = Math.sin((i / STEPS) * Math.PI * 5 - t * Math.PI * 2.6) * amp;
+                    pts.push(`${Math.min(110, p * 100 + wave).toFixed(2)}% ${((i / STEPS) * 100).toFixed(2)}%`);
+                }
+                pts.push("0% 100%");
+                illus.style.clipPath = `polygon(${pts.join(", ")})`;
+            }
+
+            // Loading follows the illustration and the fonts, never faster than MIN_MS.
             function load() {
                 return new Promise((resolve) => {
                     let ready = 0;
                     const parts = 2;
-                    room.onload = room.onerror = () => { ready++; };
-                    room.src = ROOM;
+                    illus.onload = illus.onerror = () => { ready++; };
+                    illus.src = ILLUS;
                     (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => { ready++; });
                     const start = performance.now();
                     let shown = 0;
                     const tick = (now) => {
                         const time = MIN_MS ? Math.min((now - start) / MIN_MS, 1) : 1;
                         const target = Math.min(time, ready / parts);
-                        shown += (target - shown) * (still ? 1 : 0.1);
-                        land(Math.floor(Math.min(shown * 1.04, 1) * letters.length));
+                        shown += (target - shown) * (still ? 1 : 0.08);
+                        if (target >= 1 && shown > 0.995) shown = 1;
+                        fillTo(shown, now);
                         const v = Math.round(shown * 100);
                         pct.textContent = v + "%";
-                        doorway.setAttribute("aria-valuenow", String(v));
-                        if (target >= 1 && shown > 0.995) { land(letters.length); return setTimeout(resolve, still ? 0 : 900); }
+                        illus.setAttribute("aria-valuenow", String(v));
+                        if (shown >= 1) { popSparkles(); return resolve(); }
                         requestAnimationFrame(tick);
                     };
                     requestAnimationFrame(tick);
@@ -1267,43 +1296,40 @@ exports.init = init;
             }
 
             function showPassword() {
-                text.textContent = "Knock, knock";
+                text.textContent = "Come in";
                 pct.textContent = "";
-                doorway.removeAttribute("role");
+                illus.removeAttribute("role");
                 form.removeAttribute("aria-hidden");
                 form.querySelectorAll("[tabindex='-1']").forEach((el) => el.removeAttribute("tabindex"));
                 form.classList.add("ready");
                 input.focus({ preventScroll: window.innerWidth >= 900 });
             }
 
-            /* ---------- Opening the door ---------- */
+            /* ---------- Going in ---------- */
+            // A first visit to the homepage opens on the hi-fi site (index.html
+            // carries the marker); once someone picks a version, the switch decides.
+            function firstVisitToHifi(html) {
+                let chosen = null;
+                try { chosen = localStorage.getItem("portfolio.fi"); } catch (e) {}
+                return !chosen && remember.checked && html.includes("/*hifi-first*/");
+            }
             // The colour the next page opens on, so the last moment fades into it
             function pageColour(html) {
-                if (/id="intro"/.test(html)) return "#161412";
                 const m = html.match(/body\s*\{[^}]*?background(?:-color)?\s*:\s*(#[0-9a-f]{3,8})/i);
                 return m ? m[1] : "#ffffff";
             }
 
-            async function walkIn() {
+            async function goIn(colour) {
                 document.documentElement.style.overflow = "hidden";
                 document.body.classList.add("leaving");
-                await wait(260);
-                doorway.classList.add("open");
-                await wait(850);
-
-                // Move through the doorway: the door and wall grow past the edges of
-                // the screen while the room grows less, so it reads as depth.
-                const o = opening.getBoundingClientRect(), s = stage.getBoundingClientRect(), r = room.getBoundingClientRect();
-                const vw = window.innerWidth, vh = window.innerHeight;
-                const ox = o.left + o.width / 2, oy = o.top + o.height / 2;
-                const S = Math.max(vw / o.width, vh / o.height) * 1.3;
-                stage.style.transformOrigin = `${ox - s.left}px ${oy - s.top}px`;
-                stage.style.transform = `translate(${vw / 2 - ox}px, ${vh / 2 - oy}px) scale(${S})`;
-                room.style.setProperty("--room", Math.max(vw / (r.width * S), vh / (r.height * S)).toFixed(4));
-                shade.style.opacity = "0";
-                await wait(1500);
-
-                veil.style.background = pageColour(pendingPage);
+                await wait(350);
+                // Move into the picture: it grows past the edges of the screen
+                const r = illus.getBoundingClientRect(), vw = window.innerWidth, vh = window.innerHeight;
+                const S = Math.max(vw / r.width, vh / r.height) * 1.25;
+                illus.style.transform = `translate(${vw / 2 - (r.left + r.width / 2)}px, ${vh / 2 - (r.top + r.height / 2)}px) scale(${S})`;
+                illus.style.borderRadius = "0";
+                await wait(1300);
+                veil.style.background = colour;
                 veil.classList.add("on");
                 await wait(400);
             }
@@ -1318,7 +1344,7 @@ exports.init = init;
                 input.focus();
             });
 
-            doorway.addEventListener("animationend", () => doorway.classList.remove("rattle"));
+            panel.addEventListener("animationend", () => panel.classList.remove("shake"));
 
             window.onload = async function () {
                 const { isSuccessful } = await staticrypt.handleDecryptOnLoad();
@@ -1326,16 +1352,11 @@ exports.init = init;
                     $("staticrypt_loading").classList.add("hidden");
                     $("staticrypt_content").classList.remove("hidden");
                     if (isRememberEnabled) $("staticrypt-remember-label").classList.remove("hidden");
-                    if (window.introGarden) {
-                        garden = window.introGarden(stage, {
-                            petals: ["#7c6cf0", "#f97316", "#0e9fbf", "#e2557a", "#b8a9fb"],
-                            stem: "#5d8f12",
-                            leaves: ["#6aa11c", "#4d7c0f"],
-                            centre: "#3b2a1a",
-                            reach: 1.6,
-                        });
-                    }
-                    await load();
+                    if (window.introGarden) garden = window.introGarden(gate, { reach: 1.4 });
+                    scatterStars();
+                    await Promise.all([load(), flipName()]);
+                    // let the last flowers open, but don't keep anyone waiting on them
+                    await wait(still ? 0 : Math.min(garden ? garden.remaining() : 0, 1200) + 200);
                     showPassword();
                 }
             };
@@ -1357,17 +1378,20 @@ exports.init = init;
 
                 if (!isSuccessful) {
                     holdPage = false;
-                    doorway.classList.add("rattle");
+                    panel.classList.add("shake");
                     errorEl.textContent = "That's not the password. Check the spelling; capitals count.";
                     input.select();
                     busy = false;
                     return;
                 }
 
-                if (!still) await walkIn();
+                const toHifi = firstVisitToHifi(pendingPage);
+                if (!still) await goIn(toHifi ? "#ffffff" : pageColour(pendingPage));
+                if (toHifi) return location.replace("hifi/");
                 document.write(pendingPage);
                 document.close();
             });
+          })();
         </script>
     </body>
 </html>
