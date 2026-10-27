@@ -382,8 +382,10 @@ export class BinReader {
 
   onResize() {
     // (where the book would fly back from)
-    if (this.bookOut && this.state === 'presenting' && this.flip.narrow) {
-      const { p, q } = this.bookTarget(this.flip.target());
+    // (the spread may not have laid out yet, mid-resize: then there's nowhere to put it)
+    const spread = this.bookOut && this.state === 'presenting' && this.flip.narrow && this.flip.target();
+    if (spread) {
+      const { p, q } = this.bookTarget(spread);
       this.stage.book.root.position.copy(p); this.stage.book.root.quaternion.copy(q);
     }
     if (this.state !== 'reading' || !this.held) return;

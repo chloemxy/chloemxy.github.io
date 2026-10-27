@@ -6,7 +6,9 @@
 //   woodtype  tall printer's wood type, inked letters on end grain
 //   cutout    freestanding 3D letters in glazed clay, like the pots around them
 //   board     a hand-lettered board leaning against the back of the shelf
-//   plaque    a slim drawer with a gilded, flower-painted plaque under a picture light (built by shelfWall.js, using plaqueFace)
+//   plaque    a slim drawer with a plate of aged brass, words in cream (built by shelfWall.js,
+//             using platePlaque); ?plaque=cast shows a cast brass name plate (castPlaque), and
+//             ?plaque=tiles the gilded, flower-painted tiles under a picture light
 // Each builder gets the words (top row first), the cell's span x0..x1, the
 // shelf's height y and the wall's seeded random, and returns meshes
 // (or a group that fills in once its typeface has loaded).
@@ -298,26 +300,70 @@ export function plaqueFace(text, aspect, fit = text) {
       leaf(cx + Math.cos(a) * d * 0.6, cy + Math.sin(a) * d * 0.6, scale * (0.35 + r() * 0.3), a + (r() - 0.5), LEAVES[Math.floor(r() * LEAVES.length)]);
     }
   };
-  // the big flowers on the end tiles; only small sprigs behind the words
-  spray(W * 0.07, H * 0.6, H * 0.38); peony(W * 0.07, H * 0.5, H * 0.21);
-  spray(W * 0.93, H * 0.45, H * 0.38); peony(W * 0.93, H * 0.55, H * 0.2);
-  for (let i = 0; i < 8; i++) {
-    const x = W * (0.22 + r() * 0.56), y = H * (r() < 0.5 ? 0.08 + r() * 0.12 : 0.82 + r() * 0.12);
-    if (r() < 0.5) leaf(x, y, H * (0.12 + r() * 0.14), r() * Math.PI * 2, LEAVES[Math.floor(r() * LEAVES.length)]);
-    else blossom(x, y, H * (0.03 + r() * 0.025), r() < 0.5 ? '#f3e2cf' : '#e9b2a0');
+  const mum = (x, y, rad, colour) => {      // a chrysanthemum: many fine petals
+    for (let ring = 2; ring >= 0; ring--) {
+      const n = 22 - ring * 4, rr = rad * (0.45 + ring * 0.28);
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2 + ring * 0.3;
+        p.save(); p.translate(x, y); p.rotate(a);
+        p.beginPath(); p.ellipse(rr * 0.55, 0, rr * 0.5, rr * 0.09, 0, 0, Math.PI * 2);
+        p.fillStyle = colour[ring]; p.fill(); p.strokeStyle = 'rgba(60,40,60,0.35)'; p.lineWidth = 1; p.stroke();
+        p.restore();
+      }
+    }
+    p.beginPath(); p.arc(x, y, rad * 0.16, 0, Math.PI * 2); p.fillStyle = '#d9a63c'; p.fill();
+  };
+  const lily = (x, y, rad, ang) => {        // a lily: long pointed petals, cream flushed pink
+    for (let i = 0; i < 5; i++) {
+      const a = ang + (i - 2) * 0.45;
+      p.save(); p.translate(x, y); p.rotate(a);
+      p.beginPath(); p.moveTo(0, 0);
+      p.quadraticCurveTo(rad * 0.5, -rad * 0.22, rad, 0); p.quadraticCurveTo(rad * 0.5, rad * 0.22, 0, 0);
+      const lg2 = p.createLinearGradient(0, 0, rad, 0); lg2.addColorStop(0, '#e79a8c'); lg2.addColorStop(1, '#f6e9d6');
+      p.fillStyle = lg2; p.fill(); p.strokeStyle = 'rgba(140,70,60,0.5)'; p.lineWidth = 1.2; p.stroke();
+      p.restore();
+    }
+  };
+  const vine = (x0, y0, x1, y1) => {        // a stem with leaves along it
+    stem(x0, y0, x1, y1);
+    for (let i = 1; i < 5; i++) {
+      const u = i / 5, x = x0 + (x1 - x0) * u, y = y0 + (y1 - y0) * u, a = Math.atan2(y1 - y0, x1 - x0);
+      leaf(x, y, H * (0.1 + r() * 0.08), a + (i % 2 ? 0.9 : -0.9), LEAVES[Math.floor(r() * LEAVES.length)]);
+    }
+  };
+  const T = W / 5; // one tile
+  // end tiles: the big flowers, full of leaves
+  spray(T * 0.45, H * 0.62, H * 0.42); peony(T * 0.45, H * 0.5, H * 0.24);
+  mum(T * 0.15, H * 0.12, H * 0.1, ['#3f6f9a', '#6f9cc0', '#c9dceb']);
+  spray(W - T * 0.45, H * 0.4, H * 0.42); peony(W - T * 0.5, H * 0.58, H * 0.22);
+  lily(W - T * 0.2, H * 0.18, H * 0.2, Math.PI * 0.75);
+  // the middle tiles: lighter painting round the edges, so the words read
+  for (let t = 1; t < 4; t++) {
+    const x = T * t;
+    vine(x + T * 0.05, H * 0.95, x + T * 0.6, H * 0.78);
+    vine(x + T * 0.95, H * 0.05, x + T * 0.4, H * 0.2);
+    if (t === 2) lily(x + T * 0.5, H * 0.1, H * 0.16, Math.PI * 0.5);
+    else mum(x + T * (t === 1 ? 0.2 : 0.8), H * 0.86, H * 0.08, ['#c4503a', '#e08a6a', '#f3cdb6']);
+    for (let i = 0; i < 3; i++) blossom(x + T * (0.15 + r() * 0.7), H * (r() < 0.5 ? 0.1 : 0.9), H * 0.025, r() < 0.5 ? '#f3e2cf' : '#e9b2a0');
   }
-
-  // the tiles: five across, their seams cut dark with a lit edge
-  for (let i = 1; i < 5; i++) {
-    const x = Math.round((W * i) / 5);
-    p.fillStyle = 'rgba(55,35,10,0.7)'; p.fillRect(x - 2, 0, 3, H);
-    p.fillStyle = 'rgba(255,235,180,0.45)'; p.fillRect(x + 1, 0, 1, H);
+  // the glaze: a fine crackle over everything, and each tile's own soft edge
+  p.strokeStyle = 'rgba(90,60,20,0.16)'; p.lineWidth = 0.8;
+  for (let i = 0; i < 70; i++) {
+    let x = r() * W, y = r() * H;
+    p.beginPath(); p.moveTo(x, y);
+    for (let k = 0; k < 4; k++) { x += (r() - 0.5) * 60; y += (r() - 0.5) * 40; p.lineTo(x, y); }
+    p.stroke();
+  }
+  for (let t = 0; t < 5; t++) {
+    const eg = p.createLinearGradient(T * t, 0, T * (t + 1), 0);
+    eg.addColorStop(0, 'rgba(70,40,10,0.22)'); eg.addColorStop(0.06, 'rgba(70,40,10,0)');
+    eg.addColorStop(0.94, 'rgba(70,40,10,0)'); eg.addColorStop(1, 'rgba(70,40,10,0.22)');
+    p.fillStyle = eg; p.fillRect(T * t, 0, T, H);
   }
   // the picture light's wash: bright along the top, falling off downward
   const wash = p.createLinearGradient(0, 0, 0, H);
   wash.addColorStop(0, 'rgba(255,245,215,0.38)'); wash.addColorStop(0.45, 'rgba(255,245,215,0)'); wash.addColorStop(1, 'rgba(40,20,0,0.25)');
   p.fillStyle = wash; p.fillRect(0, 0, W, H);
-  p.strokeStyle = 'rgba(60,35,10,0.6)'; p.lineWidth = 6; p.strokeRect(3, 3, W - 6, H - 6);
 
   return face('P' + text + '|' + fit + aspect.toFixed(2), W, H, (g) => {
     g.drawImage(art, 0, 0);
@@ -327,12 +373,336 @@ export function plaqueFace(text, aspect, fit = text) {
     set();
     // between the end tiles' flowers (measured with the spacing, which measureText may leave out)
     const wide = () => g.measureText(fit).width + ('letterSpacing' in g ? 0 : fit.length * px * 0.06);
-    while (wide() > W * 0.7 && px > 20) { px -= 2; set(); }
+    while (wide() > W * 0.64 && px > 20) { px -= 2; set(); }
     g.textAlign = 'center'; g.textBaseline = 'middle';
     g.fillStyle = 'rgba(60,10,10,0.45)'; g.fillText(text, W / 2 + 3, H / 2 + 7);   // a soft shadow under the paint
     g.fillStyle = '#b3141c'; g.fillText(text, W / 2, H / 2 + 4);
     g.strokeStyle = 'rgba(90,8,12,0.8)'; g.lineWidth = 2; g.strokeText(text, W / 2, H / 2 + 4);
   }, [FONT(80)]);
+}
+
+// ---- cast: a cast brass name plate, after a house sign: a long hexagon
+// with clipped ends, a raised polished rim, a darker stippled field, a
+// screw hole at each end and raised polished serif letters. Returns a group
+// centred on its face's middle, front at z = 0; the letters arrive once
+// their typeface has loaded, all plates sized to fit `fit`.
+
+let serifPromise = null;
+const loadSerif = () => (serifPromise ??= new FontLoader().loadAsync('https://cdn.jsdelivr.net/npm/three@0.169.0/examples/fonts/gentilis_bold.typeface.json'));
+const castMats = {};
+function castMaterials() {
+  if (castMats.polished) return castMats;
+  // the stipple: fine random pits, as cast
+  const c = document.createElement('canvas');
+  c.width = c.height = 256;
+  const g = c.getContext('2d'), img = g.createImageData(256, 256);
+  for (let i = 0; i < img.data.length; i += 4) { const v = 90 + Math.random() * 120; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; }
+  g.putImageData(img, 0, 0);
+  const bump = new THREE.CanvasTexture(c);
+  bump.wrapS = bump.wrapT = THREE.RepeatWrapping; bump.repeat.set(10, 3);
+  castMats.polished = new THREE.MeshStandardMaterial({ color: '#f0d184', metalness: 0.85, roughness: 0.2, envMapIntensity: 5 });
+  // the field darker and duller than the rim and letters, so they stand out from across the room
+  castMats.field = new THREE.MeshStandardMaterial({ color: '#5a4422', metalness: 0.6, roughness: 0.8, bumpMap: bump, bumpScale: 0.6, envMapIntensity: 1.1 });
+  castMats.hole = new THREE.MeshStandardMaterial({ color: '#1d150c', roughness: 0.9 });
+  return castMats;
+}
+function hexagon(w, h, clip) {
+  const s = new THREE.Shape();
+  s.moveTo(-w / 2, 0); s.lineTo(-w / 2 + clip, h / 2); s.lineTo(w / 2 - clip, h / 2);
+  s.lineTo(w / 2, 0); s.lineTo(w / 2 - clip, -h / 2); s.lineTo(-w / 2 + clip, -h / 2); s.closePath();
+  return s;
+}
+export function castPlaque(text, w, h, fit = text) {
+  const m = castMaterials(), g = new THREE.Group();
+  const clip = h * 0.36, rim = h * 0.07, T = 0.006;
+  const extrude = (shape, depth) => new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: true, bevelThickness: 0.0006, bevelSize: 0.0006, bevelSegments: 2 });
+  // the rim: the outline with the field cut out, standing proud
+  const outer = hexagon(w, h, clip), inner = hexagon(w - rim * 2.4, h - rim * 2, clip - rim * 0.4);
+  const ring = hexagon(w, h, clip); ring.holes.push(inner);
+  const rimMesh = new THREE.Mesh(extrude(ring, T), m.polished);
+  const field = new THREE.Mesh(extrude(inner, T * 0.6), m.field);
+  rimMesh.position.z = field.position.z = -T;
+  g.add(rimMesh, field);
+  // a screw hole at each end, ringed in polished brass
+  for (const sx of [-1, 1]) {
+    const x = sx * (w / 2 - clip * 0.62);
+    const boss = new THREE.Mesh(new THREE.CylinderGeometry(h * 0.11, h * 0.11, 0.0016, 28).rotateX(Math.PI / 2), m.polished);
+    boss.position.set(x, 0, -T * 0.4 + 0.0008);
+    const hole = new THREE.Mesh(new THREE.CylinderGeometry(h * 0.055, h * 0.055, 0.0018, 20).rotateX(Math.PI / 2), m.hole);
+    hole.position.set(x, 0, -T * 0.4 + 0.001);
+    g.add(boss, hole);
+  }
+  // the letters, raised from the field, as wide as the longest label allows
+  loadSerif().then((font) => {
+    const geo = (str) => {
+      const t = new TextGeometry(str, { font, size: 1, depth: 0.12, curveSegments: 6, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.015, bevelSegments: 2 });
+      t.computeBoundingBox();
+      return t;
+    };
+    const span = (b) => b.max.x - b.min.x;
+    const room = w - clip * 2 - h * 0.12, fitBox = geo(fit).boundingBox;
+    const size = Math.min(h * 0.5, room / span(fitBox));
+    const t = geo(text), b = t.boundingBox;
+    t.translate(-(b.max.x + b.min.x) / 2, -(fitBox.max.y + fitBox.min.y) / 2, 0);
+    t.scale(size, size, 0.02);  // a shallow relief: 2.4 mm proud
+    const letters = new THREE.Mesh(t, m.polished);
+    letters.position.z = -T * 0.4;
+    letters.castShadow = true;
+    g.add(letters);
+  }).catch(() => {});
+  g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  return g;
+}
+
+// ---- plate: a flat panel of aged brass, after a salon's sign: mottled
+// patina and soft brushing, held a little off the wood on four corner
+// screws, the words painted in cream, lowercase, quietly centred. Returns
+// a group centred on the plate's face, front at z = 0; every plate sets its
+// words at the size that fits `fit`, so they match.
+
+export function platePlaque(text, w, h, fit = text) {
+  const W = 1024, H = Math.round(W * h / w);
+  const FONT = (px) => `400 ${px}px Archivo, "Helvetica Neue", Helvetica, sans-serif`;
+  let seed = 97;
+  const r = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+  const brass = document.createElement('canvas');
+  brass.width = W; brass.height = H;
+  const p = brass.getContext('2d');
+  p.fillStyle = '#a88a52'; p.fillRect(0, 0, W, H);
+  // patina: soft darker and lighter clouds
+  p.filter = 'blur(18px)';
+  for (let i = 0; i < 60; i++) {
+    p.fillStyle = r() < 0.55 ? `rgba(90,70,40,${0.12 + r() * 0.18})` : `rgba(215,190,130,${0.1 + r() * 0.2})`;
+    p.beginPath(); p.ellipse(r() * W, r() * H, 30 + r() * 140, 20 + r() * 70, r() * 3, 0, Math.PI * 2); p.fill();
+  }
+  p.filter = 'none';
+  // brushing, side to side
+  for (let i = 0; i < 500; i++) {
+    p.fillStyle = r() < 0.5 ? 'rgba(255,240,200,0.07)' : 'rgba(60,45,20,0.07)';
+    p.fillRect(r() * W - 200, r() * H, 200 + r() * 600, 1 + r());
+  }
+  // a darker edge where hands and weather have reached it least
+  const edge = p.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.3, W / 2, H / 2, W * 0.62);
+  edge.addColorStop(0, 'rgba(0,0,0,0)'); edge.addColorStop(1, 'rgba(50,35,15,0.35)');
+  p.fillStyle = edge; p.fillRect(0, 0, W, H);
+
+  const map = face('PL' + text + '|' + fit + w.toFixed(3), W, H, (g) => {
+    g.drawImage(brass, 0, 0);
+    let px = Math.round(H * 0.42);
+    const set = () => { g.font = FONT(px); if ('letterSpacing' in g) g.letterSpacing = `${Math.round(px * 0.04)}px`; };
+    set();
+    while (g.measureText(fit).width > W * 0.72 && px > 20) { px -= 2; set(); }
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = 'rgba(40,28,10,0.35)'; g.fillText(text, W / 2 + 1, H / 2 + 3);    // the paint's slight edge
+    g.fillStyle = '#f4eee0'; g.fillText(text, W / 2, H / 2);
+  }, [FONT(80)]);
+
+  const g = new THREE.Group();
+  const edgeMat = new THREE.MeshStandardMaterial({ color: '#8a6d3e', metalness: 0.7, roughness: 0.45 });
+  const plate = new THREE.Mesh(new RoundedBoxGeometry(w, h, 0.003, 2, 0.0006),
+    sixSides(new THREE.MeshStandardMaterial({ map, metalness: 0.55, roughness: 0.5, envMapIntensity: 2 }), edgeMat));
+  plate.position.z = -0.0015;
+  g.add(plate);
+  // four small screws near the corners
+  const screw = new THREE.CylinderGeometry(0.0028, 0.0028, 0.0012, 16).rotateX(Math.PI / 2);
+  const screwMat = new THREE.MeshStandardMaterial({ color: '#b8995e', metalness: 0.85, roughness: 0.35, envMapIntensity: 3 });
+  for (const [sx, sy] of [[-1, 1], [1, 1], [-1, -1], [1, -1]]) {
+    const sc = new THREE.Mesh(screw, screwMat);
+    sc.position.set(sx * (w / 2 - 0.012), sy * (h / 2 - 0.012), 0.0004);
+    g.add(sc);
+  }
+  g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  return g;
+}
+
+// ---- material plaques: one plate in stone, concrete or dark wood, each
+// with its own outline and lettering. `kind` picks one of PLAQUE_KINDS;
+// returns a group centred on the face, front at z = 0, words sized to `fit`.
+
+export const PLAQUE_KINDS = ['marble', 'blackmarble', 'concrete', 'limestone', 'slate', 'walnut', 'travertine', 'oak'];
+
+// outlines, w by h, centred; 'rough' jitters a stone's edge as if split
+function outline(kind, w, h, r) {
+  const s = new THREE.Shape();
+  if (kind === 'pill') {
+    const rad = h / 2;
+    s.moveTo(-w / 2 + rad, -h / 2); s.lineTo(w / 2 - rad, -h / 2);
+    s.absarc(w / 2 - rad, 0, rad, -Math.PI / 2, Math.PI / 2, false);
+    s.lineTo(-w / 2 + rad, h / 2);
+    s.absarc(-w / 2 + rad, 0, rad, Math.PI / 2, Math.PI * 1.5, false);
+  } else if (kind === 'oval') {
+    s.absellipse(0, 0, w / 2, h / 2, 0, Math.PI * 2, false, 0);
+  } else if (kind === 'arch') {
+    // a flat bottom, the top a shallow arch
+    const rise = h * 0.28;
+    s.moveTo(-w / 2, -h / 2); s.lineTo(w / 2, -h / 2); s.lineTo(w / 2, h / 2 - rise);
+    s.quadraticCurveTo(0, h / 2 + rise, -w / 2, h / 2 - rise); s.closePath();
+  } else if (kind === 'notched') {
+    // the corners cut in with quarter circles, like an old ticket
+    const n = h * 0.18;
+    s.moveTo(-w / 2 + n, -h / 2); s.lineTo(w / 2 - n, -h / 2);
+    s.absarc(w / 2, -h / 2, n, Math.PI, Math.PI / 2, true);
+    s.lineTo(w / 2, h / 2 - n);
+    s.absarc(w / 2, h / 2, n, -Math.PI / 2, -Math.PI, true);
+    s.lineTo(-w / 2 + n, h / 2);
+    s.absarc(-w / 2, h / 2, n, 0, -Math.PI / 2, true);
+    s.lineTo(-w / 2, -h / 2 + n);
+    s.absarc(-w / 2, -h / 2, n, Math.PI / 2, 0, true);
+  } else if (kind === 'rounded') {
+    const rad = h * 0.16;
+    s.moveTo(-w / 2 + rad, -h / 2); s.lineTo(w / 2 - rad, -h / 2); s.quadraticCurveTo(w / 2, -h / 2, w / 2, -h / 2 + rad);
+    s.lineTo(w / 2, h / 2 - rad); s.quadraticCurveTo(w / 2, h / 2, w / 2 - rad, h / 2);
+    s.lineTo(-w / 2 + rad, h / 2); s.quadraticCurveTo(-w / 2, h / 2, -w / 2, h / 2 - rad);
+    s.lineTo(-w / 2, -h / 2 + rad); s.quadraticCurveTo(-w / 2, -h / 2, -w / 2 + rad, -h / 2);
+  } else if (kind === 'chipped') {
+    // a cast slab: square-ish, its edges a little uneven, a few chips out of them
+    const pts = [], j = h * 0.012;
+    const side = (x0, y0, x1, y1, n) => {
+      for (let i = 0; i < n; i++) {
+        const u = i / n, chip = r() < 0.07 ? h * (0.02 + r() * 0.03) : 0;
+        const nx = -(y1 - y0), ny = x1 - x0, len = Math.hypot(nx, ny);
+        pts.push([x0 + (x1 - x0) * u + (r() - 0.5) * j + (nx / len) * chip, y0 + (y1 - y0) * u + (r() - 0.5) * j + (ny / len) * chip]); // chips bite inward
+      }
+    };
+    side(-w / 2, -h / 2, w / 2, -h / 2, 40); side(w / 2, -h / 2, w / 2, h / 2, 12);
+    side(w / 2, h / 2, -w / 2, h / 2, 40); side(-w / 2, h / 2, -w / 2, -h / 2, 12);
+    pts.forEach(([x, y], i) => (i ? s.lineTo(x, y) : s.moveTo(x, y)));
+    s.closePath();
+  } else if (kind === 'rough') {
+    // split stone: the rectangle's edge walked in small uneven steps
+    const pts = [], j = h * 0.035;
+    const side = (x0, y0, x1, y1, n) => {
+      for (let i = 0; i < n; i++) { const u = i / n; pts.push([x0 + (x1 - x0) * u + (r() - 0.5) * j, y0 + (y1 - y0) * u + (r() - 0.5) * j]); }
+    };
+    side(-w / 2, -h / 2, w / 2, -h / 2, 26); side(w / 2, -h / 2, w / 2, h / 2, 8);
+    side(w / 2, h / 2, -w / 2, h / 2, 26); side(-w / 2, h / 2, -w / 2, -h / 2, 8);
+    pts.forEach(([x, y], i) => (i ? s.lineTo(x, y) : s.moveTo(x, y)));
+    s.closePath();
+  } else {
+    s.moveTo(-w / 2, -h / 2); s.lineTo(w / 2, -h / 2); s.lineTo(w / 2, h / 2); s.lineTo(-w / 2, h / 2); s.closePath();
+  }
+  return s;
+}
+
+// each kind: its outline, the face's paint, the lettering, the surface
+const SERIF = '"Libre Caslon Text", Georgia, serif', SANS = 'Archivo, Helvetica, sans-serif';
+const STYLES = {
+  marble:      { shape: 'rect',    depth: 0.012, bevel: 0.003, side: '#e9e6e1', rough: 0.22, coat: 0.6, letters: 'carved', ink: '#7d7a76', weight: 400, family: SERIF, caps: true },
+  blackmarble: { shape: 'rounded', depth: 0.01,  bevel: 0.002, side: '#1d1d20', rough: 0.18, coat: 0.9, letters: 'filled', ink: '#d9b45f', weight: 400, family: SERIF, caps: true },
+  concrete:    { shape: 'chipped',    depth: 0.014, bevel: 0.002, side: '#9d9992', rough: 0.9,  coat: 0,   letters: 'carved', ink: '#5d5a55', weight: 500, family: SANS, caps: false },
+  limestone:   { shape: 'rough',   depth: 0.016, bevel: 0.002, side: '#d8ccb5', rough: 0.85, coat: 0,   letters: 'carved', ink: '#7b6f5c', weight: 400, family: SANS, caps: false },
+  slate:       { shape: 'rough',   depth: 0.01,  bevel: 0.001, side: '#34383d', rough: 0.7,  coat: 0.2, letters: 'filled', ink: '#ece8df', weight: 400, family: SERIF, caps: true },
+  walnut:      { shape: 'arch',    depth: 0.012, bevel: 0.002, side: '#3e2717', rough: 0.55, coat: 0.3, letters: 'filled', ink: '#efe2c4', weight: 400, family: SERIF, caps: true },
+  travertine:  { shape: 'oval',    depth: 0.012, bevel: 0.003, side: '#ddcdb0', rough: 0.75, coat: 0,   letters: 'carved', ink: '#8a7552', weight: 500, family: SANS, caps: false },
+  oak:         { shape: 'notched', depth: 0.01,  bevel: 0.002, side: '#4a3120', rough: 0.6,  coat: 0.2, letters: 'filled', ink: '#d8b46a', weight: 700, family: SANS, caps: true },
+};
+// how much of the width the words may take: less inside an oval or a pill
+const ROOM = { travertine: 0.6, concrete: 0.74, limestone: 0.66 };
+
+// the face of each material, painted on a canvas
+function paintMaterial(kind, g, W, H, r) {
+  const fill = (c) => { g.fillStyle = c; g.fillRect(0, 0, W, H); };
+  const speck = (n, colours, max = 2) => {
+    for (let i = 0; i < n; i++) { g.fillStyle = colours[Math.floor(r() * colours.length)]; g.fillRect(r() * W, r() * H, 1 + r() * max, 1 + r() * max); }
+  };
+  const veins = (n, colour, width, blur) => {
+    g.save(); g.filter = blur ? 'blur(' + blur + 'px)' : 'none'; g.strokeStyle = colour; g.lineWidth = width;
+    for (let i = 0; i < n; i++) {
+      let x = r() * W, y = r() * H, a = r() * Math.PI * 2;
+      g.beginPath(); g.moveTo(x, y);
+      for (let k = 0; k < 40; k++) { a += (r() - 0.5) * 0.6; x += Math.cos(a) * 18; y += Math.sin(a) * 9; g.lineTo(x, y); }
+      g.stroke();
+    }
+    g.restore();
+  };
+  const grain = (base, lines, dark) => {
+    fill(base);
+    for (let y = 0; y < H; y += 2 + r() * 5) {
+      g.strokeStyle = r() < 0.2 ? dark : lines; g.lineWidth = 0.8 + r() * 1.8; g.beginPath();
+      for (let x = -10; x <= W + 10; x += 20) g.lineTo(x, y + Math.sin(x * 0.006 + y * 0.05) * 6);
+      g.stroke();
+    }
+  };
+  if (kind === 'marble') { fill('#f3f1ed'); veins(10, 'rgba(150,150,155,0.35)', 6, 6); veins(14, 'rgba(110,110,115,0.45)', 1.2, 0); }
+  else if (kind === 'blackmarble') { fill('#1e1e22'); veins(8, 'rgba(255,255,255,0.12)', 6, 5); veins(12, 'rgba(230,225,215,0.5)', 1, 0); veins(3, 'rgba(210,175,90,0.6)', 1.5, 0); }
+  else if (kind === 'concrete') {
+    fill('#aaa69f');
+    g.save(); g.filter = 'blur(20px)';
+    for (let i = 0; i < 40; i++) {
+      g.fillStyle = r() < 0.5 ? 'rgba(80,78,72,0.12)' : 'rgba(230,228,222,0.12)';
+      g.beginPath(); g.ellipse(r() * W, r() * H, 40 + r() * 120, 30 + r() * 70, 0, 0, Math.PI * 2); g.fill();
+    }
+    g.restore();
+    speck(5000, ['rgba(60,58,54,0.35)', 'rgba(235,232,225,0.35)']);
+    for (let i = 0; i < 90; i++) { g.fillStyle = 'rgba(50,48,44,0.55)'; g.beginPath(); g.arc(r() * W, r() * H, 1 + r() * 3, 0, Math.PI * 2); g.fill(); }
+  } else if (kind === 'limestone') {
+    fill('#e9dfcd'); speck(6000, ['rgba(150,135,110,0.25)', 'rgba(255,250,240,0.4)'], 1.5);
+    // the hewn border: a band of chiselled facets round a smooth dressed field
+    const band = Math.min(W, H) * 0.16;
+    for (let i = 0; i < 260; i++) {
+      const edge = Math.floor(r() * 4), t = r();
+      const x = edge === 0 ? t * W : edge === 1 ? W - r() * band : edge === 2 ? t * W : r() * band;
+      const y = edge === 0 ? r() * band : edge === 1 ? t * H : edge === 2 ? H - r() * band : t * H;
+      g.fillStyle = r() < 0.5 ? 'rgba(120,105,80,' + (0.12 + r() * 0.2) + ')' : 'rgba(255,252,245,' + (0.2 + r() * 0.3) + ')';
+      g.beginPath(); g.moveTo(x, y);
+      for (let k = 0; k < 4; k++) g.lineTo(x + (r() - 0.5) * band * 0.9, y + (r() - 0.5) * band * 0.7);
+      g.closePath(); g.fill();
+    }
+  } else if (kind === 'slate') {
+    fill('#3a3e44');
+    for (let y = 0; y < H; y += 3 + r() * 10) { g.fillStyle = (r() < 0.5 ? 'rgba(20,22,26,' : 'rgba(120,125,132,') + (0.08 + r() * 0.12) + ')'; g.fillRect(0, y, W, 1 + r() * 4); }
+    speck(2000, ['rgba(150,155,160,0.2)']);
+  } else if (kind === 'walnut') grain('#4a2e1b', 'rgba(30,16,8,0.35)', 'rgba(15,8,4,0.6)');
+  else if (kind === 'travertine') {
+    fill('#e4d6bb');
+    for (let y = 0; y < H; y += 4 + r() * 14) { g.fillStyle = (r() < 0.5 ? 'rgba(170,145,105,' : 'rgba(250,240,220,') + (0.15 + r() * 0.2) + ')'; g.fillRect(0, y, W, 2 + r() * 6); }
+    for (let i = 0; i < 160; i++) { g.fillStyle = 'rgba(120,95,60,0.45)'; g.beginPath(); g.ellipse(r() * W, r() * H, 2 + r() * 10, 1 + r() * 2.5, 0, 0, Math.PI * 2); g.fill(); }
+  } else if (kind === 'oak') grain('#5b3c24', 'rgba(35,20,10,0.3)', 'rgba(20,10,4,0.55)');
+}
+
+const titleCase = (t) => t.replace(/\b\w/g, (c) => c.toUpperCase());
+export function stylePlaque(kind, text, w, h, fit = text) {
+  const st = STYLES[kind] ?? STYLES.marble;
+  let seed = [...kind].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 5);
+  const r = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+  const label = st.caps ? text.toUpperCase() : titleCase(text);
+  const fitLabel = st.caps ? fit.toUpperCase() : titleCase(fit);
+  const W = 1024, H = Math.round(W * h / w);
+  const FONT = (px) => st.weight + ' ' + px + 'px ' + st.family;
+  const base = document.createElement('canvas');
+  base.width = W; base.height = H;
+  paintMaterial(kind, base.getContext('2d'), W, H, r);
+  const map = face('S' + kind + label + '|' + fitLabel + w.toFixed(3), W, H, (g) => {
+    g.drawImage(base, 0, 0);
+    let px = Math.round(H * 0.4);
+    const set = () => { g.font = FONT(px); if ('letterSpacing' in g) g.letterSpacing = Math.round(px * (st.caps ? 0.1 : 0.03)) + 'px'; };
+    set();
+    while (g.measureText(fitLabel).width > W * (ROOM[kind] ?? 0.76) && px > 20) { px -= 2; set(); }
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    const y = H / 2 + (kind === 'walnut' ? H * 0.06 : 0);
+    if (st.letters === 'carved') {
+      // cut into the surface: shadowed along the top edge, lit along the bottom
+      g.fillStyle = 'rgba(255,255,255,0.55)'; g.fillText(label, W / 2, y + 2);
+      g.fillStyle = 'rgba(0,0,0,0.45)'; g.fillText(label, W / 2, y - 1.5);
+      g.fillStyle = st.ink; g.fillText(label, W / 2, y);
+    } else {
+      // filled with paint or gilt, a hair of shadow beneath
+      g.fillStyle = 'rgba(0,0,0,0.35)'; g.fillText(label, W / 2, y + 2);
+      g.fillStyle = st.ink; g.fillText(label, W / 2, y);
+    }
+  }, [FONT(80)]);
+  const geo = new THREE.ExtrudeGeometry(outline(st.shape, w, h, r), { depth: st.depth, bevelEnabled: true, bevelThickness: st.bevel, bevelSize: st.bevel, bevelSegments: 3, curveSegments: 32 });
+  // the front's UVs are its x, y in metres: stretch the painting over the outline
+  const faceMap = map.clone();
+  faceMap.repeat.set(1 / w, 1 / h); faceMap.offset.set(0.5, 0.5);
+  const front = new THREE.MeshPhysicalMaterial({ map: faceMap, roughness: st.rough, clearcoat: st.coat, clearcoatRoughness: 0.15 });
+  const side = new THREE.MeshStandardMaterial({ color: st.side, roughness: Math.min(1, st.rough + 0.1) });
+  const plate = new THREE.Mesh(geo, [front, side]);
+  plate.position.z = -st.depth - st.bevel;
+  const grp = new THREE.Group();
+  grp.add(plate);
+  grp.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  return grp;
 }
 
 const BUILDERS = { blocks, lego, tiles, woodtype, cutout, board };

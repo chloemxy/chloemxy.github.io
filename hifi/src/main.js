@@ -7,6 +7,8 @@ import { buildCabinet } from './cabinet.js';
 import { Reader } from './reader.js';
 import { Bin } from './bins.js';
 import { projects, GROUPS } from './portfolio.js';
+import { woodSheet } from './materials.js';
+import { GRAINS } from './woodGrains.js';
 import { buildBinCabinet } from './bincabinet.js';
 import { BinReader } from './binReader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
@@ -123,6 +125,13 @@ function setupStudio(scene, camera) {
   const shot = CONFIG.studioShot;
   const finish = new URLSearchParams(location.search).get('finish') || 'knotty';
   const mats = finishMats(finish, { moss: false });
+  // the wall's wood: spalted maple, or ?grain=… for another drawn grain (woodGrains.js)
+  const grain = new URLSearchParams(location.search).get('grain') || 'spalted';
+  if (finish === 'knotty' && grain !== 'knotty' && GRAINS.includes(grain)) {
+    const sheet = woodSheet(grain);
+    sheet.repeat.copy(mats.wall.map.repeat);
+    mats.wall.map = sheet; mats.wall.needsUpdate = true;
+  }
   scene.background = new THREE.Color('#e7dccb');
   // only the eight bins in the two middle columns are kept, four in each,
   // with a sign of letter blocks on the shelf above: CLIENT over the left
@@ -137,6 +146,8 @@ function setupStudio(scene, camera) {
     // every plaque's words at the size the longest label fits
     signFit: Object.values(GROUPS).map((w) => [].concat(w).join(' ')).sort((a, b) => b.length - a.length)[0],
     backWood: finish === 'knotty',
+    grain,
+    plaqueKind: new URLSearchParams(location.search).get('plaque') || 'concrete',
   });
   // the case studies in reading order: the left column top to bottom, then the right
   slots.sort((a, b) => a.position.x - b.position.x || b.position.y - a.position.y);
@@ -241,10 +252,16 @@ async function start() {
       // screen and less on a narrow one, but never cropped into `keep`
       // (then it shows more height instead); centred on the view, or moved
       // just enough to keep `keep` in
-      const [x0, y0, x1, y1] = shot.view, [k0, j0, k1, j1] = shot.keep, a = camera.aspect;
-      const h = Math.max(y1 - y0, j1 - j0, (k1 - k0) / a), w = h * a;
+      // The top bar covers the top of the canvas, so the view is fitted to
+      // the part below it: the frame grows by the bar's share and moves up.
+      const [x0, y0, x1, y1] = shot.view, [k0, j0, k1, j1] = shot.keep, a0 = camera.aspect;
+      const barFrac = Math.min(0.3, (document.querySelector('.bar')?.offsetHeight ?? 0) / innerHeight);
+      const a = a0 / (1 - barFrac); // the aspect of what shows below the bar
+      const seen = Math.max(y1 - y0, j1 - j0, (k1 - k0) / a), w = seen * a;
       const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
-      const cx = clamp((x0 + x1) / 2, k1 - w / 2, k0 + w / 2), cy = clamp((y0 + y1) / 2, j1 - h / 2, j0 + h / 2);
+      // on a tall screen the extra height goes to the floor, the wall's top staying under the bar
+      const cx = clamp((x0 + x1) / 2, k1 - w / 2, k0 + w / 2), cSeen = y1 - seen / 2;
+      const h = seen / (1 - barFrac), cy = cSeen + (h - seen) / 2;
       const d = h / 2 / tanH;
       camera.position.set(cx, shot.eye, aim.z + d);
       camera.lookAt(cx, shot.eye, aim.z);

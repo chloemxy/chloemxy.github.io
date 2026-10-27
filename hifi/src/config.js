@@ -28,11 +28,12 @@ export const CONFIG = {
   // the potter's-studio wall (setupStudio in main.js): straight on and
   // level, from eye height (`eye`), the frame shifted like a shift lens, so
   // every upright stays vertical. `view` is what it shows, [x0, y0, x1, y1]
-  // on the wall (m): the two portfolio columns in the middle, a column and
-  // a half either side, a band of carpet below. Always its full height; a
+  // on the wall (m), below the top bar: the two portfolio columns in the
+  // middle up to the name drawers at the wall's top, a column and a half
+  // either side, a sliver of carpet below. Always its full height; a
   // narrower screen crops the sides, but never into `keep`, the two
   // portfolio columns and their signs, which stay whole however narrow.
-  studioShot: { azimuth: 0, elevation: 0, eye: 1.6, fov: 27.5, focus: [-0.285, 1.2], view: [-1.85, -0.17, 1.28, 2.7], keep: [-0.94, -0.05, 0.41, 2.62] },
+  studioShot: { azimuth: 0, elevation: 0, eye: 1.6, fov: 27.5, focus: [-0.285, 1.2], view: [-1.85, -0.06, 1.28, 2.43], keep: [-0.94, -0.02, 0.41, 2.43] },
 
   // what stands behind the bin cabinet: 'studio' (the bins scattered through
   // a wall of open shelving, a zen garden in front), 'cabin' (a bright wooden cabin with

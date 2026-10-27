@@ -5,6 +5,7 @@
 // from seeded noise, so the wear is the same on every load.
 
 import * as THREE from 'three';
+import { drawGrain } from './woodGrains.js';
 
 let anisotropy = 4;
 export function setMaterialAnisotropy(n) { anisotropy = n; }
@@ -298,65 +299,136 @@ export function whiteMarble() {
 // ---- Finishes for the apothecary wall (bincabinet.js FINISHES)
 
 // a wood: the scanned veneer, tinted to the species
-// knotty pine, drawn rather than scanned: pale honey boards, the grain
-// running down their length and swerving round dark knots, after the
-// reference photo of a pine shelving unit. One tile is 0.45 m square
-// (cabinet.js TILE) and wraps seamlessly.
-// `size` px for `tiles` tiles each way, with `knots` knots across it
-export function knottyPineMap({ seed = 11, size = 1024, knots: count = 5 } = {}) {
+// knotty pine, drawn rather than scanned, after the reference photo of a
+// pine shelving unit. One sheet is `size` px covering `metres` each way and
+// wraps across: planks of different widths and tones, each with straight
+// grain or the arched "cathedral" grain of a flat-sawn board, and knots from
+// small pins to a few big ones, the grain swerving round them, never
+// crowding each other.
+export function knottyPineMap({ seed = 11, size = 2048, metres = 1.8, knots: perM2 = 8 } = {}) {
   const W = size, c = document.createElement('canvas');
   c.width = c.height = W;
   const g = c.getContext('2d');
   let s = seed;
   const r = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
-  g.fillStyle = '#dcb98a'; g.fillRect(0, 0, W, W);
-  // soft lighter and darker streaks along the boards
-  for (let i = 0; i < 40; i++) {
-    g.fillStyle = r() < 0.5 ? 'rgba(255,240,215,0.08)' : 'rgba(160,105,55,0.07)';
-    g.fillRect(r() * W, 0, 10 + r() * 60, W);
+  const pxPerM = W / metres;
+
+  // the knots first, so the grain can bend round them
+  const knots = [], count = Math.round(perM2 * metres * metres);
+  for (let tries = 0; knots.length < count && tries < count * 60; tries++) {
+    const roll = r();
+    const radM = roll < 0.65 ? 0.007 + r() * 0.009 : roll < 0.92 ? 0.016 + r() * 0.012 : 0.03 + r() * 0.016;
+    const k = { x: r() * W, y: r() * W, rad: radM * pxPerM, stretch: 1.1 + r() * 0.8, tilt: (r() - 0.5) * 0.5 };
+    const clear = knots.every((o) => {
+      const dx = Math.min(Math.abs(k.x - o.x), W - Math.abs(k.x - o.x)), dy = Math.min(Math.abs(k.y - o.y), W - Math.abs(k.y - o.y));
+      return Math.hypot(dx, dy) > (k.rad + o.rad) * 4;
+    });
+    if (clear) knots.push(k);
   }
-  // the knots, each drawn again a tile away so the edges wrap
-  const knots = Array.from({ length: count }, () => ({ x: r() * W, y: r() * W, rad: (12 + r() * 16) * (W / 1024) ** 0.5, stretch: 1.15 + r() * 0.6 }));
-  const near = (x, y) => knots.flatMap((k) => [-W, 0, W].flatMap((ox) => [-W, 0, W].map((oy) => ({ ...k, x: k.x + ox, y: k.y + oy }))));
-  const all = near();
-  // grain lines: each runs top to bottom, pushed sideways round the knots
-  for (let x = 0; x < W; x += 3 + r() * 5) {
-    const a = 0.08 + r() * 0.3, wide = r() < 0.14;
-    g.strokeStyle = `rgba(${150 + r() * 30},${92 + r() * 25},${45 + r() * 20},${wide ? a * 1.4 : a})`;
-    g.lineWidth = wide ? 2 + r() * 2 : 0.8 + r() * 0.9;
-    g.beginPath();
-    for (let y = -4; y <= W + 4; y += 8) {
-      let dx = Math.sin(y / W * Math.PI * 2 * 2 + x * 0.01) * 3;
-      for (const k of all) {
-        const ex = x - k.x, ey = (y - k.y) / k.stretch, d2 = ex * ex + ey * ey, R = k.rad * 4;
-        if (d2 < R * R * 9) dx += Math.sign(ex || 1) * k.rad * 2.2 * Math.exp(-d2 / (R * R));
-      }
-      if (y < 0) g.moveTo(x + dx, y); else g.lineTo(x + dx, y);
+  const all = knots.flatMap((k) => [-W, 0, W].flatMap((ox) => [-W, 0, W].map((oy) => ({ ...k, x: k.x + ox, y: k.y + oy }))));
+  const bend = (x, y) => {
+    let dx = 0;
+    for (const k of all) {
+      const ex = x - k.x, ey = (y - k.y) / k.stretch, d2 = ex * ex + ey * ey, R = k.rad * 3.2;
+      if (d2 < R * R * 9) dx += Math.sign(ex || 1) * k.rad * 1.9 * Math.exp(-d2 / (R * R));
     }
+    return dx;
+  };
+  const line = (pts, colour, width) => {
+    g.strokeStyle = colour; g.lineWidth = width; g.beginPath();
+    pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y)));
     g.stroke();
-  }
-  for (const k of all) {
-    if (k.x < -60 || k.x > W + 60 || k.y < -60 || k.y > W + 60) continue;
-    // rings of darker wood round the knot, then the knot itself
-    for (let i = 3; i >= 1; i--) {
-      g.strokeStyle = `rgba(150,90,40,${0.12 + 0.06 * (3 - i)})`; g.lineWidth = 2;
-      g.beginPath(); g.ellipse(k.x, k.y, k.rad * (1 + i * 0.55), k.rad * k.stretch * (1 + i * 0.7), 0, 0, Math.PI * 2); g.stroke();
+  };
+  const grainColour = (a) => `rgba(${140 + r() * 40},${85 + r() * 30},${40 + r() * 22},${a})`;
+
+  // the planks, edge to edge across the sheet
+  let px0 = 0;
+  while (px0 < W) {
+    const pw = Math.min(W - px0, (0.07 + r() * 0.14) * pxPerM);
+    const x0 = px0, x1 = px0 + pw;
+    px0 = x1;
+    if (W - px0 < 0.04 * pxPerM) { px0 = W; }
+    const right = px0 === W ? W : x1;
+    g.save(); g.beginPath(); g.rect(x0, 0, right - x0, W); g.clip();
+    // each plank its own shade of honey
+    const tone = [218 + r() * 22, 178 + r() * 26, 122 + r() * 30];
+    g.fillStyle = `rgb(${tone[0]},${tone[1]},${tone[2]})`; g.fillRect(x0, 0, right - x0, W);
+    for (let i = 0; i < 6; i++) {
+      g.fillStyle = r() < 0.5 ? 'rgba(255,240,215,0.07)' : 'rgba(150,95,45,0.07)';
+      g.fillRect(x0 + r() * (right - x0), 0, 6 + r() * 40, W);
     }
-    // a soft brown knot, darkest in a small heart, not a hole
-    const grad = g.createRadialGradient(k.x, k.y, 0, k.x, k.y, k.rad * 1.15);
+    // straight grain: lines down the plank, unevenly spaced, wandering a little
+    const wave = r() * 6, freq = 1 + r() * 3;
+    for (let x = x0 + r() * 4; x < right; x += 3 + r() * (r() < 0.2 ? 14 : 6)) {
+      const pts = [];
+      for (let y = -8; y <= W + 8; y += 10) pts.push([x + Math.sin((y / W) * Math.PI * 2 * freq + x * 0.013) * wave + bend(x, y), y]);
+      const strong = r() < 0.15;
+      line(pts, grainColour(strong ? 0.28 + r() * 0.15 : 0.06 + r() * 0.18), strong ? 1.6 + r() * 2.2 : 0.7 + r() * 0.8);
+    }
+    // cathedral grain on about half the planks: nested arches, open downward
+    if (r() < 0.55) {
+      const arches = 1 + Math.floor(r() * 2);
+      for (let k = 0; k < arches; k++) {
+        const cx = x0 + (right - x0) * (0.3 + r() * 0.4), apex = r() * W, step = 7 + r() * 9;
+        const n = Math.floor(((right - x0) / 2) / step);
+        for (let i = 1; i <= n; i++) {
+          const half = i * step, tall = half * (4 + r() * 3 + i * 0.4), pts = [];
+          for (let t = -1; t <= 1.0001; t += 0.05) {
+            const x = cx + t * half, y = apex + (1 - Math.cos((t * Math.PI) / 2)) * 0 + tall * t * t;
+            pts.push([x + bend(x, y), y]);
+          }
+          line(pts, grainColour(0.12 + r() * 0.22), i % 3 === 0 ? 1.8 : 1);
+        }
+      }
+    }
+    g.restore();
+    // the joint between planks
+    if (right < W) line([[right, 0], [right, W]], 'rgba(120,75,35,0.18)', 1.2);
+  }
+
+  // the knots themselves: rings of darker wood, a soft brown heart
+  for (const k of all) {
+    if (k.x < -k.rad * 4 || k.x > W + k.rad * 4 || k.y < -k.rad * 4 || k.y > W + k.rad * 4) continue;
+    g.save(); g.translate(k.x, k.y); g.rotate(k.tilt);
+    for (let i = 3; i >= 1; i--) {
+      g.strokeStyle = `rgba(150,90,40,${0.1 + 0.06 * (3 - i)})`; g.lineWidth = Math.max(1.5, k.rad * 0.06);
+      g.beginPath(); g.ellipse(0, 0, k.rad * (1 + i * 0.5), k.rad * k.stretch * (1 + i * 0.65), 0, 0, Math.PI * 2); g.stroke();
+    }
+    const grad = g.createRadialGradient(0, 0, 0, 0, 0, k.rad * 1.15);
     grad.addColorStop(0, '#4a2a12'); grad.addColorStop(0.3, '#6e4220'); grad.addColorStop(0.65, '#9a6634'); grad.addColorStop(1, 'rgba(175,115,60,0)');
     g.fillStyle = grad;
-    g.beginPath(); g.ellipse(k.x, k.y, k.rad * 1.15, k.rad * 1.15 * k.stretch, 0, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.ellipse(0, 0, k.rad * 1.15, k.rad * 1.15 * k.stretch, 0, 0, Math.PI * 2); g.fill();
+    // a big knot sometimes has a dark rim, or a small check across it
+    if (k.rad > 0.025 * pxPerM) {
+      g.strokeStyle = 'rgba(55,30,12,0.55)'; g.lineWidth = 2;
+      g.beginPath(); g.ellipse(0, 0, k.rad * 0.85, k.rad * 0.85 * k.stretch, 0, 0, Math.PI * 2); g.stroke();
+      if (r() < 0.5) line([[-k.rad * 0.6, -k.rad * 0.1], [k.rad * 0.5, k.rad * 0.2]], 'rgba(40,20,8,0.5)', 1.4);
+    }
+    g.restore();
   }
+  return texture(c, { srgb: true });
+}
+
+// a sheet of wood for the wall in any of the grains (woodGrains.js); knotty
+// pine is drawn above
+export function woodSheet(style = 'knotty', { seed = 11, size = 2048, metres = 1.8 } = {}) {
+  if (style === 'knotty') return knottyPineMap({ seed, size, metres });
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  let s = seed;
+  drawGrain(style, c.getContext('2d'), size, () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296));
   return texture(c, { srgb: true });
 }
 
 export function knottyPine() {
   const nor = scans.ashNor.clone();
   nor.center.set(0.5, 0.5); nor.rotation = Math.PI / 2; nor.needsUpdate = true;
+  // the boards' UVs run one unit per 0.45 m (cabinet.js); the sheet covers 1.8 m
+  const map = knottyPineMap();
+  map.repeat.set(0.45 / 1.8, 0.45 / 1.8);
   return new THREE.MeshStandardMaterial({
     color: '#ffffff', vertexColors: true, // each piece keeps its own tone (cabinet.js)
-    map: knottyPineMap(), roughness: 0.72,
+    map, roughness: 0.72,
     normalMap: nor, normalScale: new THREE.Vector2(0.25, 0.25),
   });
 }

@@ -13,8 +13,10 @@
 import * as THREE from 'three';
 import { Kit } from './cabinet.js';
 import { BIN } from './bincabinet.js';
-import { signPieces, plaqueFace } from './signs.js';
-import { knottyPineMap } from './materials.js';
+import { signPieces, plaqueFace, castPlaque, platePlaque, stylePlaque, PLAQUE_KINDS } from './signs.js';
+import { woodSheet, brushedBrass } from './materials.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { PLANT_MODELS, placePlant } from './plantModels.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const TAU = Math.PI * 2;
@@ -85,6 +87,14 @@ const bladeGeo = new THREE.ConeGeometry(1, 1, 6, 1).translate(0, 0.5, 0);
 function plant(r, maxH) {
   const g = new THREE.Group();
   const leaf = () => leafMats[Math.floor(r() * leafMats.length)];
+  // most plants are real models (plantModels.js); the rest drawn here
+  const useModel = r() < 0.75, model = PLANT_MODELS[Math.floor(r() * PLANT_MODELS.length)];
+  if (useModel && model.potted) {
+    // it comes in its own pot: just give it the room
+    const w = 0.16 + r() * 0.06;
+    placePlant(g, model.id, { width: w * 1.6, height: Math.min(maxH - 0.02, 0.44), pick: r() });
+    return { g, w };
+  }
   // the pot: a small turned jar with soil in the top
   const ps = 0.75 + r() * 0.3, potH = SHAPES.jar.h * ps, potR = 0.072 * ps;
   g.add(lathe(SHAPES.jar.pts, ps, clay(CLAY[Math.floor(r() * CLAY.length)], r)));
@@ -92,7 +102,20 @@ function plant(r, maxH) {
   soil.position.y = potH - 0.012;
   g.add(soil);
   const top = potH - 0.01, room = Math.max(0.06, maxH - top - 0.02);
-  const kind = r();
+  if (useModel) {
+    // a model plant set into the clay pot, its leaves spreading past the rim
+    placePlant(g, model.id, { width: Math.max(potR * 5.6, 0.36), height: Math.min(room, 0.4), y: top - 0.004, pick: r() });
+    // and often a second, smaller plant tucked in beside it, so the pot overflows
+    if (r() < 0.5) {
+      const extra = new THREE.Group();
+      extra.position.set((r() < 0.5 ? -1 : 1) * potR * 0.6, 0, potR * 0.3);
+      placePlant(extra, PLANT_MODELS[Math.floor(r() * 3)].id, { width: 0.2, height: Math.min(room * 0.7, 0.22), y: top - 0.004, pick: r() });
+      g.add(extra);
+    }
+    return { g, w: Math.max(potR * 3.2, 0.2) };
+  }
+  // drawn plants: mostly pothos trailing over the edge, now and then a pilea
+  const kind = r() < 0.65 ? 0.9 : 0.4;
   if (kind < 0.28) {
     // snake plant: stiff upright blades, a little splayed
     const n = 8 + Math.floor(r() * 5);
@@ -166,9 +189,9 @@ function plant(r, maxH) {
 }
 
 // one piece (or a little group) for a cell; sits on y = 0, centred; fits
-// within `maxH` high; about a third are green plants. Returns it and its width.
+// within `maxH` high; more than half are green plants. Returns it and its width.
 function ceramic(r, maxH) {
-  if (maxH > 0.2 && r() < 0.3) return plant(r, maxH);
+  if (maxH > 0.2 && r() < 0.55) return plant(r, maxH);
   const g = new THREE.Group();
   const pick = r();
   const colour = () => CLAY[Math.floor(r() * CLAY.length)];
@@ -230,7 +253,7 @@ function ceramic(r, maxH) {
 // the rest become open shelves.
 // `sign(x, y)`, if given, can return a word (or words, one per row) for the
 // open cell at the top of a bin column, spelled out in `signStyle` (signs.js).
-export function shelfWall(scene, mats, { back = '#e2cba6', backWood = false, seed = 7, bins = 16, binAt = null, sign = null, signStyle = 'blocks', signFit = null } = {}) {
+export function shelfWall(scene, mats, { back = '#e2cba6', backWood = false, seed = 7, bins = 16, binAt = null, sign = null, signStyle = 'blocks', signFit = null, plaqueKind = 'concrete', grain = 'knotty' } = {}) {
   const r = seeded(seed);
   const k = new Kit(31);
   const wood = mats.wall;
@@ -262,11 +285,11 @@ export function shelfWall(scene, mats, { back = '#e2cba6', backWood = false, see
   // its knots and grain show across the back of every cell
   let backMat = new THREE.MeshStandardMaterial({ map: plasterTex, roughness: 0.95 });
   if (backWood && mats.wall.map) {
-    // its own, larger sheet (1.35 m square, many knots) so the pattern doesn't
-    // visibly repeat cell to cell
-    const map = knottyPineMap({ seed: 23, size: 2048, knots: 26 });
-    map.repeat.set((total + 12) / 1.35, (TOP + 0.4) / 1.35);
-    backMat = new THREE.MeshStandardMaterial({ map, color: '#e3d6c4', roughness: 0.8, normalMap: mats.wall.normalMap, normalScale: new THREE.Vector2(0.2, 0.2) });
+    // its own sheet (2.7 m square, a different seed) so the pattern doesn't
+    // visibly repeat cell to cell or match the boards in front
+    const map = woodSheet(grain, { seed: 23, size: 2048, metres: 2.7 });
+    map.repeat.set((total + 12) / 2.7, (TOP + 0.4) / 2.7);
+    backMat = new THREE.MeshStandardMaterial({ map, color: '#efd6c4', roughness: 0.8, normalMap: mats.wall.normalMap, normalScale: new THREE.Vector2(0.2, 0.2) });
   }
   const plaster = new THREE.Mesh(new THREE.PlaneGeometry(total + 12, TOP + 0.4), backMat);
   plaster.position.set(0, (TOP + 0.4) / 2, -DEPTH - 0.005);
@@ -294,38 +317,84 @@ export function shelfWall(scene, mats, { back = '#e2cba6', backWood = false, see
       g.rotation.y = g.userData.facing ? (r() - 0.5) * 0.6 : r() * TAU;
       things.push(g);
       at += w + 0.03 + r() * 0.08;
-      if (r() < 0.3) break; // some cells hold just one or two pieces
+      if (r() < 0.2) break; // some cells hold just one or two pieces
     }
   };
 
   // a slim drawer filling a cell DH high: a plain wooden front flush with
   // the shelving, no knob, and a brass plaque nearly its full width with the
   // words engraved large enough to read across the room
-  const plaqueMetal = new THREE.MeshStandardMaterial({ color: '#c9a256', metalness: 0.7, roughness: 0.32 });
-  // the plaque is gilded tiles painted with flowers (signs.js plaqueFace),
-  // lit by a brass picture light along its top; every plaque sets its words
-  // at the size that fits `signFit`, the longest, so they all match
+  // The name drawers: both the same height, hung from the crown so their
+  // tops, plaques and lights line up (the columns under them end a little
+  // apart; any gap below is a thicker shelf). On each, a plaque of five
+  // glazed porcelain tiles, gilded and painted with flowers (signs.js
+  // plaqueFace), set in a brushed brass frame and lit by a brass picture
+  // light. Every plaque sets its words at the size that fits `signFit`, the
+  // longest, so they all match.
+  const DRAWER_H = 0.175;
+  // brushed brass, brighter than the knobs' so it catches the light
+  const brushed = brushedBrass('#e2bf72');
+  brushed.vertexColors = false;
+  brushed.metalness = 0.85; brushed.envMapIntensity = 4.5;
+  const RoundBox = (w, h, d, rad) => new RoundedBoxGeometry(w, h, d, 3, rad);
   const slimDrawer = (words, x0, x1, y, DH) => {
     const g = 0.004, w = x1 - x0, cx = (x0 + x1) / 2;
-    k.beam(V(x0 + g, y + DH / 2, -0.012), V(x1 - g, y + DH / 2, -0.012), DH - 2 * g, 0.022, wood, V(0, 1, 0));
-    const pw = w - 0.03, ph = Math.min(0.12, DH - 0.05), py = y + 0.012 + ph / 2;
+    const gap = Math.max(0, DH - DRAWER_H), bottom = TOP - Math.min(DH, DRAWER_H);
+    if (gap > 0.001) k.beam(V(x0, y + gap / 2, -DEPTH / 2), V(x1, y + gap / 2, -DEPTH / 2), DEPTH, gap, wood, V(0, 0, 1));
+    k.beam(V(x0 + g, (bottom + TOP) / 2, -0.012), V(x1 - g, (bottom + TOP) / 2, -0.012), TOP - bottom - 2 * g, 0.022, wood, V(0, 1, 0));
+
     const text = [].concat(words).join(' ');
-    const plaque = new THREE.Mesh(new THREE.BoxGeometry(pw, ph, 0.006), [plaqueMetal, plaqueMetal, plaqueMetal, plaqueMetal,
-      new THREE.MeshStandardMaterial({ map: plaqueFace(text, pw / ph, signFit ?? text), metalness: 0.45, roughness: 0.4 }), plaqueMetal]);
-    plaque.position.set(cx, py, 0.003);
-    things.push(plaque);
-    // the picture light: a brass tube over the plaque on two short arms,
-    // glowing warm along its underside
-    const lightY = py + ph / 2 + 0.014, tubeL = pw * 0.94;
-    const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, tubeL, 24).rotateZ(Math.PI / 2), plaqueMetal);
-    tube.position.set(cx, lightY, 0.026);
-    const glow = new THREE.Mesh(new THREE.PlaneGeometry(tubeL * 0.96, 0.006).rotateX(Math.PI / 2),
-      new THREE.MeshBasicMaterial({ color: '#fff1c8' }));
-    glow.position.set(cx, lightY - 0.0092, 0.026);
+    if (plaqueKind === 'cast') {
+      // a cast brass name plate, screwed to the middle of the drawer front
+      const plate = castPlaque(text, w - 0.05, 0.11, signFit ?? text);
+      plate.position.set(cx, (bottom + TOP) / 2, 0.006);
+      things.push(plate);
+      return;
+    }
+    if (PLAQUE_KINDS.includes(plaqueKind)) {
+      // a plaque in stone, concrete or dark wood (signs.js stylePlaque)
+      const plate = stylePlaque(plaqueKind, text.toLowerCase(), w - 0.05, 0.13, (signFit ?? text).toLowerCase());
+      plate.position.set(cx, (bottom + TOP) / 2, 0.006);
+      things.push(plate);
+      return;
+    }
+    if (plaqueKind !== 'tiles') {
+      // a plate of aged brass, the words lowercase in cream, standing a few
+      // millimetres off the drawer front so it throws a thin shadow
+      const fit = (signFit ?? text).toLowerCase();
+      const plate = platePlaque(text.toLowerCase(), w - 0.05, 0.12, fit);
+      plate.position.set(cx, (bottom + TOP) / 2, 0.006);
+      things.push(plate);
+      return;
+    }
+    const pw = w - 0.05, ph = 0.1, py = bottom + 0.018 + ph / 2, rim = 0.009;
+    const frame = new THREE.Mesh(RoundBox(pw + 2 * rim, ph + 2 * rim, 0.006, 0.002), brushed);
+    frame.position.set(cx, py, 0.003);
+    things.push(frame);
+    // the tiles, each showing its fifth of the painting, thin gaps between
+    const art = plaqueFace(text, pw / ph, signFit ?? text);
+    const N = 5, seam = 0.0016, tw = (pw - seam * (N - 1)) / N;
+    const tileGeo = RoundBox(tw, ph, 0.006, 0.0018);
+    const glazeEdge = new THREE.MeshPhysicalMaterial({ color: '#e6c77d', roughness: 0.3, metalness: 0.3, clearcoat: 1, clearcoatRoughness: 0.08 });
+    for (let i = 0; i < N; i++) {
+      const map = art.clone();
+      map.repeat.set(1 / N, 1); map.offset.set(i / N, 0);
+      const glaze = new THREE.MeshPhysicalMaterial({ map, roughness: 0.32, metalness: 0.25, clearcoat: 1, clearcoatRoughness: 0.06 });
+      const t = new THREE.Mesh(tileGeo, [glazeEdge, glazeEdge, glazeEdge, glazeEdge, glaze, glazeEdge]);
+      t.position.set(cx - pw / 2 + tw / 2 + i * (tw + seam), py, 0.0075);
+      things.push(t);
+    }
+    // the picture light: a brushed brass tube over the plaque on two short
+    // arms, glowing warm along its underside
+    const lightY = py + ph / 2 + rim + 0.017, tubeL = pw * 0.94;
+    const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, tubeL, 32).rotateZ(Math.PI / 2), brushed);
+    tube.position.set(cx, lightY, 0.03);
+    const glow = new THREE.Mesh(new THREE.PlaneGeometry(tubeL * 0.96, 0.006).rotateX(Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#fff1c8' }));
+    glow.position.set(cx, lightY - 0.0112, 0.03);
     things.push(tube, glow);
     for (const sx of [-0.3, 0.3]) {
-      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.024, 10).rotateX(Math.PI / 2), plaqueMetal);
-      arm.position.set(cx + sx * pw, lightY, 0.013);
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.0028, 0.0028, 0.03, 12).rotateX(Math.PI / 2), brushed);
+      arm.position.set(cx + sx * pw, lightY, 0.015);
       things.push(arm);
     }
   };

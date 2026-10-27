@@ -61,7 +61,12 @@ export const builders = {
     const pos = geo.attributes.position;
     for (let i = 0; i < pos.count; i++) pos.setZ(i, CURVE * (1 - (1 - Math.abs(pos.getX(i)) / (W / 2)) ** 3));
     geo.computeVertexNormals();
-    const pages = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85 }));
+    // the picture shows in its own colours, not washed out by the warm sun on
+    // a matte page: it lights itself (emissive), with only a touch of the
+    // room's light on top so it still sits in the scene
+    const pages = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
+      map: tex, color: '#1a1a1a', emissive: '#ffffff', emissiveMap: tex, emissiveIntensity: 0.9, roughness: 0.85,
+    }));
     pages.position.y = H / 2 + m;
     const turn = new THREE.Group();
     turn.add(pages);
