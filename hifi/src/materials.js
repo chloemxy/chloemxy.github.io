@@ -305,7 +305,23 @@ export function whiteMarble() {
 // grain or the arched "cathedral" grain of a flat-sawn board, and knots from
 // small pins to a few big ones, the grain swerving round them, never
 // crowding each other.
-export function knottyPineMap({ seed = 11, size = 2048, metres = 1.8, knots: perM2 = 8 } = {}) {
+// The look is tuned by: `knots` per m², `knotScale` (their size), `bigShare`
+// (how many are big), `cathedral` (the share of planks with arched grain),
+// `spacing` and `contrast` of the grain lines, `wave` (how much they wander),
+// `plank` [narrowest, widest] in metres and `amber` (0 pale honey .. 1 aged).
+export const PINE_PRESETS = {
+  pine1: { knots: 2, knotScale: 0.6, bigShare: 0, cathedral: 0.3, spacing: 1, contrast: 0.8, plank: [0.12, 0.24] },   // clear: barely a knot
+  pine2: { knots: 16, knotScale: 1, bigShare: 0.12, cathedral: 0.55, contrast: 1.4 },                                // rustic: knots everywhere
+  pine3: { knots: 3, knotScale: 2.2, bigShare: 0.4, cathedral: 0.5 },                                                // a few big knots
+  pine4: { knots: 40, knotScale: 0.35, bigShare: 0, cathedral: 0.4 },                                                // pin knots, scattered
+  pine5: { knots: 6, cathedral: 1, contrast: 1.5, plank: [0.14, 0.26] },                                             // all cathedral arches
+  pine6: { knots: 4, cathedral: 0, spacing: 0.45, contrast: 1.4, wave: 0.3 },                                         // tight straight grain
+  pine7: { knots: 8, knotScale: 1.3, cathedral: 0.6, spacing: 2.4, wave: 3.5, contrast: 1.3 },                         // wide, wild grain
+  pine8: { knots: 12, cathedral: 0.5, plank: [0.04, 0.08], amber: 1, contrast: 1.2 },                                  // narrow aged amber boards
+};
+
+export function knottyPineMap({ seed = 11, size = 2048, metres = 1.8, knots: perM2 = 8, knotScale = 1, bigShare = 0.08,
+  cathedral = 0.55, spacing = 1, contrast = 1, wave: waveK = 1, plank = [0.07, 0.21], amber = 0 } = {}) {
   const W = size, c = document.createElement('canvas');
   c.width = c.height = W;
   const g = c.getContext('2d');
@@ -317,7 +333,7 @@ export function knottyPineMap({ seed = 11, size = 2048, metres = 1.8, knots: per
   const knots = [], count = Math.round(perM2 * metres * metres);
   for (let tries = 0; knots.length < count && tries < count * 60; tries++) {
     const roll = r();
-    const radM = roll < 0.65 ? 0.007 + r() * 0.009 : roll < 0.92 ? 0.016 + r() * 0.012 : 0.03 + r() * 0.016;
+    const radM = knotScale * (roll < 0.65 ? 0.007 + r() * 0.009 : roll < 1 - bigShare ? 0.016 + r() * 0.012 : 0.03 + r() * 0.016);
     const k = { x: r() * W, y: r() * W, rad: radM * pxPerM, stretch: 1.1 + r() * 0.8, tilt: (r() - 0.5) * 0.5 };
     const clear = knots.every((o) => {
       const dx = Math.min(Math.abs(k.x - o.x), W - Math.abs(k.x - o.x)), dy = Math.min(Math.abs(k.y - o.y), W - Math.abs(k.y - o.y));
@@ -344,29 +360,29 @@ export function knottyPineMap({ seed = 11, size = 2048, metres = 1.8, knots: per
   // the planks, edge to edge across the sheet
   let px0 = 0;
   while (px0 < W) {
-    const pw = Math.min(W - px0, (0.07 + r() * 0.14) * pxPerM);
+    const pw = Math.min(W - px0, (plank[0] + r() * (plank[1] - plank[0])) * pxPerM);
     const x0 = px0, x1 = px0 + pw;
     px0 = x1;
     if (W - px0 < 0.04 * pxPerM) { px0 = W; }
     const right = px0 === W ? W : x1;
     g.save(); g.beginPath(); g.rect(x0, 0, right - x0, W); g.clip();
     // each plank its own shade of honey
-    const tone = [218 + r() * 22, 178 + r() * 26, 122 + r() * 30];
+    const tone = [218 + r() * 22 - amber * 30, 178 + r() * 26 - amber * 55, 122 + r() * 30 - amber * 70];
     g.fillStyle = `rgb(${tone[0]},${tone[1]},${tone[2]})`; g.fillRect(x0, 0, right - x0, W);
     for (let i = 0; i < 6; i++) {
       g.fillStyle = r() < 0.5 ? 'rgba(255,240,215,0.07)' : 'rgba(150,95,45,0.07)';
       g.fillRect(x0 + r() * (right - x0), 0, 6 + r() * 40, W);
     }
     // straight grain: lines down the plank, unevenly spaced, wandering a little
-    const wave = r() * 6, freq = 1 + r() * 3;
-    for (let x = x0 + r() * 4; x < right; x += 3 + r() * (r() < 0.2 ? 14 : 6)) {
+    const wave = r() * 6 * waveK, freq = 1 + r() * 3;
+    for (let x = x0 + r() * 4; x < right; x += (3 + r() * (r() < 0.2 ? 14 : 6)) * spacing) {
       const pts = [];
       for (let y = -8; y <= W + 8; y += 10) pts.push([x + Math.sin((y / W) * Math.PI * 2 * freq + x * 0.013) * wave + bend(x, y), y]);
       const strong = r() < 0.15;
-      line(pts, grainColour(strong ? 0.28 + r() * 0.15 : 0.06 + r() * 0.18), strong ? 1.6 + r() * 2.2 : 0.7 + r() * 0.8);
+      line(pts, grainColour(Math.min(0.9, (strong ? 0.28 + r() * 0.15 : 0.06 + r() * 0.18) * contrast)), strong ? 1.6 + r() * 2.2 : 0.7 + r() * 0.8);
     }
     // cathedral grain on about half the planks: nested arches, open downward
-    if (r() < 0.55) {
+    if (r() < cathedral) {
       const arches = 1 + Math.floor(r() * 2);
       for (let k = 0; k < arches; k++) {
         const cx = x0 + (right - x0) * (0.3 + r() * 0.4), apex = r() * W, step = 7 + r() * 9;
@@ -377,7 +393,7 @@ export function knottyPineMap({ seed = 11, size = 2048, metres = 1.8, knots: per
             const x = cx + t * half, y = apex + (1 - Math.cos((t * Math.PI) / 2)) * 0 + tall * t * t;
             pts.push([x + bend(x, y), y]);
           }
-          line(pts, grainColour(0.12 + r() * 0.22), i % 3 === 0 ? 1.8 : 1);
+          line(pts, grainColour(Math.min(0.9, (0.12 + r() * 0.22) * contrast)), i % 3 === 0 ? 1.8 : 1);
         }
       }
     }
@@ -413,6 +429,7 @@ export function knottyPineMap({ seed = 11, size = 2048, metres = 1.8, knots: per
 // pine is drawn above
 export function woodSheet(style = 'knotty', { seed = 11, size = 2048, metres = 1.8 } = {}) {
   if (style === 'knotty') return knottyPineMap({ seed, size, metres });
+  if (PINE_PRESETS[style]) return knottyPineMap({ seed, size, metres, ...PINE_PRESETS[style] });
   const c = document.createElement('canvas');
   c.width = c.height = size;
   let s = seed;

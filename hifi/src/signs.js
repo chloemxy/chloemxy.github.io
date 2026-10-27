@@ -15,7 +15,8 @@
 
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+import { FontLoader, Font } from 'three/addons/loaders/FontLoader.js';
+import { TTFLoader } from 'three/addons/loaders/TTFLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
 export const SIGN_STYLES = ['plaque', 'blocks', 'lego', 'tiles', 'woodtype', 'cutout', 'board'];
@@ -589,7 +590,7 @@ const SERIF = '"Libre Caslon Text", Georgia, serif', SANS = 'Archivo, Helvetica,
 const STYLES = {
   marble:      { shape: 'rect',    depth: 0.012, bevel: 0.003, side: '#e9e6e1', rough: 0.22, coat: 0.6, letters: 'carved', ink: '#7d7a76', weight: 400, family: SERIF, caps: true },
   blackmarble: { shape: 'rounded', depth: 0.01,  bevel: 0.002, side: '#1d1d20', rough: 0.18, coat: 0.9, letters: 'filled', ink: '#d9b45f', weight: 400, family: SERIF, caps: true },
-  concrete:    { shape: 'chipped',    depth: 0.014, bevel: 0.002, side: '#9d9992', rough: 0.9,  coat: 0,   letters: 'carved', ink: '#5d5a55', weight: 500, family: SANS, caps: false },
+  concrete:    { shape: 'chipped',    depth: 0.03,  bevel: 0.004, side: '#9d9992', rough: 0.9,  coat: 0,   letters: 'brass', ink: '#5d5a55', weight: 500, family: SANS, caps: true },
   limestone:   { shape: 'rough',   depth: 0.016, bevel: 0.002, side: '#d8ccb5', rough: 0.85, coat: 0,   letters: 'carved', ink: '#7b6f5c', weight: 400, family: SANS, caps: false },
   slate:       { shape: 'rough',   depth: 0.01,  bevel: 0.001, side: '#34383d', rough: 0.7,  coat: 0.2, letters: 'filled', ink: '#ece8df', weight: 400, family: SERIF, caps: true },
   walnut:      { shape: 'arch',    depth: 0.012, bevel: 0.002, side: '#3e2717', rough: 0.55, coat: 0.3, letters: 'filled', ink: '#efe2c4', weight: 400, family: SERIF, caps: true },
@@ -661,6 +662,34 @@ function paintMaterial(kind, g, W, H, r) {
 }
 
 const titleCase = (t) => t.replace(/\b\w/g, (c) => c.toUpperCase());
+
+// Raised brass letters in Libre Caslon Text, the wordmark's face, spaced
+// wide like CHLOE MA; built from the site's own font file
+let caslonPromise = null;
+const loadCaslon = () => (caslonPromise ??= new TTFLoader().loadAsync('assets/fonts/LibreCaslonText-Regular.ttf').then((json) => new Font(json)));
+const brassMat = new THREE.MeshStandardMaterial({ color: '#dcb66a', metalness: 0.9, roughness: 0.26, envMapIntensity: 4 });
+const TRACK = 0.22; // letter spacing, as a share of the size
+function lettersWidth(font, text, size) {
+  const res = font.data.resolution;
+  return [...text].reduce((w, ch) => w + ((font.data.glyphs[ch]?.ha ?? res * 0.3) / res) * size + TRACK * size, -TRACK * size);
+}
+function brassLetters(font, text, size, depth) {
+  const g = new THREE.Group(), res = font.data.resolution;
+  let x = -lettersWidth(font, text, size) / 2;
+  for (const ch of text) {
+    const adv = ((font.data.glyphs[ch]?.ha ?? res * 0.3) / res) * size;
+    if (ch !== ' ') {
+      const geo = new THREE.ExtrudeGeometry(font.generateShapes(ch, size), { depth, curveSegments: 10, bevelEnabled: true, bevelThickness: depth * 0.2, bevelSize: size * 0.012, bevelSegments: 2 });
+      const m = new THREE.Mesh(geo, brassMat);
+      m.position.x = x;
+      m.castShadow = true;
+      g.add(m);
+    }
+    x += adv + TRACK * size;
+  }
+  g.position.y = -size * 0.35; // capitals centred on the line
+  return g;
+}
 export function stylePlaque(kind, text, w, h, fit = text) {
   const st = STYLES[kind] ?? STYLES.marble;
   let seed = [...kind].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 5);
@@ -674,6 +703,7 @@ export function stylePlaque(kind, text, w, h, fit = text) {
   paintMaterial(kind, base.getContext('2d'), W, H, r);
   const map = face('S' + kind + label + '|' + fitLabel + w.toFixed(3), W, H, (g) => {
     g.drawImage(base, 0, 0);
+    if (st.letters === 'brass') return;
     let px = Math.round(H * 0.4);
     const set = () => { g.font = FONT(px); if ('letterSpacing' in g) g.letterSpacing = Math.round(px * (st.caps ? 0.1 : 0.03)) + 'px'; };
     set();
@@ -698,9 +728,19 @@ export function stylePlaque(kind, text, w, h, fit = text) {
   const front = new THREE.MeshPhysicalMaterial({ map: faceMap, roughness: st.rough, clearcoat: st.coat, clearcoatRoughness: 0.15 });
   const side = new THREE.MeshStandardMaterial({ color: st.side, roughness: Math.min(1, st.rough + 0.1) });
   const plate = new THREE.Mesh(geo, [front, side]);
-  plate.position.z = -st.depth - st.bevel;
+  plate.position.z = st.bevel;                 // its back against the drawer front
   const grp = new THREE.Group();
   grp.add(plate);
+  if (st.letters === 'brass') {
+    const front = st.depth + st.bevel * 2;
+    loadCaslon().then((font) => {
+      // both plaques at the size that fits the longer label, a little under a third of the height
+      const size = Math.min(h * 0.28, (w * (ROOM[kind] ?? 0.76)) / lettersWidth(font, fitLabel, 1));
+      const letters = brassLetters(font, label, size, 0.0025);
+      letters.position.z = front;
+      grp.add(letters);
+    }).catch((e) => console.warn('Brass letters', e));
+  }
   grp.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   return grp;
 }

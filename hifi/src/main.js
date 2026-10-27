@@ -125,8 +125,8 @@ function setupStudio(scene, camera) {
   const shot = CONFIG.studioShot;
   const finish = new URLSearchParams(location.search).get('finish') || 'knotty';
   const mats = finishMats(finish, { moss: false });
-  // the wall's wood: spalted maple, or ?grain=… for another drawn grain (woodGrains.js)
-  const grain = new URLSearchParams(location.search).get('grain') || 'spalted';
+  // the wall's wood: knotty pine with a few big knots (pine3), or ?grain=… for another (woodGrains.js)
+  const grain = new URLSearchParams(location.search).get('grain') || 'pine3';
   if (finish === 'knotty' && grain !== 'knotty' && GRAINS.includes(grain)) {
     const sheet = woodSheet(grain);
     sheet.repeat.copy(mats.wall.map.repeat);

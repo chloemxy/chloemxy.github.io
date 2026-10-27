@@ -73,23 +73,16 @@ const SHAPES = {
   urn: { h: 0.3, w: 0.24, pts: [[0, 0], [0.07, 0], [0.11, 0.08], [0.12, 0.16], [0.09, 0.25], [0.06, 0.28], [0.065, 0.3]] },
 };
 
-// ---- Green plants in clay pots, among the ceramics: a snake plant's
-// upright blades, a pilea's round leaves on fine stems, a fern's arching
-// fronds, or a pothos trailing over the shelf's front edge
+// ---- Green plants among the ceramics: only the real, scanned models
+// (plantModels.js). The potted ones stand as they are; the rest are set into
+// one of the wall's turned clay pots, often with a smaller one tucked beside.
 
-const GREENS = ['#3f6b35', '#4f7a3c', '#5f8f4e', '#6e9a48', '#2f5a2e'];
-const leafMats = GREENS.map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.6, side: THREE.DoubleSide }));
-const stemMat = new THREE.MeshStandardMaterial({ color: '#6b7f3a', roughness: 0.7 });
 const soilMat = new THREE.MeshStandardMaterial({ color: '#3b2a1e', roughness: 1 });
-const leafGeo = new THREE.SphereGeometry(1, 12, 8);              // scaled flat into a leaf
-const bladeGeo = new THREE.ConeGeometry(1, 1, 6, 1).translate(0, 0.5, 0);
 
 function plant(r, maxH) {
   const g = new THREE.Group();
-  const leaf = () => leafMats[Math.floor(r() * leafMats.length)];
-  // most plants are real models (plantModels.js); the rest drawn here
-  const useModel = r() < 0.75, model = PLANT_MODELS[Math.floor(r() * PLANT_MODELS.length)];
-  if (useModel && model.potted) {
+  const model = PLANT_MODELS[Math.floor(r() * PLANT_MODELS.length)];
+  if (model.potted) {
     // it comes in its own pot: just give it the room
     const w = 0.16 + r() * 0.06;
     placePlant(g, model.id, { width: w * 1.6, height: Math.min(maxH - 0.02, 0.44), pick: r() });
@@ -102,90 +95,17 @@ function plant(r, maxH) {
   soil.position.y = potH - 0.012;
   g.add(soil);
   const top = potH - 0.01, room = Math.max(0.06, maxH - top - 0.02);
-  if (useModel) {
-    // a model plant set into the clay pot, its leaves spreading past the rim
-    placePlant(g, model.id, { width: Math.max(potR * 5.6, 0.36), height: Math.min(room, 0.4), y: top - 0.004, pick: r() });
-    // and often a second, smaller plant tucked in beside it, so the pot overflows
-    if (r() < 0.5) {
-      const extra = new THREE.Group();
-      extra.position.set((r() < 0.5 ? -1 : 1) * potR * 0.6, 0, potR * 0.3);
-      placePlant(extra, PLANT_MODELS[Math.floor(r() * 3)].id, { width: 0.2, height: Math.min(room * 0.7, 0.22), y: top - 0.004, pick: r() });
-      g.add(extra);
-    }
-    return { g, w: Math.max(potR * 3.2, 0.2) };
+  // the plant, its leaves spreading past the rim
+  placePlant(g, model.id, { width: Math.max(potR * 5.6, 0.36), height: Math.min(room, 0.4), y: top - 0.004, pick: r() });
+  // and often a second, smaller one tucked in beside it, so the pot overflows
+  if (r() < 0.5) {
+    const extra = new THREE.Group();
+    extra.position.set((r() < 0.5 ? -1 : 1) * potR * 0.6, 0, potR * 0.3);
+    const unpotted = PLANT_MODELS.filter((m) => !m.potted);
+    placePlant(extra, unpotted[Math.floor(r() * unpotted.length)].id, { width: 0.2, height: Math.min(room * 0.7, 0.22), y: top - 0.004, pick: r() });
+    g.add(extra);
   }
-  // drawn plants: mostly pothos trailing over the edge, now and then a pilea
-  const kind = r() < 0.65 ? 0.9 : 0.4;
-  if (kind < 0.28) {
-    // snake plant: stiff upright blades, a little splayed
-    const n = 8 + Math.floor(r() * 5);
-    for (let i = 0; i < n; i++) {
-      const b = new THREE.Mesh(bladeGeo, leaf());
-      const h = Math.min(room, 0.34) * (0.5 + r() * 0.5);
-      b.scale.set(0.018 + r() * 0.01, h, 0.004);
-      b.position.set((r() - 0.5) * potR, top, (r() - 0.5) * potR);
-      b.rotation.set((r() - 0.5) * 0.5, r() * Math.PI, (r() - 0.5) * 0.5);
-      g.add(b);
-    }
-  } else if (kind < 0.55) {
-    // pilea: round leaves held out on fine stems
-    const n = 16 + Math.floor(r() * 8), reach = Math.min(room * 0.8, 0.2);
-    for (let i = 0; i < n; i++) {
-      const a = r() * TAU, tilt = 0.2 + r() * 0.9, len = reach * (0.5 + r() * 0.5);
-      const end = V(Math.sin(tilt) * Math.cos(a) * len, top + Math.cos(tilt) * len, Math.sin(tilt) * Math.sin(a) * len);
-      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.0012, 0.0016, len, 5), stemMat);
-      stem.position.set(end.x / 2, (top + end.y) / 2, end.z / 2);
-      stem.lookAt(end.x, end.y, end.z); stem.rotateX(Math.PI / 2);
-      g.add(stem);
-      const l = new THREE.Mesh(leafGeo, leaf());
-      const rad = 0.026 + r() * 0.018;
-      l.scale.set(rad, 0.002, rad);
-      l.position.copy(end);
-      l.rotation.set((r() - 0.5) * 1.2, r() * TAU, (r() - 0.5) * 1.2);
-      g.add(l);
-    }
-  } else if (kind < 0.8) {
-    // fern: fronds arching up and out, leaflets along each
-    const n = 11 + Math.floor(r() * 5), reach = Math.min(room * 0.9, 0.26);
-    for (let i = 0; i < n; i++) {
-      const a = r() * TAU, len = reach * (0.6 + r() * 0.4), lift = 0.5 + r() * 0.5;
-      for (let k = 1; k <= 9; k++) {
-        const u = k / 9, out = Math.sin(u * 1.4) * len * 0.75, up = (Math.sin(u * Math.PI * 0.85) * lift) * len * 0.8;
-        const l = new THREE.Mesh(leafGeo, leaf());
-        const sz = 0.022 * (1 - u * 0.55);
-        l.scale.set(sz * 1.6, 0.0015, sz * 0.55);
-        l.position.set(Math.cos(a) * out, top + up, Math.sin(a) * out);
-        l.rotation.set(0, -a + Math.PI / 2, (u - 0.4) * 0.8);
-        g.add(l);
-      }
-    }
-  } else {
-    // pothos: a few leaves on top, vines spilling forward over the shelf edge
-    for (let i = 0; i < 12; i++) {
-      const l = new THREE.Mesh(leafGeo, leaf());
-      l.scale.set(0.032, 0.002, 0.025);
-      l.position.set((r() - 0.5) * potR * 1.6, top + 0.01 + r() * 0.03, (r() - 0.5) * potR * 1.6);
-      l.rotation.set((r() - 0.5) * 0.8, r() * TAU, (r() - 0.5) * 0.8);
-      g.add(l);
-    }
-    const vines = 2 + Math.floor(r() * 2);
-    for (let v = 0; v < vines; v++) {
-      const side = (r() - 0.5) * 0.12, drop = 0.12 + r() * 0.16;
-      const curve = new THREE.CatmullRomCurve3([V(side * 0.3, top, potR * 0.5), V(side * 0.7, top + 0.01, DEPTH * 0.35), V(side, -0.01, DEPTH * 0.55), V(side * 1.2, -drop, DEPTH * 0.6)]);
-      g.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 24, 0.0013, 4), stemMat));
-      for (let k = 2; k <= 12; k++) {
-        const p = curve.getPoint(k / 12);
-        const l = new THREE.Mesh(leafGeo, leaf());
-        const sz = 0.024 * (1 - k / 30);
-        l.scale.set(sz, 0.0018, sz * 0.8);
-        l.position.copy(p);
-        l.rotation.set(1.1 + (r() - 0.5) * 0.6, r() * TAU, (r() - 0.5) * 0.6);
-        g.add(l);
-      }
-    }
-    g.userData.facing = true; // keep the vines towards the front
-  }
-  return { g, w: Math.max(potR * 2, 0.1) };
+  return { g, w: Math.max(potR * 3.2, 0.2) };
 }
 
 // one piece (or a little group) for a cell; sits on y = 0, centred; fits
@@ -314,7 +234,7 @@ export function shelfWall(scene, mats, { back = '#e2cba6', backWood = false, see
       const { g, w } = ceramic(r, y1 - y0 - 0.03);
       if (!g.children.length || at + w > x1 - 0.03) break;
       g.position.set(at + w / 2, y0, -DEPTH / 2 + (r() - 0.5) * 0.06);
-      g.rotation.y = g.userData.facing ? (r() - 0.5) * 0.6 : r() * TAU;
+      g.rotation.y = r() * TAU;
       things.push(g);
       at += w + 0.03 + r() * 0.08;
       if (r() < 0.2) break; // some cells hold just one or two pieces
@@ -354,7 +274,7 @@ export function shelfWall(scene, mats, { back = '#e2cba6', backWood = false, see
     if (PLAQUE_KINDS.includes(plaqueKind)) {
       // a plaque in stone, concrete or dark wood (signs.js stylePlaque)
       const plate = stylePlaque(plaqueKind, text.toLowerCase(), w - 0.05, 0.13, (signFit ?? text).toLowerCase());
-      plate.position.set(cx, (bottom + TOP) / 2, 0.006);
+      plate.position.set(cx, (bottom + TOP) / 2, 0.001);
       things.push(plate);
       return;
     }
