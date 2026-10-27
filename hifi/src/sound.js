@@ -19,7 +19,7 @@ const CROSS = '<path d="M16 9.5l5 5M21 9.5l-5 5"/>';
 function render() {
   if (!button) return;
   const on = !muted;
-  button.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">${SPEAKER}${on ? WAVES : CROSS}</svg>`;
+  button.innerHTML = `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">${SPEAKER}${on ? WAVES : CROSS}</svg>`;
   button.setAttribute('aria-pressed', String(on));
   button.title = on ? 'Sound on' : 'Sound off';
 }

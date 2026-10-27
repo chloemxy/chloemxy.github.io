@@ -308,7 +308,16 @@ export class FlipBook {
       img.src = hero; img.alt = '';
       return [page('plate', img, el('p', 'plate-caption label', d.name)), title, ...story, ...end];
     }
-    const half = (side) => { const p = page(`hero-half ${side}`); p.style.backgroundImage = `url("${hero}")`; return p; };
+    // the hero across both pages: the drawer's own cover, already cropped to
+    // the spread's 16:10 where the picture matters (tools/sync_cases.py).
+    // Each half holds the whole picture, twice the page's width, set to fill
+    // the spread without stretching, and shows its own side.
+    const spread = d.hero || hero;
+    const half = (side) => {
+      const p = page(`hero-half ${side}`);
+      p.append(Object.assign(el('img', 'hero-half-img'), { src: spread, alt: '' }));
+      return p;
+    };
     const list = [half('left'), half('right'), title, ...story, ...end];
     if (list.length % 2) list.push(page('blank', el('span', 'monogram', 'MA')));
     return list;

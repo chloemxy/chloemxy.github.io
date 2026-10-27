@@ -133,6 +133,7 @@ function setupStudio(scene, camera) {
     bins: Infinity,
     binAt: (x, y) => Math.abs(x - middle) < 0.6 && y < 1.8,
     sign: (x, y) => Math.abs(x - middle) < 0.6 && y < 2.3 ? (x < middle ? GROUPS.client : GROUPS.open) : null,
+    signStyle: new URLSearchParams(location.search).get('sign') || 'blocks',
   });
   // the case studies in reading order: the left column top to bottom, then the right
   slots.sort((a, b) => a.position.x - b.position.x || b.position.y - a.position.y);

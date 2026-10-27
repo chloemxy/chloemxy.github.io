@@ -13,7 +13,7 @@
 import * as THREE from 'three';
 import { Kit } from './cabinet.js';
 import { BIN } from './bincabinet.js';
-import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { signPieces } from './signs.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const TAU = Math.PI * 2;
@@ -126,61 +126,6 @@ function ceramic(r, maxH) {
   return { g, w: shape.w * s };
 }
 
-// ---- Letter blocks: painted wooden alphabet cubes, spelling a sign on a shelf
-
-const BLOCK_COLOURS = ['#e8743b', '#2a9fb8', '#8a6fd6', '#7aa630', '#e2557a', '#e3a93a'];
-const blockMats = new Map();
-// one material set per letter and colour: the letter painted on the front,
-// plain paint on the other five sides
-function blockMaterials(ch, colour) {
-  const key = ch + colour;
-  if (blockMats.has(key)) return blockMats.get(key);
-  const c = document.createElement('canvas');
-  c.width = c.height = 128;
-  const g = c.getContext('2d');
-  const draw = () => {
-    g.fillStyle = colour; g.fillRect(0, 0, 128, 128);
-    g.strokeStyle = 'rgba(255,250,240,0.45)'; g.lineWidth = 5; g.strokeRect(12, 12, 104, 104);
-    g.fillStyle = '#fffaf0';
-    g.font = '800 84px Archivo, "Arial Black", Helvetica, sans-serif';
-    g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillText(ch, 64, 70);
-  };
-  draw();
-  const map = new THREE.CanvasTexture(c);
-  map.colorSpace = THREE.SRGBColorSpace;
-  map.anisotropy = 4;
-  // the letters' typeface may still be loading: paint them again once it's in
-  document.fonts?.load('800 84px Archivo').then(() => { draw(); map.needsUpdate = true; }).catch(() => {});
-  const paint = new THREE.MeshStandardMaterial({ color: colour, roughness: 0.55 });
-  const mats = [paint, paint, paint, paint, new THREE.MeshStandardMaterial({ map, roughness: 0.55 }), paint];
-  blockMats.set(key, mats);
-  return mats;
-}
-
-// `rows` is a word or a list of words, top row first; they stand centred on
-// the shelf at y between x0 and x1, the lower rows holding up the upper ones
-function letterBlocks(rows, x0, x1, y, r) {
-  rows = [].concat(rows);
-  const n = Math.max(...rows.map((w) => w.length));
-  const gap = 0.004, s = Math.min(0.085, (x1 - x0 - 0.05 - gap * (n - 1)) / n);
-  const geo = new RoundedBoxGeometry(s, s, s, 3, s * 0.08);
-  const out = [];
-  let k = Math.floor(r() * BLOCK_COLOURS.length);
-  [...rows].reverse().forEach((word, j) => {
-    const width = word.length * s + (word.length - 1) * gap;
-    [...word].forEach((ch, i) => {
-      k++;
-      if (ch === ' ') return;
-      const b = new THREE.Mesh(geo, blockMaterials(ch, BLOCK_COLOURS[k % BLOCK_COLOURS.length]));
-      b.position.set((x0 + x1) / 2 - width / 2 + s / 2 + i * (s + gap) + (r() - 0.5) * 0.004, y + s / 2 + j * s, -DEPTH / 2 + 0.06 + (r() - 0.5) * 0.01);
-      b.rotation.y = (r() - 0.5) * 0.14; // set down by hand, not quite square
-      out.push(b);
-    });
-  });
-  return out;
-}
-
 // ---- The wall
 
 // Builds the shelving with its ceramics; returns the bin slots (nearest the
@@ -188,8 +133,8 @@ function letterBlocks(rows, x0, x1, y, r) {
 // says which bin cells keep their bin (by the middle of the cell's foot);
 // the rest become open shelves.
 // `sign(x, y)`, if given, can return a word (or words, one per row) for the
-// open cell at the top of a bin column, spelled in letter blocks.
-export function shelfWall(scene, mats, { back = '#e2cba6', seed = 7, bins = 16, binAt = null, sign = null } = {}) {
+// open cell at the top of a bin column, spelled out in `signStyle` (signs.js).
+export function shelfWall(scene, mats, { back = '#e2cba6', seed = 7, bins = 16, binAt = null, sign = null, signStyle = 'blocks' } = {}) {
   const r = seeded(seed);
   const k = new Kit(31);
   const wood = mats.wall;
@@ -275,9 +220,9 @@ export function shelfWall(scene, mats, { back = '#e2cba6', seed = 7, bins = 16, 
       y += BT;
     }
     if (TOP - y > 0.12) {
-      // over a column of portfolio bins, a sign of letter blocks instead of pots
+      // over a column of portfolio bins, a sign (signs.js) instead of pots
       const words = sign?.((x0 + x1) / 2, y);
-      if (words) things.push(...letterBlocks(words, x0, x1, y, r));
+      if (words) things.push(...signPieces(signStyle, words, x0, x1, y, r, -DEPTH / 2 + 0.06, wood));
       else display(x0, x1, y, TOP);
     }
   });
