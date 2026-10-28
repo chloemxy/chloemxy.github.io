@@ -7,10 +7,10 @@
 // is offset so its centre sits at root's origin, so it turns in place.
 
 import * as THREE from 'three';
-import { makeBinBody, BIN } from './bincabinet.js?v=20261027191214';
-import { makeCurio, curioSound, SCALE } from './trinkets.js?v=20261027191214';
-import { bedMaterial } from './materials.js?v=20261027191214';
-import { flat, BOOK, bookStand } from './portfolio.js?v=20261027191214';
+import { makeBinBody, BIN } from './bincabinet.js?v=20261028011732';
+import { makeCurio, curioSound, SCALE } from './trinkets.js?v=20261028011732';
+import { bedMaterial } from './materials.js?v=20261028011732';
+import { flat, BOOK, bookStand } from './portfolio.js?v=20261028011732';
 
 function seeded(seed) {
   let s = seed >>> 0 || 1;

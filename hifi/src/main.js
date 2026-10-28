@@ -1,39 +1,38 @@
 import * as THREE from 'three';
-import { CONFIG } from './config.js?v=20261027191214';
-import { herbs, binContents, curios, jars } from './content.js?v=20261027191214';
-import { loadFonts, loadGrain } from './paint.js?v=20261027191214';
-import { HerbDrawer, setAnisotropy } from './items.js?v=20261027191214';
-import { buildCabinet } from './cabinet.js?v=20261027191214';
-import { Reader } from './reader.js?v=20261027191214';
-import { Bin } from './bins.js?v=20261027191214';
-import { projects, GROUPS } from './portfolio.js?v=20261027191214';
-import { woodSheet } from './materials.js?v=20261027191214';
-import { GRAINS } from './woodGrains.js?v=20261027191214';
-import { buildBinCabinet } from './bincabinet.js?v=20261027191214';
-import { BinReader } from './binReader.js?v=20261027191214';
+import { CONFIG } from './config.js?v=20261028011732';
+import { herbs, binContents, curios, jars } from './content.js?v=20261028011732';
+import { loadFonts, loadGrain } from './paint.js?v=20261028011732';
+import { HerbDrawer, setAnisotropy } from './items.js?v=20261028011732';
+import { buildCabinet } from './cabinet.js?v=20261028011732';
+import { Reader } from './reader.js?v=20261028011732';
+import { Bin } from './bins.js?v=20261028011732';
+import { projects, GROUPS } from './portfolio.js?v=20261028011732';
+import { woodSheet } from './materials.js?v=20261028011732';
+import { GRAINS } from './woodGrains.js?v=20261028011732';
+import { buildBinCabinet } from './bincabinet.js?v=20261028011732';
+import { BinReader } from './binReader.js?v=20261028011732';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { setMaterialAnisotropy, loadScans } from './materials.js?v=20261027191214';
-import { makePost } from './post.js?v=20261027191214';
-import { daySky } from './sky.js?v=20261027191214';
-import { meadow, cloudShadowAt } from './meadow.js?v=20261027191214';
-import { videoBackdrop, shadowCatcher } from './videoBackdrop.js?v=20261027191214';
-import { cabin } from './cabin.js?v=20261027191214';
-import { apothecaryWall } from './apothecaryWall.js?v=20261027191214';
-import { shelfWall } from './shelfWall.js?v=20261027191214';
-import { zenGarden } from './zenGarden.js?v=20261027191214';
-import { plantedGarden } from './plantedGarden.js?v=20261027191214';
-import { carpet } from './carpet.js?v=20261027191214';
-import { finishMats } from './bincabinet.js?v=20261027191214';
+import { setMaterialAnisotropy, loadScans } from './materials.js?v=20261028011732';
+import { makePost } from './post.js?v=20261028011732';
+import { daySky } from './sky.js?v=20261028011732';
+import { meadow, cloudShadowAt } from './meadow.js?v=20261028011732';
+import { videoBackdrop, shadowCatcher } from './videoBackdrop.js?v=20261028011732';
+import { cabin } from './cabin.js?v=20261028011732';
+import { apothecaryWall } from './apothecaryWall.js?v=20261028011732';
+import { shelfWall } from './shelfWall.js?v=20261028011732';
+import { zenGarden } from './zenGarden.js?v=20261028011732';
+import { plantedGarden } from './plantedGarden.js?v=20261028011732';
+import { carpet } from './carpet.js?v=20261028011732';
+import { finishMats } from './bincabinet.js?v=20261028011732';
 
-import { renderScale } from './post.js?v=20261027191214';
-import { loader, nextFrame } from './loader.js?v=20261027191214';
+import { renderScale } from './post.js?v=20261028011732';
+import { loader, nextFrame } from './loader.js?v=20261028011732';
 const canvas = document.getElementById('scene');
 const loading = document.getElementById('loading');
 
 // Coming in from the password page (it leaves a note, which index.html turns
-// into .from-gate): the loading screen is that page's bare tile wall, and the
-// shelves slide in from either side.
-const entering = loading.classList.contains('from-gate') && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+// into .from-gate): the loading screen is that page's closed stained glass
+// doors, which slide apart (style.css) onto the shelf wall once it's ready.
 try { sessionStorage.removeItem('portfolio.enter'); } catch {}
 
 // Two cabinets: the pull-out bins (v2, the default) and the drawers (v1,
@@ -359,12 +358,9 @@ async function start() {
   progress.to(0.92, 0.97);
   await nextFrame();
 
-  const slide = entering ? slideIn(focus, camera, aim, renderer) : null;
-
   const clock = new THREE.Clock();
   renderer.setAnimationLoop(() => {
     const dt = Math.min(clock.getDelta(), 0.05);
-    slide?.update(dt);
     reader.update(dt);
     setup.update?.(clock.elapsedTime, dt);
     lights.shade(setup.shade?.() ?? 0, dt);
@@ -374,66 +370,9 @@ async function start() {
   await progress.finish();
   progress.stop();
   loading.classList.add('done');
-  slide?.start();
-  setTimeout(() => loading.remove(), 600);
+  setTimeout(() => loading.remove(), loading.classList.contains('from-gate') ? 1700 : 600);
 }
 
-// The shelf wall in two halves, split down the middle of the view, each held
-// off-screen to its own side until start(), then eased home; the tiles behind
-// stay put. The shelving is one merged mesh, so each half is a copy of it
-// clipped at the split, the clip moving with it.
-function slideIn(focus, camera, aim, renderer) {
-  const group = focus.getObjectByName('shelving'), shelving = group.children.find((o) => o.isMesh);
-  const split = camera.position.x;
-  const tanH = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
-  const far = 2 * camera.position.distanceTo(aim) * tanH * camera.aspect * 0.6;
-  const DUR = 1.5;
-  renderer.localClippingEnabled = true;
-
-  const halves = [-1, 1].map((side) => {
-    const plane = new THREE.Plane(new THREE.Vector3(side, 0, 0), -side * split);
-    const copy = shelving.clone();
-    const mats = [shelving.material].flat().map((m) => Object.assign(m.clone(), { clippingPlanes: [plane] }));
-    copy.material = Array.isArray(shelving.material) ? mats : mats[0];
-    shelving.parent.add(copy);
-    return { side, plane, copy, mats, items: [] };
-  });
-  shelving.visible = false;
-
-  // everything on the shelves goes with the half it stands in
-  const box = new THREE.Box3(), c = new THREE.Vector3();
-  for (const o of focus.children) {
-    if (!o.isGroup || o === group) continue;
-    box.setFromObject(o).getCenter(c);
-    halves[c.x < split ? 0 : 1].items.push({ o, x: o.position.x });
-  }
-
-  let t = -1; // held until start()
-  const place = (k) => {
-    for (const h of halves) {
-      const off = h.side * far * (1 - k);
-      h.copy.position.x = off;
-      h.plane.constant = -h.side * (split + off);
-      for (const it of h.items) it.o.position.x = it.x + off;
-    }
-  };
-  place(0);
-
-  return {
-    start() { t = 0; },
-    update(dt) {
-      if (t < 0 || t > DUR) return;
-      t += dt;
-      const k = Math.min(t / DUR, 1);
-      place(1 - Math.pow(1 - k, 3));
-      if (k === 1) {
-        for (const h of halves) { h.copy.removeFromParent(); h.mats.forEach((m) => m.dispose()); }
-        shelving.visible = true;
-        renderer.localClippingEnabled = false;
-      }
-    },
-  };
-}
 
 // Daylight: a high, clean white sun from the front right, so soft shadows
 // fall below and to the left of every knob and lid; blue sky light from
