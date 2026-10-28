@@ -11,12 +11,12 @@
 // are built into. The shelving's face is at z = 0, its back at -DEPTH.
 
 import * as THREE from 'three';
-import { Kit } from './cabinet.js?v=20261028011732';
-import { BIN } from './bincabinet.js?v=20261028011732';
-import { signPieces, plaqueFace, castPlaque, platePlaque, stylePlaque, paintedPlaque, PLAQUE_KINDS } from './signs.js?v=20261028011732';
-import { woodSheet, limestoneMap, pearlTileMap, zelligeMaps, brushedBrass } from './materials.js?v=20261028011732';
+import { Kit } from './cabinet.js?v=20261028020851';
+import { BIN } from './bincabinet.js?v=20261028020851';
+import { signPieces, plaqueFace, castPlaque, platePlaque, stylePlaque, paintedPlaque, PLAQUE_KINDS } from './signs.js?v=20261028020851';
+import { woodSheet, limestoneMap, pearlTileMap, zelligeMaps, brushedBrass } from './materials.js?v=20261028020851';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { PLANT_MODELS, placePlant } from './plantModels.js?v=20261028011732';
+import { PLANT_MODELS, placePlant } from './plantModels.js?v=20261028020851';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const TAU = Math.PI * 2;

@@ -5,7 +5,7 @@
 // from seeded noise, so the wear is the same on every load.
 
 import * as THREE from 'three';
-import { drawGrain } from './woodGrains.js?v=20261028011732';
+import { drawGrain } from './woodGrains.js?v=20261028020851';
 
 let anisotropy = 4;
 export function setMaterialAnisotropy(n) { anisotropy = n; }

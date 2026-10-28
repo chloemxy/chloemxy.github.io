@@ -6,8 +6,8 @@
 // turns the card over, and its text is mirrored for screen readers.
 
 import * as THREE from 'three';
-import { tween, ease } from './anim.js?v=20261028011732';
-import { sound } from './sound.js?v=20261028011732';
+import { tween, ease } from './anim.js?v=20261028020851';
+import { sound } from './sound.js?v=20261028020851';
 
 // k of a stage running from a to b ms, eased; 0 before it starts, 1 after
 const seg = (t, a, b, e = ease.inOut) => e(THREE.MathUtils.clamp((t - a) / (b - a), 0, 1));

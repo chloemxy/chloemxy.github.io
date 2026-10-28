@@ -15,10 +15,10 @@
 // case study. A click off the book, or Back, puts it away again.
 
 import * as THREE from 'three';
-import { tween, ease } from './anim.js?v=20261028011732';
-import { sound } from './sound.js?v=20261028011732';
-import { CONFIG } from './config.js?v=20261028011732';
-import { FlipBook } from './flipbook.js?v=20261028011732';
+import { tween, ease } from './anim.js?v=20261028020851';
+import { sound } from './sound.js?v=20261028020851';
+import { CONFIG } from './config.js?v=20261028020851';
+import { FlipBook } from './flipbook.js?v=20261028020851';
 
 const seg = (t, a, b, e = ease.inOut) => e(THREE.MathUtils.clamp((t - a) / (b - a), 0, 1));
 const linear = (k) => k;
