@@ -1,7 +1,7 @@
-// The loading screen: a little wall of eight drawers, the portfolio's, that
-// fill one by one as the scene loads, each one's hero picture sliding up
-// behind its glass, the drawer it's filling pulled out a touch. It is the
-// progress bar: a drawer for each share of the load, the percentage beside.
+// The loading screen: one drawer, in black and white, that fills as the scene
+// loads, ink rising behind its glass while the drawer is pulled out a touch.
+// It is the progress bar, with the percentage beside it. (Any number of .ld
+// drawers works: each takes an equal share of the load, in order.)
 //
 // Progress comes in steps (`to(p, upto)`: at least p now, and creeping on
 // towards `upto` while the next step runs, so it never sits still), and
@@ -9,10 +9,9 @@
 
 const still = matchMedia('(prefers-reduced-motion: reduce)');
 
-export function loader(el, heroes) {
+export function loader(el, _heroes, { onShown } = {}) {
   const drawers = [...el.querySelectorAll('.ld')];
   const pct = el.querySelector('.loader-pct');
-  drawers.forEach((d, i) => { if (heroes[i]) d.querySelector('.ld-card').style.backgroundImage = `url("${heroes[i]}")`; });
   let shown = 0, target = 0, ceiling = 0, last = performance.now(), done = null, raf = 0;
 
   const draw = () => {
@@ -26,6 +25,7 @@ export function loader(el, heroes) {
     const v = Math.round(shown * 100);
     pct.textContent = `${v}%`;
     el.setAttribute('aria-valuenow', String(v));
+    onShown?.(shown);
   };
 
   const tick = (now) => {

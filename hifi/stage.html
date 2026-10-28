@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <base target="_top">
+  <meta name="robots" content="noindex">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    // In from the password page (it left a note): its picture of the doors,
+    // up from the very first paint, until the scene's own 3D doors are ready
+    // behind it (main.js takes it down).
+    try {
+      var held = sessionStorage.getItem('portfolio.enter');
+      if (held && held.charAt(0) === '<') {
+        var hold = document.createElement('div');
+        hold.id = 'gate-hold';
+        hold.style.cssText = 'position:fixed;inset:0;z-index:700;pointer-events:none;transition:opacity 600ms ease';
+        hold.innerHTML = held;
+        document.documentElement.appendChild(hold);
+        document.documentElement.style.background = '#d8c3a2';
+        // the top bar stays above them (style.css gives it z-index 2)
+        var keep = document.createElement('style');
+        keep.textContent = '.bar, .site-bar { z-index: 800 !important; }';
+        document.head.appendChild(keep);
+      }
+    } catch (e) {}
+  </script>
+  <title>Chloe Ma · Hi-fi portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap">
+  <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="style.css?v=20261028032544">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script>function hifiChosen() { try { localStorage.setItem('portfolio.fi', 'hifi'); } catch (e) {} }
+    hifiChosen(); addEventListener('pageshow', function (e) { if (e.persisted) hifiChosen(); });</script>
+  <link rel="stylesheet" href="../tokens.css?v=20261028032545">
+  <link rel="stylesheet" href="../bar.css?v=20261028032545">
+  <style>
+    body:has(.loading:not(.done)) .bar { z-index: 5; }
+    .loader-slow { margin: 0; color: var(--mute); opacity: 0; visibility: hidden; transition: opacity 400ms var(--out), visibility 400ms; }
+    .loader-slow.show { opacity: 1; visibility: visible; }
+    .loader-slow a { color: var(--ink); text-underline-offset: 3px; }
+  </style>
+  <style>#loading, #loader-slow { display: none !important; } body:not(.stage-open) > :not(#scene) { visibility: hidden; } html, body { background: #d8c3a2; }</style>
+</head>
+<body>
+  <canvas id="scene" tabindex="-1" aria-label="An apothecary cabinet of small labelled drawers"></canvas>
+
+  <header class="bar site-bar">
+    <h1 class="site-bar__mark" aria-label="Chloe Ma"><span aria-hidden="true">CHLOE</span></h1>
+    <div class="tools site-bar__tools">
+      <!-- the drawers design is hidden for now; remove `hidden` to bring the switch back -->
+      <nav class="switch label" aria-label="Cabinet" hidden>
+        <a href="?cabinet=drawers" data-design="drawers">Drawers</a>
+        <a href="./" data-design="bins">Bins</a>
+      </nav>
+      <nav class="site-bar__switch" aria-label="Site version"><a href="../index.html">Lo-fi</a><a href="./" aria-current="page">Hi-fi</a></nav>
+      <button id="sound" type="button" class="btn ghost label icon site-bar__icon" aria-label="Sound" aria-pressed="true"></button>
+    </div>
+    <span class="brand-end site-bar__mark site-bar__mark--end" aria-hidden="true">MA</span>
+  </header>
+
+  <nav class="index label" aria-label="Browse the cabinet">
+    <details>
+      <summary>Browse the cabinet</summary>
+      <div class="index-panel">
+        <p class="index-head"><span>In the drawers</span><span id="index-count"></span></p>
+        <ol id="index-list"></ol>
+      </div>
+    </details>
+  </nav>
+
+  <div id="tip" class="tip" role="tooltip" hidden></div>
+
+  <p id="caption" class="caption" hidden></p>
+  <div id="reader" class="reader" role="group" aria-label="Reading" hidden>
+    <button id="reader-prev" type="button" class="btn ghost label arrow" aria-label="Previous card" hidden>‹</button>
+    <button id="reader-turn" type="button" class="btn ghost label">Turn over</button>
+    <span id="reader-count" class="count label" aria-live="polite"></span>
+    <button id="reader-next" type="button" class="btn ghost label arrow" aria-label="Next card" hidden>›</button>
+    <button id="reader-close" type="button" class="btn label">Put back</button>
+  </div>
+  <div id="reader-text" class="sr-only" aria-live="polite"></div>
+
+  <!-- an open portfolio drawer: what the case study is, and the way in -->
+  <section id="stage" class="stage" aria-roledescription="book" aria-labelledby="stage-title" hidden>
+    <h2 id="stage-title" class="sr-only"></h2>
+    <div class="book">
+      <div class="book-pages">
+        <div class="book-left"></div>
+        <div class="book-leaves"></div>
+      </div>
+    </div>
+    <div class="book-nav">
+      <button type="button" class="btn ghost label book-prev" aria-label="Previous page">&larr;</button>
+      <span class="book-count label" aria-live="polite">1 / 1</span>
+      <button type="button" class="btn ghost label book-next" aria-label="Next page">&rarr;</button>
+    </div>
+  </section>
+  <div id="stage-dim" class="stage-dim" aria-hidden="true"></div>
+  <button id="stage-back" type="button" class="stage-back btn ghost label" hidden>&larr; Back to the wall</button>
+  <div id="veil" class="veil" aria-hidden="true"></div>
+
+  <div id="loading" class="loading" role="progressbar" aria-label="Filling the drawer" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+    <div class="loader-wall" aria-hidden="true">
+      <div class="ld"><span class="ld-glass"><i class="ld-card"></i></span><span class="ld-front"><b class="ld-knob"></b></span></div>
+    </div>
+    <p class="loader-line"><span class="loader-text">Filling the drawer</span><span class="loader-pct">0%</span></p>
+    <p class="loader-slow label" id="loader-slow" aria-live="polite">Taking a while? <a href="../index.html">See the lo-fi portfolio</a></p>
+  </div>
+
+  <script>window.STAGE = true;</script>
+  <script type="module" src="src/main.js?v=20261028032544"></script>
+  <script>
+    setTimeout(function () {
+      var l = document.getElementById('loading'), m = document.getElementById('loader-slow');
+      if (l && m && !l.classList.contains('done')) m.classList.add('show');
+    }, 6000);
+  </script>
+</body>
+</html>

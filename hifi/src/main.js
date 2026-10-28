@@ -1,44 +1,57 @@
 import * as THREE from 'three';
-import { CONFIG } from './config.js?v=20261028020851';
-import { herbs, binContents, curios, jars } from './content.js?v=20261028020851';
-import { loadFonts, loadGrain } from './paint.js?v=20261028020851';
-import { HerbDrawer, setAnisotropy } from './items.js?v=20261028020851';
-import { buildCabinet } from './cabinet.js?v=20261028020851';
-import { Reader } from './reader.js?v=20261028020851';
-import { Bin } from './bins.js?v=20261028020851';
-import { projects, GROUPS } from './portfolio.js?v=20261028020851';
-import { woodSheet } from './materials.js?v=20261028020851';
-import { GRAINS } from './woodGrains.js?v=20261028020851';
-import { buildBinCabinet } from './bincabinet.js?v=20261028020851';
-import { BinReader } from './binReader.js?v=20261028020851';
+import { CONFIG } from './config.js?v=20261028032544';
+import { herbs, binContents, curios, jars } from './content.js?v=20261028032544';
+import { loadFonts, loadGrain } from './paint.js?v=20261028032544';
+import { HerbDrawer, setAnisotropy } from './items.js?v=20261028032544';
+import { buildCabinet } from './cabinet.js?v=20261028032544';
+import { Reader } from './reader.js?v=20261028032544';
+import { Bin } from './bins.js?v=20261028032544';
+import { projects, GROUPS } from './portfolio.js?v=20261028032544';
+import { woodSheet } from './materials.js?v=20261028032544';
+import { GRAINS } from './woodGrains.js?v=20261028032544';
+import { buildBinCabinet } from './bincabinet.js?v=20261028032544';
+import { BinReader } from './binReader.js?v=20261028032544';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { setMaterialAnisotropy, loadScans } from './materials.js?v=20261028020851';
-import { makePost } from './post.js?v=20261028020851';
-import { daySky } from './sky.js?v=20261028020851';
-import { meadow, cloudShadowAt } from './meadow.js?v=20261028020851';
-import { videoBackdrop, shadowCatcher } from './videoBackdrop.js?v=20261028020851';
-import { cabin } from './cabin.js?v=20261028020851';
-import { apothecaryWall } from './apothecaryWall.js?v=20261028020851';
-import { shelfWall } from './shelfWall.js?v=20261028020851';
-import { zenGarden } from './zenGarden.js?v=20261028020851';
-import { plantedGarden } from './plantedGarden.js?v=20261028020851';
-import { carpet } from './carpet.js?v=20261028020851';
-import { glassDoors } from './doors.js?v=20261028020851';
-import { finishMats } from './bincabinet.js?v=20261028020851';
+import { setMaterialAnisotropy, loadScans } from './materials.js?v=20261028032544';
+import { makePost } from './post.js?v=20261028032544';
+import { daySky } from './sky.js?v=20261028032544';
+import { meadow, cloudShadowAt } from './meadow.js?v=20261028032544';
+import { videoBackdrop, shadowCatcher } from './videoBackdrop.js?v=20261028032544';
+import { cabin } from './cabin.js?v=20261028032544';
+import { apothecaryWall } from './apothecaryWall.js?v=20261028032544';
+import { shelfWall } from './shelfWall.js?v=20261028032544';
+import { zenGarden } from './zenGarden.js?v=20261028032544';
+import { plantedGarden } from './plantedGarden.js?v=20261028032544';
+import { carpet } from './carpet.js?v=20261028032544';
+import { glassDoors } from './doors.js?v=20261028032544';
+import { finishMats } from './bincabinet.js?v=20261028032544';
 
-import { renderScale } from './post.js?v=20261028020851';
-import { loader, nextFrame } from './loader.js?v=20261028020851';
+import { renderScale } from './post.js?v=20261028032544';
+import { loader, nextFrame } from './loader.js?v=20261028032544';
 const canvas = document.getElementById('scene');
 const loading = document.getElementById('loading');
 
-// Coming in from the password page (it leaves a note, which index.html turns
-// into .from-gate): the scene starts behind its stained glass doors, built
-// here in 3D (doors.js), and the loading screen wears the page's picture of
-// them; once the scene is ready the picture fades into the real doors, which
-// slide apart onto the shelf wall. ?doors=closed shows them shut, for making
-// that picture.
-const DOORS = loading.classList.contains('from-gate') ? 'enter' : new URLSearchParams(location.search).get('doors');
+// Coming in from the password page (it leaves a note): its picture of the
+// stained glass doors (a render of this scene's doors.js, from this camera)
+// is held over everything from the first paint (#gate-hold, index.html),
+// already cut into its leaves; once the scene is ready behind it, the
+// leaves slide apart over the live shelf wall (openHeld). The slide runs on
+// the browser's compositor, so it stays smooth while the scene settles, and
+// the doors never change look. ?doors=closed builds the doors in 3D, shut,
+// for making that picture.
+const hold = document.getElementById('gate-hold');   // index.html's head puts it up
+// The stage (hifi/stage.html, made by the portfolio's build.sh): the whole
+// scene, built behind its closed 3D doors inside the password page, before
+// the password. Its glass lights up piece by piece as it loads (it tells the
+// page how far along it is); the page's password opens the doors.
+const STAGE = !!window.STAGE;
+const tell = (msg) => { if (STAGE && parent !== window) parent.postMessage({ stage: msg.type, ...msg }, location.origin); };
+const DOORS = STAGE ? 'stage' : hold ? 'enter' : new URLSearchParams(location.search).get('doors');
+let stageDoors = null;
 try { sessionStorage.removeItem('portfolio.enter'); } catch {}
+// the password page's copy of the top bar, shown while this page arrived: our own
+// bar is styled by now (this module runs after the stylesheets), so it can go
+document.getElementById('passing-copy')?.remove();
 
 // Two cabinets: the pull-out bins (v2, the default) and the drawers (v1,
 // ?cabinet=drawers). The switch between them in the top bar is hidden for
@@ -231,11 +244,11 @@ function setupStudio(scene, camera) {
   windowLight(scene);
   // a narrower shaft of it, low enough to slip under the shelf above and
   // fall straight onto the two painted signs over the portfolio drawers
-  windowLight(scene, { from: new THREE.Vector3(-1.7, 2.3, 2.6), to: new THREE.Vector3(-0.25, 1.95, -0.42), intensity: 95, angle: 0.3, colour: '#ffe0ad' });
+  windowLight(scene, { from: new THREE.Vector3(-1.7, 2.3, 2.6), to: new THREE.Vector3(-0.25, 1.95, -0.42), intensity: 72, angle: 0.3, colour: '#ffe0ad' });
 
   const shotFocus = (x, y) => new THREE.Vector3(x, y, 0);
   let doorsReady = null;
-  const doors = DOORS ? glassDoors(scene, mats, { loaded: () => doorsReady?.() }) : null;
+  const doors = DOORS && DOORS !== 'enter' ? glassDoors(scene, mats, { loaded: () => doorsReady?.() }) : null;
   return {
     doors, doorsLoaded: doors ? new Promise((r) => { doorsReady = r; }) : null,
     reader: new BinReader({ camera, canvas, bins: items, cols: 7 }), focus, shotFocus, shot,
@@ -251,7 +264,9 @@ function setupStudio(scene, camera) {
 
 async function start() {
   // the drawers on the loading screen fill as each step comes in
-  const progress = loader(loading, projects.map((p) => p.hero));
+  const progress = loader(loading, projects.map((p) => p.hero), {
+    onShown: (v) => { stageDoors?.setFill(v); tell({ type: 'progress', p: v }); },
+  });
   progress.to(0.04, 0.25);
   await Promise.all([loadFonts(), loadGrain()]);
   progress.to(0.25, 0.45);
@@ -281,6 +296,7 @@ async function start() {
   progress.to(0.7, 0.92);
   await nextFrame();
   const { reader, focus, shotFocus, shot } = setup;
+  if (STAGE && setup.doors) { stageDoors = setup.doors; stageDoors.setFill(0); }
   const lights = addLights(scene, { bright: setup.bright, target: shotFocus(...shot.focus), ...setup.light });
   camera.fov = shot.fov;
 
@@ -362,41 +378,78 @@ async function start() {
 
   // the shaders built off the main thread where it can (so the drawers keep
   // filling), before the first frame
-  await Promise.race([renderer.compileAsync(scene, camera).catch(() => {}), new Promise((res) => setTimeout(res, 5000))]);
+  // (in from the password page the doors hide the first frames, so they
+  // needn't wait for every shader: the doors part as soon as the scene draws)
+  if (!hold) await Promise.race([renderer.compileAsync(scene, camera).catch(() => {}), new Promise((res) => setTimeout(res, 5000))]);
   progress.to(0.92, 0.97);
   await nextFrame();
 
+  let drawn = false;
   const clock = new THREE.Clock(), frameTimes = [];
   renderer.setAnimationLoop(() => {
     const raw = clock.getDelta(), dt = Math.min(raw, 0.05);
     frameTimes.push(raw); if (frameTimes.length > 15) frameTimes.shift();
     reader.update(dt);
     setup.update?.(clock.elapsedTime, dt);
-    if (setup.doors?.update(dt)) setup.doors = null;   // open and gone
+    if (setup.doors?.update(dt)) { setup.doors = null; stageOpened(); }   // open and gone
     lights.shade(setup.shade?.() ?? 0, dt);
     post.render();
+    if (STAGE && !drawn) { drawn = true; tell({ type: 'drawn' }); }
   });
 
-  await progress.finish();
+  if (!hold) await progress.finish();   // (behind the doors no one sees the drawer fill)
   progress.stop();
   if (setup.doorsLoaded) await Promise.race([setup.doorsLoaded, new Promise((r) => setTimeout(r, 4000))]);
+  if (STAGE) {
+    // built: the glass is all in colour, and the password page can ask for the doors
+    stageDoors?.setFill(1);
+    tell({ type: 'ready' });
+    addEventListener('message', (e) => {
+      if (e.origin === location.origin && e.data?.stage === 'open') setup.doors?.open();
+    });
+  }
   loading.classList.add('done');
   setTimeout(() => loading.remove(), 600);
-  // in from the password page: the picture fades into the real doors; they
-  // part once the scene is running smoothly (its first frames are the heavy
-  // ones), so the slide never stutters; never waiting more than 3 s
-  if (DOORS === 'enter' && setup.doors) {
+  // in from the password page: once the scene has drawn a few frames behind
+  // the held picture, its leaves part (never waiting more than 1.5 s)
+  if (hold) {
     const since = performance.now();
     const ready = () => {
-      const avg = frameTimes.reduce((a, b) => a + b, 0) / Math.max(1, frameTimes.length);
       const waited = performance.now() - since;
-      if ((waited > 800 && frameTimes.length >= 12 && avg < 1 / 40) || waited > 3000) setup.doors?.open();
-      else setTimeout(ready, 100);
+      if ((waited > 300 && frameTimes.length >= 6) || waited > 1500) openHeld(hold);
+      else setTimeout(ready, 60);
     };
-    setTimeout(ready, 100);
+    setTimeout(ready, 60);
   }
 }
 
+
+// The stage's doors are open: its own top bar takes over from the password
+// page's (the page hides its own as this arrives)
+function stageOpened() {
+  if (!STAGE) return;
+  document.body.classList.add('stage-open');
+  tell({ type: 'opened' });
+}
+
+// The password page's doors, held over the scene, part: the picture around
+// them fades into the live room (they're the same render), the middle leaf
+// slides behind the left, then the two sides glide off and the head beam
+// lifts away. Distances come with the picture (the page measured them).
+function openHeld(hold) {
+  const b = hold.querySelector('.gate-backdrop');
+  if (!b) { hold.remove(); return; }
+  const dl = +b.dataset.dl, dr = +b.dataset.dr, mw = +b.dataset.mw, hh = +b.dataset.hh;
+  const part = (n) => b.querySelector('.gd-' + n), x = (v) => ({ transform: `translateX(${v}px)` });
+  const dur = 3400, opts = { duration: dur, easing: 'cubic-bezier(0.45, 0, 0.3, 1)', fill: 'forwards' };
+  b.style.background = 'transparent';
+  part('still')?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 500, fill: 'forwards' });
+  part('mid')?.animate([x(0), { ...x(-mw), offset: 0.35 }, x(-mw - dl)], opts);
+  part('left')?.animate([x(0), { ...x(0), offset: 0.15 }, x(-dl)], opts);
+  part('right')?.animate([x(0), { ...x(0), offset: 0.15 }, x(dr)], opts);
+  part('head')?.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(0)', offset: 0.15 }, { transform: `translateY(${-hh}px)` }], opts);
+  setTimeout(() => hold.remove(), dur + 100);
+}
 
 // Daylight: a high, clean white sun from the front right, so soft shadows
 // fall below and to the left of every knob and lid; blue sky light from

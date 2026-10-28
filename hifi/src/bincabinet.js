@@ -18,8 +18,8 @@
 // hangs in the slot itself, not on the tray.
 
 import * as THREE from 'three';
-import { Kit, jar } from './cabinet.js?v=20261028020851';
-import { makeMaterials, weather, mossMaterial, brushedBrass, whiteMarble, woodFinish, painted, knottyPine } from './materials.js?v=20261028020851';
+import { Kit, jar } from './cabinet.js?v=20261028032544';
+import { makeMaterials, weather, mossMaterial, brushedBrass, whiteMarble, woodFinish, painted, knottyPine } from './materials.js?v=20261028032544';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const TILE = 0.45;

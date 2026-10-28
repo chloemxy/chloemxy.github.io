@@ -1,10 +1,14 @@
 // Real plants for the shelves: eight CC0 models from Poly Haven
 // (polyhaven.com, no credit required; see assets/plants/SOURCES.txt), loaded
 // once each and cloned wherever they're placed. Two come in their own pots;
-// the rest are set into the wall's turned clay pots by shelfWall.js.
+// the rest are set into the wall's turned clay pots by shelfWall.js. Each is
+// loaded as <id>.glb, made from the 1k original by tools/optimize_plant.sh
+// (512 px textures, a lighter mesh, meshopt): about 3 MB for all eight, down
+// from 23 MB, so the scene opens quickly.
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 
 export const PLANT_MODELS = [
   { id: 'fern_02', potted: false, variants: true }, // four separate ferns
@@ -18,7 +22,7 @@ export const PLANT_MODELS = [
   { id: 'anthurium_botany_01', potted: false, variants: true, big: true }, // six anthuriums
 ];
 
-const loader = new GLTFLoader();
+const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
 const templates = new Map();
 
 // stand an object on y = 0, centred on its own footprint, inside a holder
@@ -40,7 +44,7 @@ function stand(obj) {
 // stems) make one plant. A ground plane under a model is left out.
 function load(id, variants) {
   if (!templates.has(id)) {
-    templates.set(id, loader.loadAsync(`assets/plants/${id}/${id}_1k.gltf`).then((gltf) => {
+    templates.set(id, loader.loadAsync(`assets/plants/${id}/${id}.glb`).then((gltf) => {
       const parts = gltf.scene.children.filter((n) => !/_ground$/.test(n.name));
       if (variants) {
         const byLetter = new Map();

@@ -81,6 +81,7 @@ function initBar({ home, version } = {}) {
     </div>
   `;
 
+  document.getElementById('passing-copy')?.remove();   // the password page's copy, shown until now
   document.body.prepend(overlay, panel, bar);   // bar ends up first in the DOM
   document.body.classList.add('has-bar');       // pages start below the bar (shared.css)
 

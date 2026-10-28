@@ -6,7 +6,7 @@
 // the furrows catch the low sun.
 
 import * as THREE from 'three';
-import { mossMaterial } from './materials.js?v=20261028020851';
+import { mossMaterial } from './materials.js?v=20261028032544';
 
 function seeded(seed) {
   let s = seed >>> 0 || 1;

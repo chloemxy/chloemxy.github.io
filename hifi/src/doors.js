@@ -18,7 +18,7 @@
 // portfolio); each pane takes its part of it. assets/doors/order.png gives
 // each piece of glass its moment for the password page's loading.
 import * as THREE from 'three';
-import { Kit } from './cabinet.js?v=20261028020851';
+import { Kit } from './cabinet.js?v=20261028032544';
 
 // the picture's layout, in its own pixels at 1920 x 799 (the texture is 2x)
 const PIC = { w: 1920, h: 799, top: 14, bottom: 785 };
@@ -145,11 +145,34 @@ export function glassDoors(scene, mats, { centre = -0.265, z = 0.36, loaded } = 
   // render the whole room a second time each frame, and the doors must move
   // smoothly; the glow gives the light-through look.)
   const glassMat = new THREE.MeshPhysicalMaterial({
-    map, color: new THREE.Color('#d9cbb4'), roughness: 0.3,
+    // (kept well inside the range: no part of the glass should blow out to white)
+    // and neutral, so the glass's own colours come through rather than the
+    // room's warm light laid over them
+    map, color: new THREE.Color('#9a9a9a'), roughness: 0.4,
     normalMap: normal, normalScale: new THREE.Vector2(0.55, 0.55),
-    emissive: new THREE.Color('#fff0d8'), emissiveMap: map, emissiveIntensity: 0.5,
-    specularIntensity: 0.9, clearcoat: 0.45, clearcoatRoughness: 0.16,
+    emissive: new THREE.Color('#ffffff'), emissiveMap: map, emissiveIntensity: 0.4,
+    specularIntensity: 0.5, clearcoat: 0.25, clearcoatRoughness: 0.3,
   });
+  // While the scene loads, each piece of glass turns from clear to colour in
+  // its own moment (order.png holds each piece's, 0..1; the lead and frame
+  // are 0 and never change): setFill(p) moves the moment on.
+  const fill = { value: 1 }, orderU = { value: order };
+  glassMat.onBeforeCompile = (sh) => {
+    sh.uniforms.uFill = fill; sh.uniforms.uOrder = orderU;
+    sh.fragmentShader = sh.fragmentShader
+      .replace('void main() {', `uniform float uFill;
+uniform sampler2D uOrder;
+void main() {`)
+      .replace('#include <map_fragment>', `#include <map_fragment>
+        float ord = texture2D(uOrder, vMapUv).r;
+        float lit = ord < 0.02 ? 1.0 : smoothstep(ord, ord + 0.04, uFill);
+        float lumD = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11));
+        diffuseColor.rgb = mix(vec3(lumD * 1.02, lumD * 0.98, lumD * 0.9) * 0.82 + 0.1, diffuseColor.rgb, lit);`)
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+        { float lumE = dot(totalEmissiveRadiance, vec3(0.3, 0.59, 0.11));
+          totalEmissiveRadiance = mix(vec3(lumE * 1.02, lumE * 0.98, lumE * 0.9), totalEmissiveRadiance, lit); }`);
+  };
+  glassMat.customProgramCacheKey = () => 'stained-glass-fill';
   const wood = mats.wall, brass = mats.brass ?? new THREE.MeshStandardMaterial({ color: '#c9a35a', metalness: 1, roughness: 0.4 });
 
   const root = new THREE.Group();
@@ -195,6 +218,7 @@ export function glassDoors(scene, mats, { centre = -0.265, z = 0.36, loaded } = 
   const middle = leaves[1], middleX = middle.position.x;
   return {
     root, map, order, glassMat,
+    setFill(p) { fill.value = p; },
     get opening() { return t0 >= 0; },
     open(seconds = 3.4) { dur = seconds; t0 = performance.now(); },
     // returns true once fully open (and gone from the scene)
