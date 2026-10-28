@@ -23,7 +23,7 @@
 // page and its back the left-hand page of the next spread. `page` is how
 // many leaves are turned.
 
-import { BOOK } from './portfolio.js?v=20261028032544';
+import { BOOK } from './portfolio.js?v=20261028032817';
 
 const NARROW = matchMedia('(max-width: 640px), (max-aspect-ratio: 4/5)');
 const still = matchMedia('(prefers-reduced-motion: reduce)');

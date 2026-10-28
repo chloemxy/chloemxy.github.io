@@ -18,7 +18,7 @@
 // portfolio); each pane takes its part of it. assets/doors/order.png gives
 // each piece of glass its moment for the password page's loading.
 import * as THREE from 'three';
-import { Kit } from './cabinet.js?v=20261028032544';
+import { Kit } from './cabinet.js?v=20261028032817';
 
 // the picture's layout, in its own pixels at 1920 x 799 (the texture is 2x)
 const PIC = { w: 1920, h: 799, top: 14, bottom: 785 };

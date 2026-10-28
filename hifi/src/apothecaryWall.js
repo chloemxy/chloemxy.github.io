@@ -9,10 +9,10 @@
 // It is scenery: only the bins open. The wall's face is flush with theirs.
 
 import * as THREE from 'three';
-import { Kit, jar } from './cabinet.js?v=20261028032544';
-import { makeCurio } from './trinkets.js?v=20261028032544';
-import { herbs } from './content.js?v=20261028032544';
-import { paintLabel } from './paint.js?v=20261028032544';
+import { Kit, jar } from './cabinet.js?v=20261028032817';
+import { makeCurio } from './trinkets.js?v=20261028032817';
+import { herbs } from './content.js?v=20261028032817';
+import { paintLabel } from './paint.js?v=20261028032817';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 
