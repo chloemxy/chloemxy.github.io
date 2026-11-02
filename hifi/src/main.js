@@ -1,33 +1,33 @@
 import * as THREE from 'three';
-import { CONFIG } from './config.js?v=20261102164058';
-import { herbs, binContents, curios, jars } from './content.js?v=20261102164058';
-import { loadFonts, loadGrain } from './paint.js?v=20261102164058';
-import { HerbDrawer, setAnisotropy } from './items.js?v=20261102164058';
-import { buildCabinet } from './cabinet.js?v=20261102164058';
-import { Reader } from './reader.js?v=20261102164058';
-import { Bin } from './bins.js?v=20261102164058';
-import { projects, GROUPS } from './portfolio.js?v=20261102164058';
-import { woodSheet } from './materials.js?v=20261102164058';
-import { GRAINS } from './woodGrains.js?v=20261102164058';
-import { buildBinCabinet } from './bincabinet.js?v=20261102164058';
-import { BinReader } from './binReader.js?v=20261102164058';
+import { CONFIG } from './config.js?v=20261102165456';
+import { herbs, binContents, curios, jars } from './content.js?v=20261102165456';
+import { loadFonts, loadGrain } from './paint.js?v=20261102165456';
+import { HerbDrawer, setAnisotropy } from './items.js?v=20261102165456';
+import { buildCabinet } from './cabinet.js?v=20261102165456';
+import { Reader } from './reader.js?v=20261102165456';
+import { Bin } from './bins.js?v=20261102165456';
+import { projects, GROUPS } from './portfolio.js?v=20261102165456';
+import { woodSheet } from './materials.js?v=20261102165456';
+import { GRAINS } from './woodGrains.js?v=20261102165456';
+import { buildBinCabinet } from './bincabinet.js?v=20261102165456';
+import { BinReader } from './binReader.js?v=20261102165456';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { setMaterialAnisotropy, loadScans } from './materials.js?v=20261102164058';
-import { makePost } from './post.js?v=20261102164058';
-import { daySky } from './sky.js?v=20261102164058';
-import { meadow, cloudShadowAt } from './meadow.js?v=20261102164058';
-import { videoBackdrop, shadowCatcher } from './videoBackdrop.js?v=20261102164058';
-import { cabin } from './cabin.js?v=20261102164058';
-import { apothecaryWall } from './apothecaryWall.js?v=20261102164058';
-import { shelfWall } from './shelfWall.js?v=20261102164058';
-import { zenGarden } from './zenGarden.js?v=20261102164058';
-import { plantedGarden } from './plantedGarden.js?v=20261102164058';
-import { carpet } from './carpet.js?v=20261102164058';
-import { glassDoors } from './doors.js?v=20261102164058';
-import { finishMats } from './bincabinet.js?v=20261102164058';
+import { setMaterialAnisotropy, loadScans } from './materials.js?v=20261102165456';
+import { makePost } from './post.js?v=20261102165456';
+import { daySky } from './sky.js?v=20261102165456';
+import { meadow, cloudShadowAt } from './meadow.js?v=20261102165456';
+import { videoBackdrop, shadowCatcher } from './videoBackdrop.js?v=20261102165456';
+import { cabin } from './cabin.js?v=20261102165456';
+import { apothecaryWall } from './apothecaryWall.js?v=20261102165456';
+import { shelfWall } from './shelfWall.js?v=20261102165456';
+import { zenGarden } from './zenGarden.js?v=20261102165456';
+import { plantedGarden } from './plantedGarden.js?v=20261102165456';
+import { carpet } from './carpet.js?v=20261102165456';
+import { glassDoors } from './doors.js?v=20261102165456';
+import { finishMats } from './bincabinet.js?v=20261102165456';
 
-import { renderScale } from './post.js?v=20261102164058';
-import { loader, nextFrame } from './loader.js?v=20261102164058';
+import { renderScale } from './post.js?v=20261102165456';
+import { loader, nextFrame } from './loader.js?v=20261102165456';
 const canvas = document.getElementById('scene');
 const loading = document.getElementById('loading');
 
@@ -413,6 +413,8 @@ async function start() {
   // in from the password page: once the scene has drawn a few frames behind
   // the held picture, its leaves part (never waiting more than 1.5 s)
   if (hold) {
+    // (drawn here rather than carried from the password page: seen first)
+    if (window.gateDoorsPic) await Promise.race([window.gateDoorsPic, new Promise((r) => setTimeout(r, 3000))]);
     const since = performance.now();
     const ready = () => {
       const waited = performance.now() - since;
