@@ -10,8 +10,8 @@
 // content.js for the options each one takes.
 
 import * as THREE from 'three';
-import { paintTarot, paintTarotBack, paintRune } from './paint.js?v=20261102165947';
-import { builders as portfolio, sounds as portfolioSounds } from './portfolio.js?v=20261102165947';
+import { paintTarot, paintTarotBack, paintRune } from './paint.js?v=20261102170340';
+import { builders as portfolio, sounds as portfolioSounds } from './portfolio.js?v=20261102170340';
 
 export const SCALE = 1.35;
 const TAU = Math.PI * 2;
