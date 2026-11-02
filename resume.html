@@ -1,0 +1,1629 @@
+<!doctype html>
+<html class="staticrypt-html" lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>Chloe Ma — Portfolio</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="robots" content="noindex" />
+        <meta name="theme-color" content="#efe4d1" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&family=Libre+Caslon+Text&display=swap"
+            rel="stylesheet"
+        />
+        <script>
+          // On the way into hi-fi (the password page left a note): put its
+          // picture of the doors up now, before the stylesheets and fonts below
+          // can hold the first paint back, so they never vanish between pages.
+          // Hi-fi's own page does the same, and takes them down once its 3D
+          // doors are ready behind.
+          (function () {
+            try {
+              if (!/\/hifi\//.test(location.pathname) || !localStorage.getItem("staticrypt_passphrase")) return;
+              var held = sessionStorage.getItem("portfolio.enter");
+              if (!held || held.charAt(0) !== "<") return;
+              var hold = document.createElement("div");
+              hold.id = "gate-hold";
+              hold.style.cssText = "position:fixed;inset:0;z-index:700;pointer-events:none";
+              hold.innerHTML = held;
+              document.documentElement.appendChild(hold);
+              document.documentElement.style.background = "#d8c3a2";
+              // the top bar stays above them, whatever its page's own styles say
+              var keep = document.createElement("style");
+              keep.textContent = ".bar, .site-bar { z-index: 800 !important; }";
+              document.head.appendChild(keep);
+            } catch (e) {}
+          })();
+        </script>
+        <link rel="stylesheet" href="/tokens.css?v=20261102164058" /><link rel="stylesheet" href="/bar.css?v=20261102164058" />
+
+        <style>
+            /* The way in: the hi-fi scene's stained glass doors (plywood leaves
+               glazed with the illustration's three panels, floral sidelights), as
+               its own camera shows them. As the page loads, each piece of glass
+               lights up in colour; then the password, at the foot of the doors.
+               The right one opens the site, whose doors slide apart onto the shelf
+               wall. (The old dark intro
+               is kept in archive/loading-dark.html.) */
+            :root {
+                --paper: #efe4d1;
+                --ink: #2b231c;
+                --body: rgba(43, 35, 28, 0.76);
+                --mute: rgba(43, 35, 28, 0.6);
+                --hair: rgba(43, 35, 28, 0.14);
+                --border: rgba(43, 35, 28, 0.34);
+                --error: #a3341f;
+                --u: 48px;             /* one tile of the password field */
+                --navy: #2f3b5c;       /* the painted signs' blue */
+                --glaze-go: #c2683f;   /* the terracotta of the pots */
+
+                --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+                --space-5: 24px; --space-6: 32px; --space-7: 48px;
+                --text-xs: 12px; --text-sm: 14px; --text-md: 16px; --text-lg: 20px;
+
+                --text: "Archivo", -apple-system, Helvetica, Arial, sans-serif;
+                --brand: "Libre Caslon Text", Georgia, serif;
+                --out: cubic-bezier(0.16, 1, 0.3, 1);
+
+                --bar: 64px;
+            }
+
+            * { box-sizing: border-box; }
+            .hidden { display: none !important; }
+            html, body { margin: 0; background: var(--paper); }
+            body {
+                color: var(--ink);
+                font: 400 var(--text-sm)/1.5 var(--text);
+                font-stretch: semi-condensed; /* as tokens.css --f-stretch; this page can't load tokens.css */
+                -webkit-font-smoothing: antialiased;
+            }
+            :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+            /* A blank sheet while a remembered password unlocks the page */
+            .staticrypt-spinner-container { min-height: 100vh; min-height: 100svh; }
+            /* Moving between pages: the site's own top bar (bar.css) on the next
+               page's background, so the bar holds still while the page unlocks */
+            @view-transition { navigation: auto; }
+            html.passing, html.passing body { background: var(--pass-bg); }
+
+            /* Same bar as the hi-fi site: the name split across both ends */
+            .bar {
+                position: fixed; top: 0; left: 0; right: 0; height: var(--bar); z-index: 5;
+                display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--space-3);
+                padding: 0 var(--space-6);
+                background: #fffdf9;
+                border-bottom: 1px solid var(--hair);
+            }
+            .bar .mark { font: 400 24px/1 var(--brand); letter-spacing: 0.01em; }
+            .bar .mark:last-child { justify-self: end; }
+            .bar .label { font: 500 var(--text-xs)/1.4 var(--text); letter-spacing: 0.08em; text-transform: uppercase; color: var(--mute); }
+            /* Lo-fi / Hi-fi, as in the site's bar: two joined square buttons, the current one inked in */
+            .gate-switch { display: flex; height: 40px; border: 1px solid var(--border); }
+            .gate-switch button {
+                padding: 0 var(--space-4); border: 0; background: transparent; color: var(--ink); cursor: pointer;
+                font: 400 var(--text-xs)/1.4 var(--text); font-stretch: semi-condensed; letter-spacing: 0.14em; text-transform: uppercase;
+                transition: background 200ms var(--out), color 200ms var(--out);
+            }
+            .gate-switch button + button { border-left: 1px solid var(--border); }
+            .gate-switch button:hover { background: rgba(43, 35, 28, 0.06); }
+            .gate-switch button[aria-pressed="true"] { background: var(--ink); color: #fffdf9; }
+
+            .gate { position: relative; min-height: 100vh; min-height: 100svh; overflow: hidden; background: #e9dcc4; }
+            /* the doors, painted by the script (inline styles, so the hi-fi
+               loading screen can wear them as they are) */
+            .doors { position: fixed; inset: 0; z-index: 0; }
+            .leaving .gate { background: transparent; }
+
+            .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+            /* ---------- Loading, then the password, at the foot of the doors ---------- */
+            .panel {
+                position: fixed; z-index: 3; left: 50%; bottom: 36px;
+                width: min(380px, calc(100vw - 32px)); transform: translateX(-50%);
+                transition: opacity 400ms var(--out);
+            }
+            .panel .error { text-shadow: 0 0 12px rgba(255, 250, 240, 0.95), 0 0 2px rgba(255, 250, 240, 0.95); }
+            .panel.shake { animation: shake 380ms var(--out); }
+            @keyframes shake {
+                0%, 100% { transform: translateX(-50%); }
+                25% { transform: translateX(calc(-50% - 6px)); }
+                50% { transform: translateX(calc(-50% + 5px)); }
+                75% { transform: translateX(calc(-50% - 3px)); }
+            }
+
+            form {
+                position: relative;
+                opacity: 0; transform: translateY(8px);
+                transition: opacity 500ms var(--out), transform 500ms var(--out);
+            }
+            form.ready, form.loading { opacity: 1; transform: none; }
+            /* While the site loads, the long tile is the progress bar: it glazes
+               terracotta left to right, the percentage at its end; at 100% it is
+               the password field */
+            .meter {
+                grid-column: 1; grid-row: 1; position: relative; z-index: 1; pointer-events: none;
+                display: flex; justify-content: space-between; align-items: center; padding: 0 var(--space-4);
+                overflow: hidden; color: var(--navy); font: italic 400 var(--text-md) var(--brand); letter-spacing: 0.04em;
+                transition: opacity 400ms var(--out);
+            }
+            .field > .meter { background: none; box-shadow: none; }
+            .field input { grid-column: 1; grid-row: 1; } .field .eye { grid-column: 2; grid-row: 1; } .field .enter { grid-column: 3; grid-row: 1; }
+            .meter::before {
+                content: ""; position: absolute; inset: 0; z-index: -1; width: calc(var(--p, 0) * 100%);
+                background: linear-gradient(180deg, rgba(255, 236, 210, 0.35), transparent 60%), rgba(194, 104, 63, 0.55);
+            }
+            .meter-pct { font-style: normal; font-variant-numeric: tabular-nums; }
+            form.loading .field input::placeholder { color: transparent; }
+            form.loading .eye, form.loading .enter { filter: saturate(0.4) brightness(0.92); opacity: 0.75; }
+            form.ready .meter { opacity: 0; }
+            /* the field: a long tile of cream glaze to write on, then a tile to
+               show the password and a painted tile to go in */
+            .field {
+                position: relative; display: grid; height: var(--u);
+                grid-template-columns: minmax(0, 1fr) var(--u) var(--u); gap: 3px;
+            }
+            .field > * {
+                min-width: 0; border: 0; border-radius: 2px;
+                box-shadow: inset 0 0 0 1px rgba(255, 250, 240, 0.35), inset 0 -6px 10px rgba(80, 55, 25, 0.16), 0 2px 10px rgba(40, 30, 20, 0.25);
+            }
+            .field input {
+                padding: 0 var(--space-4); color: var(--navy);
+                background:
+                    linear-gradient(180deg, rgba(255, 253, 247, 0.75), rgba(255, 253, 247, 0) 55%),
+                    #f6ebd8;
+                font: 400 var(--text-md) var(--brand); letter-spacing: 0.12em;
+            }
+            .field input::placeholder { color: rgba(47, 59, 92, 0.55); letter-spacing: 0.04em; font-style: italic; }
+            .field input:focus { outline: none; box-shadow: inset 0 0 0 1.5px var(--navy), inset 0 -6px 10px rgba(80, 55, 25, 0.16), 0 2px 10px rgba(40, 30, 20, 0.25); }
+            .field button {
+                display: grid; place-items: center; padding: 0; cursor: pointer;
+                transition: filter 200ms var(--out);
+            }
+            .field button svg { width: 22px; height: 22px; pointer-events: none; }
+            .field button:hover { filter: brightness(1.06); }
+            .field button:focus-visible { outline: 2px solid var(--navy); outline-offset: 1px; }
+            .eye {
+                color: var(--navy);
+                background: radial-gradient(ellipse 70% 45% at 30% 22%, rgba(255, 253, 247, 0.7), rgba(255, 253, 247, 0) 70%), #f8eedd;
+            }
+            .eye[aria-pressed="true"] { background: radial-gradient(ellipse 70% 45% at 30% 22%, rgba(255, 253, 247, 0.6), rgba(255, 253, 247, 0) 70%), #e6d4b6; }
+            .enter {
+                color: #fbf3e4;
+                background: radial-gradient(ellipse 70% 45% at 30% 22%, rgba(255, 236, 210, 0.45), rgba(255, 236, 210, 0) 70%), var(--glaze-go);
+            }
+            .error { position: absolute; left: 0; right: 0; top: calc(100% + 6px); min-height: 18px; margin: 0; text-align: center; font-size: var(--text-xs); color: var(--error); letter-spacing: 0.02em; }
+
+            /* On the way in, the password steps aside and the doors open */
+            .leaving .panel, .panel.checking { opacity: 0; pointer-events: none; }
+            .panel.checking { transition-duration: 220ms; }
+            .veil { position: fixed; inset: 0; z-index: 10; opacity: 0; pointer-events: none; transition: opacity 380ms ease; }
+            .veil.on { opacity: 1; }
+
+            /* Slow to load: an offer of the lo-fi way in */
+            .slow { margin: 12px 0 0; text-align: center; font-size: var(--text-xs); color: var(--ink); text-shadow: 0 0 12px rgba(255, 250, 240, 0.95), 0 0 2px rgba(255, 250, 240, 0.95); }
+            .slow button { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+            form.ready ~ .slow { display: none; }
+
+            /* ---------- Lo-fi: the dark way in (archive/loading-dark.html) ---------- */
+            .dark {
+                --name-size: clamp(40px, 5.4vw, 84px);
+                position: fixed; inset: 0; z-index: 4; overflow: hidden;
+                display: grid; grid-template-columns: auto minmax(0, 560px); justify-content: center; align-items: center;
+                column-gap: clamp(48px, 7vw, 112px);
+                padding: calc(var(--bar) + var(--space-6)) 6vw var(--space-7);
+                background: #161412; color: #fff;
+                animation: dark-in 300ms var(--out);
+            }
+            @keyframes dark-in { from { opacity: 0; } }
+            .dark .spark { position: absolute; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 500ms var(--out); }
+            .dark .spark.on { animation: starAppear var(--d, 500ms) cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+            .dark .spark.pop { z-index: 3; animation: sparkPop 520ms cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+            @keyframes starAppear {
+                0%   { opacity: 0;    transform: scale(0.2)  rotate(-16deg); }
+                55%  { opacity: 1;    transform: scale(1.09) rotate(5deg); }
+                78%  { opacity: 0.88; transform: scale(0.96) rotate(1deg); }
+                100% { opacity: 0.9;  transform: scale(1)    rotate(2deg); }
+            }
+            @keyframes sparkPop {
+                0%   { opacity: 0; transform: scale(0.2) rotate(-18deg); }
+                30%  { opacity: 1; transform: scale(1.08) rotate(4deg); }
+                60%  { opacity: 0.7; transform: scale(0.95) rotate(1deg); }
+                100% { opacity: 0; transform: scale(0.55) rotate(10deg); }
+            }
+            .dark .left { position: relative; z-index: 2; display: grid; gap: var(--space-6); justify-items: start; }
+            .dark .art { position: relative; z-index: 1; min-width: 0; }
+            .dark .illus {
+                display: block; width: 100%; height: auto; max-height: calc(100svh - var(--bar) - 120px); object-fit: contain;
+                border-radius: 14px; box-shadow: 0 32px 80px rgba(0, 0, 0, 0.55);
+                clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+                transition: transform 1600ms cubic-bezier(0.62, 0, 0.25, 1), border-radius 1600ms cubic-bezier(0.62, 0, 0.25, 1);
+            }
+            .dark .name {
+                position: relative; z-index: 1;
+                display: flex; flex-wrap: nowrap; white-space: nowrap; align-items: flex-end; margin: 0;
+                font: 700 var(--name-size)/0.9 var(--text); font-stretch: semi-condensed;
+                letter-spacing: -0.045em; text-transform: uppercase;
+                transition: opacity 500ms var(--out);
+            }
+            .dark .name .l { display: inline-block; color: rgba(255, 255, 255, 0.28); transition: color 120ms ease; }
+            .dark .name .l.in { color: #fff; }
+            .dark .name .sp { display: inline-block; width: 0.28em; }
+            .dark .foot {
+                position: absolute; bottom: 40px; left: 48px; right: 48px; z-index: 1;
+                display: flex; justify-content: space-between; align-items: flex-end;
+                font-size: 12px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase;
+                color: rgba(255, 255, 255, 0.65); transition: opacity 400ms var(--out);
+            }
+            .leaving .dark .name, .leaving .dark .foot, .leaving .dark .spark { opacity: 0; animation: none; }
+            /* the password, beside the name, in the dark sheet's own plain style */
+            .lofi .panel { position: relative; left: auto; right: auto; bottom: auto; width: 100%; min-width: 320px; transform: none; z-index: 2; }
+            .lofi .panel.shake { animation-name: shake-dark; }
+            @keyframes shake-dark { 0%, 100% { transform: none; } 25% { transform: translateX(-6px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-3px); } }
+            .lofi .field { gap: 0; }
+            .lofi .field > * { border: 1px solid rgba(255, 255, 255, 0.34); border-radius: 0; box-shadow: none; background: transparent; color: #fff; }
+            .lofi .field > * + * { border-left: 0; }
+            .lofi .field input { font: 400 var(--text-md) var(--text); letter-spacing: 0.08em; }
+            .lofi .field input::placeholder { color: rgba(255, 255, 255, 0.5); font-style: normal; }
+            .lofi .field input:focus { box-shadow: none; border-color: #fff; }
+            .lofi .field button:hover { filter: none; background: rgba(255, 255, 255, 0.08); }
+            .lofi .field button:focus-visible { outline-color: #fff; }
+            .lofi .eye[aria-pressed="true"] { background: rgba(255, 255, 255, 0.12); }
+            .lofi .enter { background: #fff; color: #161412; border-color: #fff; }
+            .lofi .enter:hover { background: transparent; color: #fff; }
+            .lofi .panel .error { text-shadow: none; color: #ff9b85; text-align: left; }
+            .lofi .meter { color: #fff; }
+            .lofi .meter::before { background: rgba(255, 255, 255, 0.16); }
+            .lofi form.loading .eye, .lofi form.loading .enter { filter: none; opacity: 0.4; }
+
+            @media (max-width: 899px) {
+                .dark {
+                    --name-size: clamp(36px, 11vw, 64px);
+                    grid-template-columns: minmax(0, 1fr); justify-items: center; align-content: center; row-gap: var(--space-6);
+                    padding: calc(var(--bar) + var(--space-5)) var(--space-4) var(--space-6);
+                }
+                .dark .art { order: -1; width: min(100%, 480px); }
+                .dark .illus { max-height: 42svh; }
+                .dark .left { justify-items: center; width: min(100%, 380px); }
+                .dark .foot { display: none; }
+                .lofi .panel { min-width: 0; }
+                .gate-switch button { padding: 0 var(--space-2); letter-spacing: 0.08em; }
+            }
+            @media (max-width: 899px) {
+                :root { --bar: 56px; }
+                .bar { padding: 0 var(--space-4); }
+                .bar .mark { font-size: 20px; }
+                .panel { bottom: 28px; }
+            }
+            @media (prefers-reduced-motion: reduce) {
+                .dark, .dark .spark.on { animation: none; }
+                .dark .spark { opacity: 0.9; }
+                .dark .illus, .dark .name .l { transition: none; }
+                .panel.shake { animation: none; }
+                form { transition: none; }
+            }
+        </style>
+    </head>
+
+    <body class="staticrypt-body">
+        <div id="staticrypt_loading" class="staticrypt-spinner-container"></div>
+        <script>
+          (function () {
+            // The site's own top bar (bar.css), drawn here for a page that's
+            // still unlocking: also used by the way in below, on its way to hi-fi
+            window.gateSiteBar = function (fi, hifiPage) {
+              var icon = hifiPage
+                ? '<span class="site-bar__icon" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9h3l5-4v14l-5-4H4z" fill="currentColor" stroke="none"/><path d="M15.5 9.2a4 4 0 0 1 0 5.6M18.3 6.6a8 8 0 0 1 0 10.8"/></svg></span>'
+                : '<span class="site-bar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="5" y1="7" x2="19" y2="7"/><line x1="5" y1="12" x2="19" y2="12"/><line x1="5" y1="17" x2="19" y2="17"/></svg></span>';
+              // (a working bar: whichever copy is showing at a given moment,
+              // its switch goes where it says)
+              var bar = document.createElement("header");
+              bar.className = "site-bar";
+              bar.innerHTML = '<a class="site-bar__mark" href="/index.html">CHLOE</a><div class="site-bar__tools"><nav class="site-bar__switch" aria-label="Site version">'
+                + '<a href="/index.html"' + (fi === "lofi" ? ' aria-current="page"' : '') + '>Lo-fi</a><a href="/hifi/"' + (fi === "hifi" ? ' aria-current="page"' : '') + '>Hi-fi</a>'
+                + '</nav>' + icon + '</div><span class="site-bar__mark site-bar__mark--end" aria-hidden="true">MA</span>';
+              return bar;
+            };
+            // Someone who's already in is only moving between pages: show the
+            // bar the next page has, with its switch already set.
+            try { if (!localStorage.getItem("staticrypt_passphrase")) return; } catch (e) { return; }
+            var path = location.pathname, fi;
+            if (/\/hifi\//.test(path)) fi = "hifi";
+            else if (/\/(index\.html)?$/.test(path)) fi = "lofi";
+            else { try { fi = localStorage.getItem("portfolio.fi") === "hifi" ? "hifi" : "lofi"; } catch (e) { fi = "lofi"; } }
+            var hifiPage = fi === "hifi" && /\/hifi\//.test(path);
+            var bar = window.gateSiteBar(fi, hifiPage);
+            bar.id = "passing-bar";
+            document.body.appendChild(bar);
+            var root = document.documentElement;
+            // (just in from the password page, the doors are already up: see the head)
+            var held = document.getElementById("gate-hold");
+            root.style.setProperty("--pass-bg", held ? "#d8c3a2" : hifiPage ? "#ffffff" : "var(--c-warm, #EDEAE5)");
+            root.classList.add("passing");
+          })();
+        </script>
+
+        <div id="staticrypt_content" class="hidden">
+            <header class="bar">
+                <span class="mark" aria-hidden="true">CHLOE</span>
+                <nav class="gate-switch" aria-label="Site version"><button type="button" data-fi="lofi" aria-pressed="false">Lo-fi</button><button type="button" data-fi="hifi" aria-pressed="true">Hi-fi</button></nav>
+                <span class="mark" aria-hidden="true">MA</span>
+            </header>
+
+            <main class="gate" id="gate">
+                <div class="doors" id="doors" role="progressbar" aria-label="Opening up" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+
+                <h1 class="sr-only">Chloe Ma</h1>
+
+                <div class="panel" id="panel">
+                    <form id="staticrypt-form" action="#" method="post" novalidate aria-hidden="true">
+                        <label class="sr-only" for="staticrypt-password">Password</label>
+                        <div class="field">
+                            <input
+                                id="staticrypt-password"
+                                type="password"
+                                name="password"
+                                aria-describedby="gate-error"
+                                autocomplete="current-password"
+                                autocapitalize="off"
+                                spellcheck="false"
+                                placeholder="Password"
+                                tabindex="-1"
+                            />
+                            <div class="meter" id="meter" aria-hidden="true"><span>Opening up …</span><span class="meter-pct" id="meter-pct">0%</span></div>
+                            <button type="button" class="eye" id="eye" aria-pressed="false" aria-label="Show password" tabindex="-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.8"/></svg></button>
+                            <button type="submit" class="enter" aria-label="Enter" tabindex="-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button>
+                        </div>
+
+                        <p class="error" id="gate-error" role="status" aria-live="polite"></p>
+
+                        <!-- always remembered on this device -->
+                        <input id="staticrypt-remember" class="hidden" type="checkbox" name="remember" checked tabindex="-1" aria-hidden="true" />
+                    </form>
+                    <p class="slow" id="slow" hidden>Taking a while? <button type="button" data-fi="lofi">See the site in lo-fi</button></p>
+                </div>
+            </main>
+            <section class="dark hidden" id="dark" aria-hidden="true">
+                <div class="left" id="dark-left"><p class="name" id="name"></p></div>
+                <div class="art"><img class="illus" id="illus" alt="" /></div>
+                <div class="foot"><span>&copy;2026</span><span>/Designing since 2018</span></div>
+            </section>
+            <div class="veil" id="veil"></div>
+        </div>
+
+        <script>
+          // Wrapped so none of these names outlive the password page: the unlocked
+          // page is written into this same window and declares its own.
+          (() => {
+            // these variables will be filled when generating the file - the template format is 'variable_name'
+            const staticryptInitiator = ((function(){
+  const exports = {};
+  const cryptoEngine = ((function(){
+  const exports = {};
+  const { subtle } = crypto;
+
+const IV_BITS = 16 * 8;
+const HEX_BITS = 4;
+const ENCRYPTION_ALGO = "AES-CBC";
+
+/**
+ * Translates between utf8 encoded hexadecimal strings
+ * and Uint8Array bytes.
+ */
+const HexEncoder = {
+    /**
+     * hex string -> bytes
+     * @param {string} hexString
+     * @returns {Uint8Array}
+     */
+    parse: function (hexString) {
+        if (hexString.length % 2 !== 0) throw "Invalid hexString";
+        const arrayBuffer = new Uint8Array(hexString.length / 2);
+
+        for (let i = 0; i < hexString.length; i += 2) {
+            const byteValue = parseInt(hexString.substring(i, i + 2), 16);
+            if (isNaN(byteValue)) {
+                throw "Invalid hexString";
+            }
+            arrayBuffer[i / 2] = byteValue;
+        }
+        return arrayBuffer;
+    },
+
+    /**
+     * bytes -> hex string
+     * @param {Uint8Array} bytes
+     * @returns {string}
+     */
+    stringify: function (bytes) {
+        const hexBytes = [];
+
+        for (let i = 0; i < bytes.length; ++i) {
+            let byteString = bytes[i].toString(16);
+            if (byteString.length < 2) {
+                byteString = "0" + byteString;
+            }
+            hexBytes.push(byteString);
+        }
+        return hexBytes.join("");
+    },
+};
+
+/**
+ * Translates between utf8 strings and Uint8Array bytes.
+ */
+const UTF8Encoder = {
+    parse: function (str) {
+        return new TextEncoder().encode(str);
+    },
+
+    stringify: function (bytes) {
+        return new TextDecoder().decode(bytes);
+    },
+};
+
+/**
+ * Salt and encrypt a msg with a password.
+ */
+async function encrypt(msg, hashedPassword) {
+    // Must be 16 bytes, unpredictable, and preferably cryptographically random. However, it need not be secret.
+    // https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/encrypt#parameters
+    const iv = crypto.getRandomValues(new Uint8Array(IV_BITS / 8));
+
+    const key = await subtle.importKey("raw", HexEncoder.parse(hashedPassword), ENCRYPTION_ALGO, false, ["encrypt"]);
+
+    const encrypted = await subtle.encrypt(
+        {
+            name: ENCRYPTION_ALGO,
+            iv: iv,
+        },
+        key,
+        UTF8Encoder.parse(msg)
+    );
+
+    // iv will be 32 hex characters, we prepend it to the ciphertext for use in decryption
+    return HexEncoder.stringify(iv) + HexEncoder.stringify(new Uint8Array(encrypted));
+}
+exports.encrypt = encrypt;
+
+/**
+ * Decrypt a salted msg using a password.
+ *
+ * @param {string} encryptedMsg
+ * @param {string} hashedPassword
+ * @returns {Promise<string>}
+ */
+async function decrypt(encryptedMsg, hashedPassword) {
+    const ivLength = IV_BITS / HEX_BITS;
+    const iv = HexEncoder.parse(encryptedMsg.substring(0, ivLength));
+    const encrypted = encryptedMsg.substring(ivLength);
+
+    const key = await subtle.importKey("raw", HexEncoder.parse(hashedPassword), ENCRYPTION_ALGO, false, ["decrypt"]);
+
+    const outBuffer = await subtle.decrypt(
+        {
+            name: ENCRYPTION_ALGO,
+            iv: iv,
+        },
+        key,
+        HexEncoder.parse(encrypted)
+    );
+
+    return UTF8Encoder.stringify(new Uint8Array(outBuffer));
+}
+exports.decrypt = decrypt;
+
+/**
+ * Salt and hash the password so it can be stored in localStorage without opening a password reuse vulnerability.
+ *
+ * @param {string} password
+ * @param {string} salt
+ * @returns {Promise<string>}
+ */
+async function hashPassword(password, salt) {
+    // we hash the password in multiple steps, each adding more iterations. This is because we used to allow less
+    // iterations, so for backward compatibility reasons, we need to support going from that to more iterations.
+    let hashedPassword = await hashLegacyRound(password, salt);
+
+    hashedPassword = await hashSecondRound(hashedPassword, salt);
+
+    return hashThirdRound(hashedPassword, salt);
+}
+exports.hashPassword = hashPassword;
+
+/**
+ * This hashes the password with 1k iterations. This is a low number, we need this function to support backwards
+ * compatibility.
+ *
+ * @param {string} password
+ * @param {string} salt
+ * @returns {Promise<string>}
+ */
+function hashLegacyRound(password, salt) {
+    return pbkdf2(password, salt, 1000, "SHA-1");
+}
+exports.hashLegacyRound = hashLegacyRound;
+
+/**
+ * Add a second round of iterations. This is because we used to use 1k, so for backwards compatibility with
+ * remember-me/autodecrypt links, we need to support going from that to more iterations.
+ *
+ * @param hashedPassword
+ * @param salt
+ * @returns {Promise<string>}
+ */
+function hashSecondRound(hashedPassword, salt) {
+    return pbkdf2(hashedPassword, salt, 14000, "SHA-256");
+}
+exports.hashSecondRound = hashSecondRound;
+
+/**
+ * Add a third round of iterations to bring total number to 600k. This is because we used to use 1k, then 15k, so for
+ * backwards compatibility with remember-me/autodecrypt links, we need to support going from that to more iterations.
+ *
+ * @param hashedPassword
+ * @param salt
+ * @returns {Promise<string>}
+ */
+function hashThirdRound(hashedPassword, salt) {
+    return pbkdf2(hashedPassword, salt, 585000, "SHA-256");
+}
+exports.hashThirdRound = hashThirdRound;
+
+/**
+ * Salt and hash the password so it can be stored in localStorage without opening a password reuse vulnerability.
+ *
+ * @param {string} password
+ * @param {string} salt
+ * @param {int} iterations
+ * @param {string} hashAlgorithm
+ * @returns {Promise<string>}
+ */
+async function pbkdf2(password, salt, iterations, hashAlgorithm) {
+    const key = await subtle.importKey("raw", UTF8Encoder.parse(password), "PBKDF2", false, ["deriveBits"]);
+
+    const keyBytes = await subtle.deriveBits(
+        {
+            name: "PBKDF2",
+            hash: hashAlgorithm,
+            iterations,
+            salt: UTF8Encoder.parse(salt),
+        },
+        key,
+        256
+    );
+
+    return HexEncoder.stringify(new Uint8Array(keyBytes));
+}
+
+function generateRandomSalt() {
+    const bytes = crypto.getRandomValues(new Uint8Array(128 / 8));
+
+    return HexEncoder.stringify(new Uint8Array(bytes));
+}
+exports.generateRandomSalt = generateRandomSalt;
+
+async function signMessage(hashedPassword, message) {
+    const key = await subtle.importKey(
+        "raw",
+        HexEncoder.parse(hashedPassword),
+        {
+            name: "HMAC",
+            hash: "SHA-256",
+        },
+        false,
+        ["sign"]
+    );
+    const signature = await subtle.sign("HMAC", key, UTF8Encoder.parse(message));
+
+    return HexEncoder.stringify(new Uint8Array(signature));
+}
+exports.signMessage = signMessage;
+
+function getRandomAlphanum() {
+    const possibleCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+    let byteArray;
+    let parsedInt;
+
+    // Keep generating new random bytes until we get a value that falls
+    // within a range that can be evenly divided by possibleCharacters.length
+    do {
+        byteArray = crypto.getRandomValues(new Uint8Array(1));
+        // extract the lowest byte to get an int from 0 to 255 (probably unnecessary, since we're only generating 1 byte)
+        parsedInt = byteArray[0] & 0xff;
+    } while (parsedInt >= 256 - (256 % possibleCharacters.length));
+
+    // Take the modulo of the parsed integer to get a random number between 0 and totalLength - 1
+    const randomIndex = parsedInt % possibleCharacters.length;
+
+    return possibleCharacters[randomIndex];
+}
+
+/**
+ * Generate a random string of a given length.
+ *
+ * @param {int} length
+ * @returns {string}
+ */
+function generateRandomString(length) {
+    let randomString = "";
+
+    for (let i = 0; i < length; i++) {
+        randomString += getRandomAlphanum();
+    }
+
+    return randomString;
+}
+exports.generateRandomString = generateRandomString;
+
+  return exports;
+})());
+const codec = ((function(){
+  const exports = {};
+  /**
+ * Initialize the codec with the provided cryptoEngine - this return functions to encode and decode messages.
+ *
+ * @param cryptoEngine - the engine to use for encryption / decryption
+ */
+function init(cryptoEngine) {
+    const exports = {};
+
+    /**
+     * Top-level function for encoding a message.
+     * Includes password hashing, encryption, and signing.
+     *
+     * @param {string} msg
+     * @param {string} password
+     * @param {string} salt
+     *
+     * @returns {string} The encoded text
+     */
+    async function encode(msg, password, salt) {
+        const hashedPassword = await cryptoEngine.hashPassword(password, salt);
+
+        const encrypted = await cryptoEngine.encrypt(msg, hashedPassword);
+
+        // we use the hashed password in the HMAC because this is effectively what will be used a password (so we can store
+        // it in localStorage safely, we don't use the clear text password)
+        const hmac = await cryptoEngine.signMessage(hashedPassword, encrypted);
+
+        return hmac + encrypted;
+    }
+    exports.encode = encode;
+
+    /**
+     * Encode using a password that has already been hashed. This is useful to encode multiple messages in a row, that way
+     * we don't need to hash the password multiple times.
+     *
+     * @param {string} msg
+     * @param {string} hashedPassword
+     *
+     * @returns {string} The encoded text
+     */
+    async function encodeWithHashedPassword(msg, hashedPassword) {
+        const encrypted = await cryptoEngine.encrypt(msg, hashedPassword);
+
+        // we use the hashed password in the HMAC because this is effectively what will be used a password (so we can store
+        // it in localStorage safely, we don't use the clear text password)
+        const hmac = await cryptoEngine.signMessage(hashedPassword, encrypted);
+
+        return hmac + encrypted;
+    }
+    exports.encodeWithHashedPassword = encodeWithHashedPassword;
+
+    /**
+     * Top-level function for decoding a message.
+     * Includes signature check and decryption.
+     *
+     * @param {string} signedMsg
+     * @param {string} hashedPassword
+     * @param {string} salt
+     * @param {int} backwardCompatibleAttempt
+     * @param {string} originalPassword
+     *
+     * @returns {Object} {success: true, decoded: string} | {success: false, message: string}
+     */
+    async function decode(signedMsg, hashedPassword, salt, backwardCompatibleAttempt = 0, originalPassword = "") {
+        const encryptedHMAC = signedMsg.substring(0, 64);
+        const encryptedMsg = signedMsg.substring(64);
+        const decryptedHMAC = await cryptoEngine.signMessage(hashedPassword, encryptedMsg);
+
+        if (decryptedHMAC !== encryptedHMAC) {
+            // we have been raising the number of iterations in the hashing algorithm multiple times, so to support the old
+            // remember-me/autodecrypt links we need to try bringing the old hashes up to speed.
+            originalPassword = originalPassword || hashedPassword;
+            if (backwardCompatibleAttempt === 0) {
+                const updatedHashedPassword = await cryptoEngine.hashThirdRound(originalPassword, salt);
+
+                return decode(signedMsg, updatedHashedPassword, salt, backwardCompatibleAttempt + 1, originalPassword);
+            }
+            if (backwardCompatibleAttempt === 1) {
+                let updatedHashedPassword = await cryptoEngine.hashSecondRound(originalPassword, salt);
+                updatedHashedPassword = await cryptoEngine.hashThirdRound(updatedHashedPassword, salt);
+
+                return decode(signedMsg, updatedHashedPassword, salt, backwardCompatibleAttempt + 1, originalPassword);
+            }
+
+            return { success: false, message: "Signature mismatch" };
+        }
+
+        return {
+            success: true,
+            decoded: await cryptoEngine.decrypt(encryptedMsg, hashedPassword),
+        };
+    }
+    exports.decode = decode;
+
+    return exports;
+}
+exports.init = init;
+
+  return exports;
+})());
+const decode = codec.init(cryptoEngine).decode;
+
+/**
+ * Initialize the staticrypt module, that exposes functions callbable by the password_template.
+ *
+ * @param {{
+ *  staticryptEncryptedMsgUniqueVariableName: string,
+ *  isRememberEnabled: boolean,
+ *  rememberDurationInDays: number,
+ *  staticryptSaltUniqueVariableName: string,
+ * }} staticryptConfig - object of data that is stored on the password_template at encryption time.
+ *
+ * @param {{
+ *  rememberExpirationKey: string,
+ *  rememberPassphraseKey: string,
+ *  replaceHtmlCallback: function,
+ *  clearLocalStorageCallback: function,
+ * }} templateConfig - object of data that can be configured by a custom password_template.
+ */
+function init(staticryptConfig, templateConfig) {
+    const exports = {};
+
+    /**
+     * Decrypt our encrypted page, replace the whole HTML.
+     *
+     * @param {string} hashedPassword
+     * @returns {Promise<boolean>}
+     */
+    async function decryptAndReplaceHtml(hashedPassword) {
+        const { staticryptEncryptedMsgUniqueVariableName, staticryptSaltUniqueVariableName } = staticryptConfig;
+        const { replaceHtmlCallback } = templateConfig;
+
+        const result = await decode(
+            staticryptEncryptedMsgUniqueVariableName,
+            hashedPassword,
+            staticryptSaltUniqueVariableName
+        );
+        if (!result.success) {
+            return false;
+        }
+        const plainHTML = result.decoded;
+
+        // if the user configured a callback call it, otherwise just replace the whole HTML
+        if (typeof replaceHtmlCallback === "function") {
+            replaceHtmlCallback(plainHTML);
+        } else {
+            document.write(plainHTML);
+            document.close();
+        }
+
+        return true;
+    }
+
+    /**
+     * Attempt to decrypt the page and replace the whole HTML.
+     *
+     * @param {string} password
+     * @param {boolean} isRememberChecked
+     *
+     * @returns {Promise<{isSuccessful: boolean, hashedPassword?: string}>} - we return an object, so that if we want to
+     *   expose more information in the future we can do it without breaking the password_template
+     */
+    async function handleDecryptionOfPage(password, isRememberChecked) {
+        const { staticryptSaltUniqueVariableName } = staticryptConfig;
+
+        // decrypt and replace the whole page
+        const hashedPassword = await cryptoEngine.hashPassword(password, staticryptSaltUniqueVariableName);
+        return handleDecryptionOfPageFromHash(hashedPassword, isRememberChecked);
+    }
+    exports.handleDecryptionOfPage = handleDecryptionOfPage;
+
+    async function handleDecryptionOfPageFromHash(hashedPassword, isRememberChecked) {
+        const { isRememberEnabled, rememberDurationInDays } = staticryptConfig;
+        const { rememberExpirationKey, rememberPassphraseKey } = templateConfig;
+
+        const isDecryptionSuccessful = await decryptAndReplaceHtml(hashedPassword);
+
+        if (!isDecryptionSuccessful) {
+            return {
+                isSuccessful: false,
+                hashedPassword,
+            };
+        }
+
+        // remember the hashedPassword and set its expiration if necessary
+        if (isRememberEnabled && isRememberChecked) {
+            window.localStorage.setItem(rememberPassphraseKey, hashedPassword);
+
+            // set the expiration if the duration isn't 0 (meaning no expiration)
+            if (rememberDurationInDays > 0) {
+                window.localStorage.setItem(
+                    rememberExpirationKey,
+                    (new Date().getTime() + rememberDurationInDays * 24 * 60 * 60 * 1000).toString()
+                );
+            }
+        }
+
+        return {
+            isSuccessful: true,
+            hashedPassword,
+        };
+    }
+    exports.handleDecryptionOfPageFromHash = handleDecryptionOfPageFromHash;
+
+    /**
+     * Clear localstorage from staticrypt related values
+     */
+    function clearLocalStorage() {
+        const { clearLocalStorageCallback, rememberExpirationKey, rememberPassphraseKey } = templateConfig;
+
+        if (typeof clearLocalStorageCallback === "function") {
+            clearLocalStorageCallback();
+        } else {
+            localStorage.removeItem(rememberPassphraseKey);
+            localStorage.removeItem(rememberExpirationKey);
+        }
+    }
+
+    async function handleDecryptOnLoad() {
+        let isSuccessful = await decryptOnLoadFromUrl();
+
+        if (!isSuccessful) {
+            isSuccessful = await decryptOnLoadFromRememberMe();
+        }
+
+        return { isSuccessful };
+    }
+    exports.handleDecryptOnLoad = handleDecryptOnLoad;
+
+    /**
+     * Clear storage if we are logging out
+     *
+     * @returns {boolean} - whether we logged out
+     */
+    function logoutIfNeeded() {
+        const logoutKey = "staticrypt_logout";
+
+        // handle logout through query param
+        const queryParams = new URLSearchParams(window.location.search);
+        if (queryParams.has(logoutKey)) {
+            clearLocalStorage();
+            return true;
+        }
+
+        // handle logout through URL fragment
+        const hash = window.location.hash.substring(1);
+        if (hash.includes(logoutKey)) {
+            clearLocalStorage();
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * To be called on load: check if we want to try to decrypt and replace the HTML with the decrypted content, and
+     * try to do it if needed.
+     *
+     * @returns {Promise<boolean>} true if we derypted and replaced the whole page, false otherwise
+     */
+    async function decryptOnLoadFromRememberMe() {
+        const { rememberDurationInDays } = staticryptConfig;
+        const { rememberExpirationKey, rememberPassphraseKey } = templateConfig;
+
+        // if we are login out, terminate
+        if (logoutIfNeeded()) {
+            return false;
+        }
+
+        // if there is expiration configured, check if we're not beyond the expiration
+        if (rememberDurationInDays && rememberDurationInDays > 0) {
+            const expiration = localStorage.getItem(rememberExpirationKey),
+                isExpired = expiration && new Date().getTime() > parseInt(expiration);
+
+            if (isExpired) {
+                clearLocalStorage();
+                return false;
+            }
+        }
+
+        const hashedPassword = localStorage.getItem(rememberPassphraseKey);
+
+        if (hashedPassword) {
+            // try to decrypt
+            const isDecryptionSuccessful = await decryptAndReplaceHtml(hashedPassword);
+
+            // if the decryption is unsuccessful the password might be wrong - silently clear the saved data and let
+            // the user fill the password form again
+            if (!isDecryptionSuccessful) {
+                clearLocalStorage();
+                return false;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    async function decryptOnLoadFromUrl() {
+        const passwordKey = "staticrypt_pwd";
+        const rememberMeKey = "remember_me";
+
+        // try to get the password from the query param (for backward compatibility - we now want to avoid this method,
+        // since it sends the hashed password to the server which isn't needed)
+        const queryParams = new URLSearchParams(window.location.search);
+        const hashedPasswordQuery = queryParams.get(passwordKey);
+        const rememberMeQuery = queryParams.get(rememberMeKey);
+
+        const urlFragment = window.location.hash.substring(1);
+        // get the password from the url fragment
+        const hashedPasswordRegexMatch = urlFragment.match(new RegExp(passwordKey + "=([^&]*)"));
+        const hashedPasswordFragment = hashedPasswordRegexMatch ? hashedPasswordRegexMatch[1] : null;
+        const rememberMeFragment = urlFragment.includes(rememberMeKey);
+
+        const hashedPassword = hashedPasswordFragment || hashedPasswordQuery;
+        const rememberMe = rememberMeFragment || rememberMeQuery;
+
+        if (hashedPassword) {
+            return handleDecryptionOfPageFromHash(hashedPassword, rememberMe);
+        }
+
+        return false;
+    }
+
+    return exports;
+}
+exports.init = init;
+
+  return exports;
+})());
+            const templateError = "Bad password!",
+                isRememberEnabled = true,
+                staticryptConfig = {"staticryptEncryptedMsgUniqueVariableName":"f32b6c5d9a114a5b28c8cbf2c50d58f0d6e5165544b44ea7b1ed1934ea7c80fc46ea95c835ae537526caeb503c7f56e83b3705a1c97f63d126682ec6ec29752ad3b7abaf211cd61111532126a8c11e80b075fad95b0a5973e01660b4897b1d109aa2c3e4bd844fb0e998ad3d7609dbf992ffcf4fdfc26901bb103d7e3783e59c54e6c741185db5e505ab3edc7ce7fcf64b591de9e41e41aee549ba094d879f76bccb669c122b39581582a48bdd6552d8cc999adc8b111182d208f6c6d945244259864aba4e4de48e784af7a3a81e7ffaf2ab7223502457fb4b24fe425514aab262caae86da8f121c4d3cc4b2eb208a886497dc870f50f488ef7f460c2e0b831fbc60fed5f05e9e3950605f31f78ee26b9b10045c183897ebc83257a4422009ff3dadd9aeb99b3a39cea2e0e453824d2811ac25498d67bd6576ec338f4102610650856dc18dfa9a0b2a50432a07c841a0ea099e91c876c84d1a3b2df4d23475f6d53b02150197d2f0fbe1ae2fa160869a83b2f036f0fa7e23e783beceef25daee502a7c073d27502a449aa1ac370afc32f8eb734c722c7d3454302372fee1ea943d87206189371f1b15ecf0c5597d5390320966fe72f9d895c73b6bf1710ad0b9b14be6dce0259aa990b014735cf4442ea0208fca0ee13707a47478ae33ff5123a56ea53d3976b56ce28320ab8753ee796ba341bbc4b2fe2fcf9478efac7230bdc36ad2bda721d1f39a8a2a917cf44b2d3fbd57f616657f421e04fd703ad9a2168a2f65fb40c173d3da4e479e8b383d4ce75cf4d79c4d18fd7c94ebc945b3943be188d301754f10f7b2ea48dbbaff4a7989f649124a11adae923cfa664786da55e10a953d0825b8a213dc83b0451cd0792e39e8d1f8aead15c177c6b10bd6e78e4aa43f12f059ce3eac172e0325226a0592e3c5624e8061b38831c090eb2b1f1c2fee5af86ad0eded10aac3a8db9dddc2cce37f471152720bc25ad994857ecd9fc96c3d18533e87c035088fbc55b9d77f06e41cf9f934f4f67eb41642b5cb76e435e16658339925fdbe3cd097812321853c1478992f5ad6915e7d53997c2c53ab08bcdfd775e722d06aab8d1217e9f317a7cd5003177849207a76626ad4c5ccf3ce3cdbdb3a2212638aeed3150c9d9bba3977961c44ba128b41c62b92bf9380b04d25df40ce47706a93748afdb3880157ef87f19e762b995bfad93861f2f5faa7df3398ee897a7eb39d952bd480a5a125fe5b3532a3a6109ba6b704cd32b97bc5de76a23d30a255b95497db741c28a7691f88eea2cf574e5367f8f089c6d6b68fc66904237a702bb97f4582f90795ef1fa3bae8f06f767cbd1d013f819a5d89641241296668e4600da30c36c10f0ceccf7416efd588cb65314a57270c3031c56b939f48c6e765d76553a660691a1801d2a5d53ee796db86d223c0d4b8f56dbe99469771243f8511e053198f8454a87317d935a7c14a34c5c2d2059f12b49efcad04c25a93bedf637623c6b9a93d61f27e5d84c12e5af38211b4b76a9ca20423faf2184832bb56c6d64b41a6e76b7822f5a54720693fba4b8cb77edf6f454f6b4c42145f2e266ba6a1249f6cda57795d92a071cb9d7e1fb1d8d700a1984b29eba43b88ccebce1d95078138409a17cf4e9e545e0ebd97873abf335c9c47700a45433c0ba36f9b2d26d13b4b3db381f7429c54c6b013cc60053bf9c1870f2820b2e899e281d06c011877568575fca0f6a0197c878074250e3617a975d802d1967b6250baf97a1cb96c43871430c8eca21e32f03bb146b30e4c6b381979bc673a7ec208e1b9c8de1a3f6a77ed00f901fe4f7b6515e9c2630c505a7035d45ba1bdf099acb13715ce4f57f89b4e2f1b193bef4d2a69ce632af4e4064ad4f89069b2b7ee9d7ed8fba52615a654e041e256aa16bef46f044f18add31b2ce0b88a11a9bf808b14a720661b0f92703fe314cac999af4da7f4c7a839ba5fb5fa3dfc86e56068bf86cfca380fe3f8bb04802e3ddf1b80e23de6299e10dd63cc65bd0922c621482b535fb3ba19dd01ee4cba52327ec1883fb33a4fc5d56646c21b9f7a370b675095876e3d0a1884988cbd3eefc6873e797e93546bdd4ecd3f9b45d410597b8eeb03932a3ba4ad3a48d040b731dec009e08fcf1118fffb6320eadb8b8a5cd21b7642250dfadf8a8bab39cff71c89e7ea9455b0d3493fe2506c0aea9b387112d73e715619d9d122f3069da713859858105f4d02a6cdee976510d87c5b04d975b52e0f705bfc3214f57108562f8e5cde17120081dc307096ba203f4fd042f202495b8b812f415380107c4b04ffe4d269a862b8947a85d4f17044f4779a12830625d1e5cbeb28e73e8f8d91785dddc8692ac742b728de14bed1afe942385eac8e3bdc8299a235c0fde6797b46068b3ac4651dff367e02bc5deef88f06ef37ad057ca9f220cc2939fa5f73f5f591eb974c45b3a95e0846c565d1e9a3bc7744ede53a545588db2b17d04edb9093512ae6b5ae31cdb421ca287da64a1c0186c8189df87fd68d7e18e7ac99fb5a542e1ede927ab099d8532bef82e74fca34b6f83f0a6ce69e1e439518b2f254a738a8a02e60438989953b72467151662cca85ce44b7fae642670e2728f6cda4c079373163ae5e51e7130f7cff70c7e37301d55583003764ea913956c9d184b28cc09015fa292422bb8c6c8d6246d3bb990a55ae3eb6ab7e44192783acd45ede539a4edc3defe1bab1ee42cc313d941521630c12f53c2e20f00f6c48027aaf6b4a12b70f318f2d497b4d378811b53255d28cf85c6c7b38252175fe7ac894ed2703351a3140d9a223b20da0d087ff97b6aaf926fce19a04eed130a84924809f4d1a39da7fc7dfffc3d509419116e395927c76c2a8cbab7aef34368b01ef1060930ccad93fc59a0c2d1593bfe2dd2bf4b06a0534aab765999f8c26755dbc9bbec78f1aed2ed7f02a326ec0769a20aef2f009c9fc627df00126af3e3c3442f81e5f01e4f181c10578d3dcb67a4d183f09dd8559d4f4c82a382249b0d1522d564347e979e581f6c7311c24abfcf50d3eaafef1f9b08bc13782df77a7e857d88329d819465b6c75f230cdb4f2c8181ba0424211775f2eb0b8d52309fc273fd482a8a45072bfa4b1aa2ea6f38434f0684e50489907bffad1e0d0d8b60c372ccb77dd3708c1b8ea2282398e78abd75931779f04175d77d7913b658764b15f64740cb0ede1dfb3adc706dc9821f45c28d63054057a62d7c3cb26a907fe4eb9a88cf9812beafc93b193ad16209e1d21aa63e1c0a6d8db6f1f4f33d81f085ab2a792658f84e4ce70b41be78d1958a1524310e31228340b158b184933d8228ea62a88c5763ca44728d97e49c2605a9a2b786b064dcc04d37abdee35f9c905dca48f7a32923ff15ee6473eca3e27109e9efaea7c06efbe17e28966ecb5d5729d4c5ecb6cee4250af53948ff3a5843ff477851acd90efd0c97a0827b18a9de80d04d178d01fbb7b6a1d76130b5017a7cca75be57e765359e7d9c79632e1335864c59585e4284f6506f25ff0f554cb37922dd743a5e6b28b06a56203440b0720c5a37d392d15f649a6605b8ea611041b20ce729805d1c84608de11e87a652749c001edb6141824982c0bca8ffd1d1dab18e1bd170dd1b3de9e7e5658c1f5dac4af68189f8f16e79cf9faad861b7226472fdc8e0c411ffb831c73f563d361c63fd62ab140506177b1ad678b313ba147c6caad762787b7cbe8bb218c4cbb2bddf6e4648dd523e9ea17ffb4084c9ef5d6b17f0e5c0681575b857946e5c3f179d3c391f71237c93e642827cf74e6edee8c4b61ccbe1fc9d294387f5fa86ad9af6851671d1f9701220599f93b0d8ae180cd22dc0844807402c45d8b928a8254beb17a38dedd0f126485908a9c25d5cc3d48379208407f51d34035fe6141c17802abefe93a6aa54450bd0c5d875464eee32faa730af6d5ffe40e51ae01a9e57b65b8c38f7297c05e7f23bf2e8486622df8e86de37c077ae61f60b5423d80e7c700eb1c0df4f3d43300561edc9ecd94da95407c8a4a86f3c65c2af206e2cb67567667f5e31e57fafddfb8b0645084c4292bd1b1d5591a935bf55c8ff36f58dd8e83e70375a2952cde1859c1c55a04632629b2b69836305eac3afa6d9caa10a46043310a13a3a98c41ec0dc80045f44437dc211d8d043addb2fe5a744ae9906817c7fd11478b3e660ed6e03528808bed1deaa3abbc2a20baca08447d85afc00692caa07052dc8148600a1e8d0e9a63a4906940d3b62468bc34cf82a884bce0c8e68bc14b240b6c24a28e611d0924bd87c8731df1132e48ea07a33f72af15a10aab60d65611a8196ded98f5cad9310193f560879cff1ad9d43b31208936471d902e6bfaef42b693347876ed8ff14fa6a3ddde3866d3fb44264d986996efdfc656d3743385738daa1769020bdad9c725dc757fe2ee6c5e0a3686856ef2d8cbb375363479bb552b6af47d58f8c564f3acfbce1aa864118fc698479d4351946d70e4e392b9566f4022b94ac1f6c3b1eb72e3dc3b65a37c4b85360219ea4aa4b82ba2156445c3aa3c330f813ceba0900ef00b688d2b0f09fd9da103416008a75b24f5da0e09f7a23266f6d5fe0b973fd199205a8f0b72c8d76c37c3eab181b27187cf722cc8769a8e3934319a4eed8a342789e0b3810d437de448c63bd4abef5f63438bc759d595242cafcbc252b2f07c8432f4f1abfc0033e52c0c9e67a52e6fc56a12aa46e433c83577cae165dc157535b046fc7b05aa266c534de0f837b4fed56ee4a727b2eac23391aa1b3db466c6aa95f73702678d90aa2ffa45d33200c1e3b0cf052a46462fa1ea5e3192af1155315d68f9cae4106074bc888e8d65141305b1e2fc9c5f4d3f4e6006d09bdbee1e65a281032c4a5dd6365f40930957032e35453b9399f9217604e58f9a2ad39a4e425adc7d0028ee9daa7ec362691590b7721bc328ca03feb98d0a95d35ceca4504ec4b8b8d6ca585b64850f8a71fa443290b6893f57654b490c0d74f6c51cf341723ae6505ee9c3f40e768dad9b94854c9fa550ac1f97753a408565d3c1078005c10e8b111940ddd3af865e5e875d6c2d6a700a2273abe6c491baa5c0041d17f4e7eb1254cbeab0d24539d5f9f39eab53c8475ce1f73ca02c2a49c0677d5e8144cc47f8b30f498879850fa935b8f9c2d6a80b70f4edcc39bff7a39a633786e3229ea007747aea34d49b5b6c662dd83a64ca29193110772099a848e1ff5aa19c3ea0a1064352e25cb450dd89903161da1137d85c8b6df88a8df6f8d7de5859ce622e2ff3557c8607004c52b58a3f81549217f26428ce0dfc13e0dd36a3c534d12af06bce9ea698810d536378c688d92a7d90cd28761b5775f4b7c65461b274601ac0fb375adbb69231513f98aa71f2f50f50d55553fe62217181aec25097dcbd4ae357e5e965fa98df99c91d596f027b5b7c8a013b2a42a89c79d8f03b0818dd0c0b162e356fd65b95f5886627a53fed8ef0821999cffe747340e96a7f46ceac11b3ce02b1f15f5334f30c2bf94b730b1796b18eba223a95cf3bbec2929b12ac058a8fd154bdb39d61e389ebee9473f3b577bf641619c4b9a47f19376d6bab254882e974c8c08079e72ab768ebd7266e370bc08ac4e6d8885a640523d39c2b9a1394a23ef9fcffb72387b066adfe867af10c2a3e7a5efa964d0ab742dd0b08b5b72196f2edec40f635beaf511580f143a66ff9783e2b53b3174340c1020721a75bad20a0fca9ac4394457d1659155afb60cff9422a93a0a2ef80b03b90fc616b64c3fa5a8d73322cd599f3bded33ab122fcb801e6c88742445b5a0af52619f1f37210915fe05ddfe789f6d2d2fac1723de489f88305349dff1c5a01ab6c6e90e07b9dc424cafcbbf5fc2a2c72507737aec4b20c82f07b5d45bd17627233adc93231e33602b0becaa974fe72af3600da9d07aa250c6e8eb7e14f1f9ed5f8e9b8215293f2926b0d35d275e37127aeb4b622f0fca1d3ea8efc00c530375de2f5049370f2aec7811cf3cc8bceda6c5d3f46dc73abe1cf65be07bd80610fd689a087a052fc50042485c7d81afcb762aa964fda5700baab5a7c90806697d395359cfd1c0d513cfac670dee3ed2a1429c96ad06d61f1243990701f8241535aff6411c6d776cd7a9d2a2ca373598200ea3c28de934b619bc516500e84e0dd0c3a8f0625223585828cd95615ccfb3ef73d2695bdf6b6060c2a51c26b9b86b2707f4d4ed199a562e91143dd5c11d8fc65ec9c04342672d9082f9bc34d0be3177d8b238d51563c5a8a36286426c87e42ddca8dec63045e7a32735ff41a67da9ce5e8404db2e2ea50337942cd5e7c6ba3d417e6567243a0e84c71075906f7fdab4603c64e88a0ef44506176aed0ae5edfd37be01a05714286805b21dffcc7d43e3e208f4200d590fdab72fdfe13060979aa32012d08154d5b40e5c1d8a0a1e937d45067498e9ca715eda927c68d16eeee0389c63a1383d34013777206b7d69aa744290cf68a5534255237f151e77c4b2f19ee9f383881b44c992ccd3deecd092819e0602518b9924643637c39547af9395d26d75a61fe4b7a35ffb72665386fec9f0ac94cdc2231032c38906599db48ed2ad88a65ddc50868da3037f0b059523d1be5d9c2468c804b7824d00a771a0dfafe5c41c12fab48e49477608e5e5bec57d5d00008757c2c1dfbfb4e6da77858523d94af3301e52d53fd32f4d0d9129d15fbd9c93c32a7923ff6457674bac27055ec83f6fa2cc30345849ca98eb22a625c17bc59580cfb7b2b0c7773a8adee360f00c143afcbcba0e287a306698b9963576cf7f2c22c9ce596df32881ac0317a0aa4cec1d205df94cf8a9f195eda60ff761ea024bf3f73a67611c5ab3c70f4bb280e2feb313987e66098570097c777c8df1ae42dafed2081967359716714aabf08790b1443139a91298d966d2be15994198c528d143f341ac5ea51e4f195e32f423c7dfe7e5781cea178605469d6ad7d8ab2481fc5fb1023d08631c9ac3377c88c3f0fe905d01fe30fe1e47609f95d904bca8856c9cea4232b113265e0b7a51d1f12d53024171f863c0438add9148df1b659ff873794aa655d981bfb5d93c4f21f100954c438ce8a1ae5540d6f953dacfec3cf7ab64a18d81c1dea70e7fcc9f9099238ab6e935830950a3ec7f9e27cbee571d1092774f6909887061298d4400fa329495666e9e17c7265eaa3cf40d3522dcd6e6d027858888c50d3a0d497521d8ad31d9f17bf2156613b2fa1421d21be7510cd1ac15948bd1bd14459c3975078539f586e6cc769c98116d0411f988dab68c8ba800b629b596891084f72c2ccd7f84e072b434b84160be694cc17570d86af25043cc0cdabb81357c69b83fa769c25034d81a846cf0969e94cc381c450353f197e20d2b9f138b8d5a5547d586c9de95810f7ba97d18209d24124db5dca151e0f61c9997701d87db781311d7a06141bf46ade5cd2dff8a2eb4cf0dc1180fe9100451cbc2d49039787a8691d0e4493824eae192dbba84e00e3c0a9030cdd0d98476c46cd2e53fa393b5c1871a6a091bb2248f598383d587b38bfecc883dde29113a761bb0f7f83127ec44f13dbf45870778709aafe688a669c09427227b3ea2eedad05b9516b35f404bd5e94abf81b032215451340bcc3df7cb3ed3aa2817c3689f83bb33903dcce4b9ed697f84e833ea95ad387540338105013b24424da95740c28a4ff49495b4e854dd8c230035474a0bfe5a85dd1bb2b3fbeab077434b221ab19c88cab718db1284c14f70583f28bd948c0312146db47ce1c2c993405f604d25b54f04d492c598f375145b0508893161155fbc4199d508987511440a261e70153a1122cec63c248ea5f537503fb60d1872016b06ce75cd098a03420f7cd9a4e4255dc3a0116225c4cd4671f01e619c5bd2b782b2260ac78e2bffdd6794610567d61d9a2e101be994dcae397cdaf6e3e229c043b96c099a0d9f8009000e666e9794a8cf85a2f6b83fa9a65dc9241beacf3acc1ae345c587a9c6f1fc9b9647b218aae2dea08d18c0816438724392f2b5ff845d5a31a06ce28db028edb0b820573568502ba445c92d89cdfa54276f4a1ef6b1bc46b0eed63a19144460e486534030577db014cb32a96dda66058addddf868ab31e7fae43e42e58471c685da194297146409c775856416b029163a79b22e8ae3a7bc79e87c1d987837018f2d825d3fd8c1f57e8d479eab478f989edbb36eed048968e1cb2dc51237d01b7fbe4199030a6bcc649ef16591142d345271fd43931fcc644a40c07ce8a6c87a1fa84f4636d2d2447c88a0b6654b09f15ba75f1bb6bbd78d7bc988f94aad3cebf671d7cb656b46d7479f91e21d6c4185b7a8a4f9f3023bbd20c28430ccc1806fccde2a924f02671ce786938743d042315e0ba5fad29cb61fa48aa90623aaf06021eebf438e6e69d7ab11890686580e6b48326f0ade41cd086b40ce9c4a21ef757da695039611df93bcfbc857641fc2959ff4a4a007b4670501e3097f551acb12f487d65eea8a35d5bd475d0ecd87af74105de0affac8ecacadd7a61a5778c15eca0aaeddae5e242098b09406c1073fcc3bf567649b870d17cb2a52e2a809853411a83655d8705ca91b3d49a608fe474d2bced57fce58fc254ca3f65574127a13267ae3dc052a36f3d0631a86a27d17f19f6e4c3d1a52dbc13b1ebd6337fd54811725e2ad06ebf657d04cc4fc3eeec8927846bc6f97e56a0f361b46b57f3090d5651fd63d3fd9345b9b3f86d22cd770a2928d2dc0d145e47a05771b04446dfab298a1ed1f8f86c686d04592ed8f0df74bbd5c334fb191afa8851f273ff2579337cee4403cf22a46211e9973d95eb597175d59d8bad5518e872d0feed5a432781933355e58e82b846930ff96bc57b75f109efccc4f0c719f7756b62d638481a56e58097da0d62f6deeb08be43b104d5894523c45499826cba81b5c5d395032c9c9106343119ffd7d9616d4f810c9f3738d01b68ef040ec98e2a40a90831bc932b101dc7249a90d309d776b18bfebcce393f37c5825fb9a01e66f792513211d46f15749778477292f88b4ddfbba345b8f071d715ddfc24ba41dba3eed72407a31c75e1c0b76b886d20ebfb1bf8a8699a02f5626392d0774a3eebbd7115bb5ae65e8614aadb2ce58b75a618071f5321e31a72e276c40bed3f61cb03ce665a55d70b3f5e33a40d1ecb890aae4db1c543ab75155c58f00292191da45593175e478de078364c96dc72edbfc28d864e8e8a86c7221c9abf0ba169b3afa562ed8240d02b73ef67092f3ee4dc8fe97ba49ccdf581f3e9e6d414d0295d0c0d0cf9aea77530da904e924adf87eba8c368e33e7762802828ac3600f18c019d32f44cce54233b2b0b007d83c6160681636a0545b11017475b65c932db8eda7fe478d9f4d8bb17ae797867efbf8b4542df12eb3a328939fc66991052870bc3a75d08932498098cf6322e05c4f011d81c80b0f6860510e08c9ba6a47e490ea3f1cf95dff6ba1e18d32d0046ca427b7c898973e4eb79acb063120f862ef4d910424f04b7569f1a4bb8323249249a179e98a43abc9c5884293fdfe1be50fb88545cbc5fcf8ad3b3fcf9003cbc4c63aa7462f8d023a0192fd04195059965403e5270ba84fdbc4e7cb4a79279c9d84ea65869ee6b9222ce56896c1da096678997162f71de4d72d1924952d62cffb88bc89bf53bbd851263f6a9c39785eae4b6301e4649a551be935abc80a01fd67c42c7b0c36a30e984b9fbcbc2286c3165dac90b4ec9d1b4822ad155615b4006d3d11ca0fb3b22e0692201e7edaf51c590c573a5925fe63b83d9df1b71aa94af2d603559f7729778e6f51cc02ec5cfe628803c7e083d046432ea620c1c1a9ea43a8b463eb1c3258b06636246c049d76551558c733878f760dbe7ec9cd3e5ce646ab197ffbfc88d431ff2992e5ca3886e99b61a0b00af8c41349c61b0d29227916b532a19a2f500eabc1244ed86a88864a0e56217e5f5cfed0396aba024a000f4812eb3db08f52378a6d0c7d6999f5543d257b072cf2eab8b1502a362b53489490cdb66e2ce1f0016cad732ff531de479ae4bf6c206815f5f9d66e57ea924f06452ad88a1303c0c290a97844446dd8c1b5596b7d3c8249404bb1b91d2c90cd2ace3290dd53a68698cdacddc8a2e2c64020fc730e5bb42fb656276724d711808a9761d28b4e3de4db6b64e873e14d69a7148056d1b273581dcc370f6f34d1a226c2e7c91d1d256428bc76eab2655bd32f0956ce0cd957323643a3051a9eeec1f89bf3be8b203ca945efa0c3af35c556fd41a151abefdaaca8a0a0dcc7953e99a1212db17533539e26f3f68f43b5baad70c2e730a6e4160d3f775aec4d1c0605dfca3f03ad24bc1f5684f140e8225cc01bd5e0ccdbe3e8368f59b192544b371f3a7311389854592851dda3fc4e8b13b06deee700eee20e40be507fc8018e4c4f65d9dc7daf6ceb7393f9ad8dc5e8b0eac5aeddf2292d5650b64cf723438094278fa8bb483e9bc12de787bbc5cbf6bc8e2e1b56ec430471e0efa8cc4ae0afbf6cdff59c818e62c65aad37386fc8dba04d983e40fe6719a9d06d02bc8e8e7950681f17dbb557a4819e0ba9c63ca57082a89a9cf322c02903dcefaca123c7b9be30b8351ebcd55dfe441c5010c7d4a9251d2ce38981894d05a66322b3885654e0ce5ff24048a76141ad570065b2a294fc64f363f6274f5496effd5a3351ce48bdae769a4a2ad6578b3f3a7ed493ef41d9f7011875336ceb857ed36393b8695a8db6b7ca2757ade6184487e0ab6ffe6c1f940096d626e5d3a49068cc5560fffe0ccbdb6e025c739ec3a6c0cc988ab0479ccad7ecb555711b61ceac789bee589268a4e0fce8d4a7ff784c6fc04ac13846562d97a055e75fcb8f69fb6b2d2c69955c37e7879da032f51f3b623f3003141d528394cebb8adae5e75ddd0353d214b22c3a62c80bbff9f0aaf5417ba0a178004c8afc5f0d6762dcceca51c8a60f6e68a1c02a9a49ee900f7e4a60a3b5e70bcb1019b2796fb925666325f630aebcb6b808c19145a27880f08e8c8a8169286a5f5629e609722829642c31d6dc0ffd2698ad738286a6252547b94350d2dd72eb472694eff18cd3caefee2a233c764782a2227e14360071a7a94e2237e35e0c6e92c5c905fa23b0ee2a120d4b2156e4d22cee392e6a482ec959c851b5b43bb4dda0579bfab18c7d465d918761df0f7d58a8e2c85d29c9791a0a65a8d6bb783124a89f5344ffca20d1fedc548d4512ee9f5657648bc65afd2b844543ca6366e1ed9bba78b01e1ba120ea6861ae4b5119c62eaac0f9d3136b4f24f043f3631c9ec1ad7fc33abf0b1342de46d0d9ecb7261d643fe9cbcdfc2ccf8fb535aba4fbc32afa3467742b54a248a1fba0a87b5afd08a7bc23a8d39ef95c2bc18e811c957b725f3fadd3a1b53e9eafccd3abdbf145392e2a8f280fdae882d63f4a31ea7ff63c9379d9742b4baeb4ec83d5d9f37b45f01067a0976094425951fc027099bfeabde413e2e7429a319213573e9aa0329061682910f593eecd332db238bfa008914415c711f0e2987b13c8ef4b57d5c58aa5d688ffbef3b76db2827956307baffcb21c452c5554e94dcb698542314784adb7841c1e6a2a8b80aca69417f2efff77a877e67c02cc2bfa71fc331dfe61eb398e02a2532de9fed4e604a77e773630599899f7f138ec6a296107e06887dda9f74a6a019466c551aa37b0f93823ae38cc9457a67d766d74caa177b7df485cd9e154c4fd1f38f193911e0c2154671af9034086ef57ecab2a8f955446d7890724df2db4d0a94fa786411fbf175961543329c367bfdeea2633c20496675ccfa4d694de3b4863409f360560120975af16a48a702c4c86bddc0b05c91778ec5733fd9eb4ad411f58b9b189b683fbf987e4982adf2973ad9178b58f373a81cfba4c8681ab98c0d7115a80aaefe1f8c9f06d44495e5f3d0a1aacd01fc6eb91e954915e3f638fed4d1dc545c75cc60eb99aa7917853b84cb312ff9908b805b4b35bf3e000682fe9eeb6c3e119182773b08c1380e41ffd7401edbe039414dcc52b88189091087ebac9c4554b79174c8ae96a258db3b2d2eb6ba3bcb6cd15c900dbd56beb549b196310a783d07391e7364ac05e724b6ab9de44df32e5f3476bce2f9ce5eb36006ca65587e88dd97e550b0d8da7da7df64a3e0f59e13445a2499ae27236268a82438262f80742264cc0b11dfdb0ddbd41f0d4fee63830e105282f7851d44e931a13d8f8afa83c8ee67e26b3c3c2dc7b94db320a0660b75b62778795ec874b1c7400d20ad3389e11d414366f90716ac197e96cf32bc83e77fea9e01704b76c3c34b1aea6a84734b19e2a8fe5fb552c67f9abc69919e6cb1680a48f32b9cc07972e393eb1aacccd3070a985b5cf734645f61f3105968b96bb8bfc623644d3b008be6ddb741b7624673ceae4d0309bec3b3c2b5faaf47aab41e34a0d4098bcc7ead9dc4567bb9a7836fb3e3f9ebccc81d0b186b5b36dcdd927fcff5f15787115f3e2d7675cecda5fbe41531b5f6cfff9562a921788b777fa8b5e40caa965ad3502eeda9205b50960ef49818cefc7c3c81b3cb10da4f42336961cdd9345d660a207a9c70a2a6a7c0e33e95cc6430fc56d504c63a39593c4b35faad634795f0a6b6a1a839a57edf864d181e6a31ff69f4135260565b2be6fcd416c238e86c989fe12672369c47df34f9a44cd464d9d47014f2b15626f46c9daaccb82176a31cff86808f025ff78ba817337475e1b8f821f8a42086f625f5c7bb780d1592e2fe6c7564a89bb3c3efaff7a3e3ba5d9633c987887644fe084e288a4da7b9549c4c069c11bef838a4897e09af96765e4c8b3a55ad1f1a24fb305122e00689d00d8c519448dac01d008fe82570604686081c18b125709ae9ff4218ad1779cee73064790f77186d451feff11f903427ac985b7ccfa4c3c18c82d6f71ac280a658d86a94c026baf65e5d1213e6b03be07509dba5dbc69ba05107ce52e7459edd77ff727c33b75b7a7cc7a2704babf2f2daa16f4edd4ec2be609237bd99828a6df9f1509f490cc88ce1b32f047a12ceed48cad99591fa961eaa6ab1b4c763f821c30e0122415b53b908846c57072ecb2e7c8007e062d1887c060599920cc78f4bd6cbcf5b4af675abcc1ebb0adf12d9f8c846e0336a1233e12f24b37814b557990741a4ffd0a841b4af099d4c8ac91d33d412eba577618","isRememberEnabled":true,"rememberDurationInDays":30,"staticryptSaltUniqueVariableName":"ef5aeea5389fcb38dcf9b27da875ba41"};
+
+            // A remembered password swaps the page in straight away. A typed one
+            // holds the page until the way in has played.
+            let holdPage = false, pendingPage = null;
+            const templateConfig = {
+                rememberExpirationKey: "staticrypt_expiration",
+                rememberPassphraseKey: "staticrypt_passphrase",
+                replaceHtmlCallback(html) {
+                    if (holdPage) { pendingPage = html; return; }
+                    document.write(carryBar(html));
+                    document.close();
+                },
+                clearLocalStorageCallback: null,
+            };
+
+            const staticrypt = staticryptInitiator.init(staticryptConfig, templateConfig);
+
+            // Moving between pages, the bar must never blink: the unlocked page is
+            // written in with a copy of the bar shown here, which stays until the
+            // page's own bar is up (lo-fi builds it in shared.js and takes the copy
+            // down; hi-fi has it in its markup, so the copy goes once it loads).
+            // (the copy carries its look inline, every property as shown here: the
+            // page it goes into paints before its own stylesheets arrive)
+            function frozen(el) {
+                const copy = el.cloneNode(false), cs = getComputedStyle(el);
+                if (copy.nodeType === 1) {
+                    let css = "";
+                    for (let i = 0; i < cs.length; i++) { const k = cs[i]; if (!k.startsWith("--") && !k.startsWith("view-transition")) css += `${k}:${cs.getPropertyValue(k)};`; }
+                    copy.setAttribute("style", css);
+                }
+                for (const c of el.childNodes) copy.appendChild(c.nodeType === 1 ? frozen(c) : c.cloneNode(true));
+                return copy;
+            }
+            function carryBar(html) {
+                const bar = document.getElementById("passing-bar") || document.querySelector("header.site-bar");
+                if (!bar) return html;
+                const copy = frozen(bar);
+                copy.id = "passing-copy";
+                copy.style.zIndex = "800";
+                // put up by the very first thing in the page's head, so it's there
+                // before any script or stylesheet the page waits on
+                const put = '<script>(function () { var d = document.createElement("div"); d.innerHTML = '
+                    + JSON.stringify(copy.outerHTML).replace(/<\//g, "<\\/")
+                    + '; document.documentElement.appendChild(d.firstChild);'
+                    + ' addEventListener("load", function () { var c = document.getElementById("passing-copy"); if (c) c.remove(); }); })();<\/script>';
+                return /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, (m) => m + put) : put + html;
+            }
+
+            const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+            const $ = (id) => document.getElementById(id);
+
+
+            const doors = $("doors"), panel = $("panel");
+            const form = $("staticrypt-form"), input = $("staticrypt-password"), remember = $("staticrypt-remember");
+            const errorEl = $("gate-error"), eye = $("eye"), veil = $("veil");
+            let busy = false;
+
+            /* ---------- The doors: the hi-fi scene's own, just where its camera shows them ---------- */
+            // The hi-fi site starts behind stained glass doors built in its 3D
+            // scene (the apothecary's doors.js): plywood leaves glazed with the
+            // illustration's three panels, floral sidelights, a head beam. Its
+            // studio shot (studioShot in config.js, framed by frameScene in
+            // main.js) is a level camera square to them. img/gate/doors.jpg is a
+            // render from that camera's own position (a desktop screen's), wider
+            // and taller than the screen, so it has the scene's depth, shadows and
+            // carpet; it is placed here by the doors' plane with the same
+            // numbers, so the page and the site show the very same doors. While loading, each
+            // piece of glass lights up from clear to colour in its own time
+            // (img/gate/doors-order.png, rendered alongside, holds each piece's
+            // moment), drawn by a small WebGL layer; without WebGL the glass
+            // simply shows in colour.
+            const SHOT = { fov: 27.5, eye: 1.6, view: [-1.85, -0.06, 1.28, 2.43], keep: [-0.94, -0.02, 0.41, 2.43], aimZ: 0 };
+            // the picture's edges where it meets the doors' front (z 0.38), in the scene's metres
+            const PLATE = { z: 0.38, x0: -3.785, x1: 3.215, y0: -0.4, y1: 3.6 };
+            const DOORS = "/img/gate/doors.jpg", ORDER = "/img/gate/doors-order.png";
+            let fill = 0, doorsImg = null, orderImg = null, cover = null;
+
+            function layout() {
+                const W = innerWidth, H = innerHeight, tanH = Math.tan(SHOT.fov * Math.PI / 360);
+                const barFrac = Math.min(0.3, document.querySelector(".bar, .site-bar").offsetHeight / H);
+                const [x0, y0, x1, y1] = SHOT.view, [k0, j0, k1, j1] = SHOT.keep;
+                const a = W / H / (1 - barFrac);
+                const seen = Math.max(y1 - y0, j1 - j0, (k1 - k0) / a), w = seen * a;
+                const cx = Math.min(Math.max((x0 + x1) / 2, k1 - w / 2), k0 + w / 2);
+                const h = seen / (1 - barFrac), cy = y1 - seen / 2 + (h - seen) / 2, d = h / 2 / tanH;
+                const P = H / 2 / tanH;                              // the lens, in px
+                const horizon = H / 2 + (cy - SHOT.eye) / d * P;     // where eye height lands
+                const s = P / (d + SHOT.aimZ - PLATE.z);             // px per metre on the doors
+                const X = (x) => W / 2 + (x - cx) * s, Y = (y) => horizon - (y - SHOT.eye) * s;
+                return { W, H, X, Y, s, left: X(PLATE.x0), top: Y(PLATE.y1), pw: (PLATE.x1 - PLATE.x0) * s, ph: (PLATE.y1 - PLATE.y0) * s };
+            }
+            // The doors as markup, every style inline, so hi-fi can wear them as
+            // they are and open them: the whole picture (.gd-still), and over it
+            // the parts that move, each a window onto the same picture, cut at the
+            // leaves' edges in the scene (doors.js): the left leaves with their
+            // sidelights, the middle leaf, the right leaf with its sidelights, the
+            // head beam. Hi-fi slides them apart over its live shelf wall.
+            const PARTS = { left: [-3.4928, -0.7337, 0, 2.31], mid: [-0.7337, 0.1596, 0, 2.31], right: [0.1596, 2.9628, 0, 2.31], head: [-3.6928, 3.1628, 2.31, 2.81] };
+            function doorsHTML() {
+                const { W, H, X, Y, left, top, pw, ph } = layout();
+                const pic = (x, y) => `background:url(${DOORS}) ${left - x}px ${top - y}px/${pw}px ${ph}px no-repeat`;
+                const part = (name, [x0, x1, y0, y1]) => {
+                    const x = X(x0), y = Y(y1), w = X(x1) - x, h = Y(y0) - y;
+                    return `<div class="gd-${name}" style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px;${pic(x, y)};will-change:transform"></div>`;
+                };
+                // how far each part travels to clear the screen, for hi-fi's opening
+                const seam = X(PARTS.mid[1]), midW = seam - X(PARTS.mid[0]);
+                return `<div class="gate-backdrop" data-dl="${seam + 40}" data-dr="${W - seam + 40}" data-mw="${midW}" data-hh="${Y(PARTS.head[2]) + 40}" `
+                    + `style="position:absolute;left:0;top:0;width:${W}px;height:${H}px;overflow:hidden;pointer-events:none;background:#d8c3a2">`
+                    + `<div class="gd-still" style="position:absolute;left:${left}px;top:${top}px;width:${pw}px;height:${ph}px;${pic(left, top)}"></div>`
+                    + part("mid", PARTS.mid) + part("left", PARTS.left) + part("right", PARTS.right) + part("head", PARTS.head) + `</div>`;
+            }
+
+            // The clear glass over the colour, piece by piece: where a piece's
+            // moment has come, the clear layer goes and its colour shows
+            function makeCover() {
+                const c = document.createElement("canvas");
+                c.style.cssText = "position:absolute;inset:0;width:100%;height:100%;pointer-events:none";
+                const g = c.getContext("webgl", { premultipliedAlpha: true, antialias: false });
+                if (!g) return null;
+                const sh = (type, src) => { const o = g.createShader(type); g.shaderSource(o, src); g.compileShader(o); return o; };
+                const prog = g.createProgram();
+                g.attachShader(prog, sh(g.VERTEX_SHADER,
+                    "attribute vec2 a; uniform vec4 r; varying vec2 v;" +
+                    "void main(){ v = a; vec2 p = r.xy + a * r.zw; gl_Position = vec4(p.x * 2.0 - 1.0, 1.0 - p.y * 2.0, 0.0, 1.0); }"));
+                g.attachShader(prog, sh(g.FRAGMENT_SHADER,
+                    "precision mediump float; varying vec2 v; uniform sampler2D col, ord; uniform float p;" +
+                    "void main(){ vec3 c = texture2D(col, v).rgb; float o = texture2D(ord, v).r;" +
+                    // clear glass: the colour taken out, a faint warmth left, a little paler
+                    " float l = dot(c, vec3(0.3, 0.59, 0.11)); vec3 cl = vec3(l * 1.02, l * 0.98, l * 0.9);" +
+                    " cl = (cl - 0.5) * 0.82 + 0.56;" +
+                    // the wood and frame (0 in the map) are never glass: always in colour
+                    " float a = o < 0.02 ? 0.0 : 1.0 - smoothstep(o, o + 0.04, p);" +
+                    " gl_FragColor = vec4(cl * a, a); }"));
+                g.linkProgram(prog);
+                if (!g.getProgramParameter(prog, g.LINK_STATUS)) return null;
+                g.useProgram(prog);
+                const buf = g.createBuffer();
+                g.bindBuffer(g.ARRAY_BUFFER, buf);
+                g.bufferData(g.ARRAY_BUFFER, new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]), g.STATIC_DRAW);
+                const at = g.getAttribLocation(prog, "a");
+                g.enableVertexAttribArray(at);
+                g.vertexAttribPointer(at, 2, g.FLOAT, false, 0, 0);
+                const tex = (img, unit, nearest) => {
+                    const t = g.createTexture();
+                    g.activeTexture(g.TEXTURE0 + unit);
+                    g.bindTexture(g.TEXTURE_2D, t);
+                    g.texImage2D(g.TEXTURE_2D, 0, g.RGBA, g.RGBA, g.UNSIGNED_BYTE, img);
+                    const f = nearest ? g.NEAREST : g.LINEAR;
+                    g.texParameteri(g.TEXTURE_2D, g.TEXTURE_MIN_FILTER, f);
+                    g.texParameteri(g.TEXTURE_2D, g.TEXTURE_MAG_FILTER, f);
+                    g.texParameteri(g.TEXTURE_2D, g.TEXTURE_WRAP_S, g.CLAMP_TO_EDGE);
+                    g.texParameteri(g.TEXTURE_2D, g.TEXTURE_WRAP_T, g.CLAMP_TO_EDGE);
+                };
+                tex(doorsImg, 0, false); tex(orderImg, 1, true);
+                g.uniform1i(g.getUniformLocation(prog, "col"), 0);
+                g.uniform1i(g.getUniformLocation(prog, "ord"), 1);
+                return { c, g, r: g.getUniformLocation(prog, "r"), p: g.getUniformLocation(prog, "p") };
+            }
+            function drawCover() {
+                if (!cover) return;
+                const { c, g } = cover, { W, H, left, top, pw, ph } = layout(), k = Math.min(window.devicePixelRatio || 1, 2);
+                if (c.width !== Math.round(W * k) || c.height !== Math.round(H * k)) { c.width = Math.round(W * k); c.height = Math.round(H * k); }
+                g.viewport(0, 0, c.width, c.height);
+                g.clearColor(0, 0, 0, 0); g.clear(g.COLOR_BUFFER_BIT);
+                g.uniform4f(cover.r, left / W, top / H, pw / W, ph / H);
+                g.uniform1f(cover.p, fill * 1.06);
+                g.drawArrays(g.TRIANGLE_STRIP, 0, 4);
+            }
+            function hangDoors() {
+                doors.innerHTML = doorsHTML();
+                if (cover && fill < 1) { doors.appendChild(cover.c); drawCover(); }
+            }
+            const meter = $("meter"), meterPct = $("meter-pct");
+            function setMeter(p) {
+                meter.style.setProperty("--p", p.toFixed(3));
+                meterPct.textContent = Math.round(p * 100) + "%";
+            }
+            function setFill(p) {
+                fill = p;
+                setMeter(p);
+                drawCover();
+                if (p >= 1 && cover) { cover.c.remove(); cover = null; }   // all in colour: the picture alone from here
+            }
+            let resizing = 0;
+            addEventListener("resize", () => {
+                clearTimeout(resizing);
+                resizing = setTimeout(() => { if (doorsImg && !document.body.classList.contains("leaving")) hangDoors(); }, 150);
+            });
+
+            // Loading: first the doors' picture and its pieces' map (to have
+            // something to light), then the glass lights up exactly as fast as the
+            // hi-fi site behind it arrives: its page, three.js, the doors' glass
+            // and the wall's wood are fetched here (into the browser's cache, so
+            // going in doesn't wait for them), and each piece of glass glows as
+            // their bytes come in. Any other page has nothing more to fetch.
+            const HOME = /\/(index\.html)?$/.test(location.pathname);
+            function fetchSite() {
+                let fonts = 0;
+                (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => { fonts = 1; });
+                if (!HOME) return () => fonts;
+                // every file the scene loads, with its size (hifi/preload.json, written by build.sh)
+                const base = location.pathname.replace(/index\.html$/, "") + "hifi/";
+                let list = null, got = [], done = [];
+                const signal = (fetching = new AbortController()).signal;
+                fetch(base + "preload.json", { signal }).then((r) => r.json()).then((files) => {
+                    list = [[base, 30000], ...files.map(([u, n]) => [/^https?:/.test(u) ? u : base + u, n])];
+                    got = list.map(() => 0); done = list.map(() => false);
+                    list.forEach(async ([url], i) => {
+                        try {
+                            const res = await fetch(url, { mode: /^https?:/.test(url) ? "cors" : "same-origin", signal });
+                            const reader = res.body.getReader();
+                            for (;;) { const { done: end, value } = await reader.read(); if (end) break; got[i] += value.length; }
+                        } catch (e) {}
+                        done[i] = true;
+                    });
+                }).catch(() => { list = []; });
+                return () => {
+                    if (!list) return 0;
+                    if (!list.length) return fonts;
+                    let have = 0, all = 0;
+                    list.forEach(([, n], i) => { all += n; have += done[i] ? n : Math.min(got[i], n); });
+                    return (have / all) * 0.98 + fonts * 0.02;
+                };
+            }
+            /* ---------- The stage: hi-fi itself, built behind the doors ---------- */
+            // On the homepage the whole hi-fi scene starts now, before the
+            // password, in hifi/stage.html (an open copy of the hi-fi page): its
+            // 3D doors closed, its glass lighting up piece by piece as it loads.
+            // This picture of the doors stands in until the stage draws (same
+            // camera, same render), then steps aside; the password appears once
+            // the stage is built, and opens its doors. If the stage can't start
+            // (no WebGL, or nothing heard for a while), `fallback` takes over: the
+            // picture, and the way in through the hi-fi page.
+            let stage = null, fetching = null;
+            function openStage(fallback) {
+                const frame = document.createElement("iframe");
+                frame.id = "stage";
+                frame.title = "Chloe Ma, hi-fi portfolio";
+                frame.setAttribute("aria-hidden", "true");
+                frame.tabIndex = -1;
+                frame.style.cssText = "position:fixed;inset:0;width:100%;height:100%;border:0;z-index:0;pointer-events:none;background:#d8c3a2";
+                frame.src = location.pathname.replace(/index\.html$/, "") + "hifi/stage.html";
+                doors.before(frame);
+                stage = { frame, p: 0, ready: false, failed: false, opened: null };
+                let heard = false;
+                addEventListener("message", (e) => {
+                    if (e.origin !== location.origin || e.source !== frame.contentWindow || !e.data?.stage) return;
+                    heard = true;
+                    const m = e.data;
+                    if (m.stage === "progress") stage.p = m.p;
+                    else if (m.stage === "drawn") { doors.style.transition = "opacity 500ms ease"; doors.style.opacity = "0"; }
+                    else if (m.stage === "ready") stage.ready = true;
+                    else if (m.stage === "opened") stage.opened?.();
+                });
+                setTimeout(() => {
+                    if (heard || !stage) return;
+                    stage.failed = true; frame.remove(); stage = null; doors.style.opacity = "";
+                    fallback();
+                }, 15000);
+                return () => (stage ? (stage.ready ? 1 : Math.min(0.99, stage.p)) : 0);
+            }
+
+            function load() {
+                return new Promise((resolve) => {
+                    let shown = 0, last = 0, progress = () => 1, waiting = 2;
+                    const pics = {};
+                    const tick = (now) => {
+                        if (lofi) return;   // the doors were left for the lo-fi way in
+                        const dt = last ? (now - last) / 1000 : 0;
+                        last = now;
+                        const target = Math.min(1, progress());
+                        shown += (target - shown) * (still ? 1 : 1 - Math.exp(-dt * 6));
+                        if (target >= 1 && shown > 0.995) shown = 1;
+                        setFill(shown);
+                        doors.setAttribute("aria-valuenow", String(Math.round(shown * 100)));
+                        if (shown >= 1) return resolve();
+                        requestAnimationFrame(tick);
+                    };
+                    const begin = () => {
+                        doorsImg = pics.doors || true; orderImg = pics.order || null;
+                        if (pics.doors && pics.order) { try { cover = makeCover(); } catch (e) { cover = null; } }
+                        hangDoors();
+                        if (!lofi) form.classList.add("loading");
+                        progress = HOME ? openStage(() => { progress = fetchSite(); }) : fetchSite();
+                        requestAnimationFrame(tick);
+                        // still well short after a while: offer the lo-fi way in
+                        if (HOME) setTimeout(() => { if (!lofi && fill < 0.9) $("slow").hidden = false; }, 6000);
+                    };
+                    for (const [key, src] of [["doors", DOORS], ["order", ORDER]]) {
+                        const img = new Image();
+                        img.onload = () => { pics[key] = img; if (--waiting === 0) begin(); };
+                        img.onerror = () => { if (--waiting === 0) begin(); };
+                        img.src = src;
+                    }
+                });
+            }
+
+            function showPassword() {
+                doors.removeAttribute("role");
+                form.removeAttribute("aria-hidden");
+                form.querySelectorAll("[tabindex='-1']").forEach((el) => el.removeAttribute("tabindex"));
+                form.classList.remove("loading");
+                form.classList.add("ready");
+                input.focus({ preventScroll: true });
+            }
+
+            /* ---------- Lo-fi: the dark way in ---------- */
+            // The switch in the bar picks the version before the password. Hi-fi
+            // (the default) is the doors above. Lo-fi, for when the 3D is slow or
+            // not wanted, stops loading it and plays the old dark intro instead
+            // (archive/loading-dark.html): stars, the illustration filling in,
+            // CHLOE MA flipping into place with flowers growing out of it, then
+            // the same password, which goes on to the lo-fi homepage.
+            let lofi = false;
+            try { lofi = localStorage.getItem("portfolio.fi") === "lofi"; } catch (e) {}
+            const dark = $("dark"), illus = $("illus"), nameEl = $("name");
+            const markSwitch = () => document.querySelectorAll(".gate-switch button")
+                .forEach((b) => b.setAttribute("aria-pressed", String((b.dataset.fi === "lofi") === lofi)));
+            markSwitch();
+            document.querySelectorAll("#staticrypt_content [data-fi]").forEach((b) => b.addEventListener("click", () => {
+                const want = b.dataset.fi === "lofi";
+                if (busy || want === lofi) return;
+                try { localStorage.setItem("portfolio.fi", want ? "lofi" : "hifi"); } catch (e) {}
+                if (want) goDark(); else location.reload();   // the doors start over
+            }));
+
+            function starSVG(size, colour) {
+                const p = (d) => `<path d="${d}" fill="${colour}"/>`;
+                return `<svg width="${size}" height="${size}" viewBox="0 0 72 72" fill="none" aria-hidden="true">` +
+                    p("M36 4C36 4 38.5 26 36 36C33.5 26 36 4 36 4Z") + p("M36 68C36 68 33.5 46 36 36C38.5 46 36 68 36 68Z") +
+                    p("M4 36C4 36 26 33.5 36 36C26 38.5 4 36 4 36Z") + p("M68 36C68 36 46 38.5 36 36C46 33.5 68 36 68 36Z") + `</svg>`;
+            }
+            // [top, left, size, colour, delay ms, duration ms]
+            const STARS = [
+                ["9%", "7%", 58, "rgba(155,140,248,0.95)", 0, 580],
+                ["14%", "78%", 34, "rgba(255,255,255,0.9)", 65, 495],
+                ["42%", "91%", 50, "rgba(6,182,212,0.85)", 115, 560],
+                ["6%", "48%", 18, "rgba(255,255,255,0.75)", 30, 425],
+                ["70%", "11%", 40, "rgba(255,255,255,0.85)", 85, 515],
+                ["63%", "68%", 26, "rgba(249,115,22,0.9)", 145, 450],
+                ["28%", "35%", 16, "rgba(255,255,255,0.65)", 70, 395],
+                ["88%", "83%", 46, "rgba(168,85,247,0.85)", 45, 540],
+                ["22%", "58%", 30, "rgba(255,255,255,0.8)", 105, 450],
+                ["80%", "42%", 20, "rgba(132,204,22,0.85)", 155, 415],
+                ["52%", "22%", 42, "rgba(255,255,255,0.85)", 125, 495],
+                ["4%", "90%", 22, "rgba(255,255,255,0.7)", 185, 430],
+                ["75%", "57%", 14, "rgba(6,182,212,0.7)", 20, 360],
+                ["36%", "82%", 36, "rgba(155,140,248,0.8)", 80, 470],
+            ];
+            function scatterStars() {
+                for (const [top, left, size, colour, delay, dur] of STARS) {
+                    const el = document.createElement("div");
+                    el.className = "spark";
+                    el.style.top = top;
+                    el.style.left = left;
+                    el.style.setProperty("--d", dur + "ms");
+                    el.innerHTML = starSVG(size, colour);
+                    dark.insertBefore(el, dark.firstChild);
+                    setTimeout(() => el.classList.add("on"), still ? 0 : delay);
+                }
+            }
+            // Three quick sparkles round the picture once it has filled
+            function popSparkles() {
+                if (still) return;
+                const art = illus.getBoundingClientRect();
+                [[0.86, 0.12, 54, "rgba(255,255,255,0.85)", 0], [0.78, 0.52, 32, "rgba(155,140,248,0.9)", 60], [0.52, 0.8, 22, "rgba(6,182,212,0.85)", 110]]
+                    .forEach(([fx, fy, size, colour, delay]) => setTimeout(() => {
+                        const el = document.createElement("div");
+                        el.className = "spark pop";
+                        el.style.left = art.left + art.width * fx - size / 2 + "px";
+                        el.style.top = art.top + art.height * fy - size / 2 + "px";
+                        el.innerHTML = starSVG(size, colour);
+                        dark.appendChild(el);
+                        setTimeout(() => el.remove(), 540);
+                    }, delay));
+            }
+
+            // The name, like a split-flap board: flaps start fast and slow down
+            // before each letter lands, and flowers grow from it (intro-garden.js)
+            const FLAPS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#@!$%&";
+            const flap = () => FLAPS[Math.floor(Math.random() * FLAPS.length)];
+            function flipName(garden) {
+                return new Promise((resolve) => {
+                    const letters = [];
+                    for (const ch of "CHLOE MA") {
+                        const span = document.createElement("span");
+                        span.className = ch === " " ? "sp" : "l";
+                        nameEl.appendChild(span);
+                        if (ch !== " ") letters.push([span, ch]);
+                    }
+                    if (still) {
+                        letters.forEach(([span, ch]) => { span.textContent = ch; span.classList.add("in"); });
+                        return resolve();
+                    }
+                    const CYCLES = 7, gap = (k) => 22 + 150 * Math.pow(k / CYCLES, 2.5);
+                    let settled = 0;
+                    letters.forEach(([span, ch], i) => {
+                        let cycle = 0;
+                        span.textContent = flap();
+                        const flipOnce = () => {
+                            if (++cycle < CYCLES) {
+                                span.textContent = flap();
+                                span.style.color = `rgba(155,140,248,${(0.15 + (cycle / CYCLES) * 0.55).toFixed(2)})`;
+                                setTimeout(flipOnce, gap(cycle));
+                            } else {
+                                span.textContent = ch;
+                                span.style.color = "";
+                                span.classList.add("in");
+                                if (garden) garden.grow(span);
+                                if (++settled === letters.length) resolve();
+                            }
+                        };
+                        setTimeout(flipOnce, i * 40);
+                    });
+                });
+            }
+
+            // The picture fills in left to right behind a wavy edge, as it and the
+            // fonts load, never faster than the name takes to flip into place
+            function fillTo(p, now) {
+                if (p >= 1) { illus.style.clipPath = "none"; return; }
+                const pts = ["0% 0%"], STEPS = 36, amp = 5 * (1 - p * p), t = now / 1000;
+                for (let i = 0; i <= STEPS; i++) {
+                    const wave = Math.sin((i / STEPS) * Math.PI * 5 - t * Math.PI * 2.6) * amp;
+                    pts.push(`${Math.min(110, p * 100 + wave).toFixed(2)}% ${((i / STEPS) * 100).toFixed(2)}%`);
+                }
+                pts.push("0% 100%");
+                illus.style.clipPath = `polygon(${pts.join(", ")})`;
+            }
+            // The picture fills as the lo-fi homepage's own files arrive (the page,
+            // its styles and scripts, the portrait and this picture), fetched here
+            // into the cache, so going in doesn't wait for them; nothing slows it
+            const LOFI_FILES = ["/", "/tokens.css", "/bar.css", "/shared.css", "/shared.js", "/img/home/Portrait.jpg", "/img/home/Growup_crop.png",
+                "https://cdn.jsdelivr.net/npm/motion@11.11.13/dist/motion.js"];
+            function fetchLofi() {
+                const got = LOFI_FILES.map(() => 0), size = LOFI_FILES.map(() => 0), done = LOFI_FILES.map(() => false);
+                let fonts = 0;
+                (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => { fonts = 1; });
+                LOFI_FILES.forEach(async (url, i) => {
+                    try {
+                        const res = await fetch(url, { mode: /^https?:/.test(url) ? "cors" : "same-origin" });
+                        size[i] = +res.headers.get("content-length") || 0;
+                        const reader = res.body.getReader();
+                        for (;;) { const { done: end, value } = await reader.read(); if (end) break; got[i] += value.length; }
+                    } catch (e) {}
+                    done[i] = true;
+                });
+                // each file counts the same, partly as its bytes come in
+                return () => LOFI_FILES.reduce((a, _, i) => a + (done[i] ? 1 : size[i] ? Math.min(got[i] / size[i], 0.95) : 0), 0) / LOFI_FILES.length * 0.97 + fonts * 0.03;
+            }
+            function fillIllus() {
+                return new Promise((resolve) => {
+                    const progress = fetchLofi();
+                    let shown = 0, last = 0;
+                    illus.src = "/img/home/Growup_crop.png";   // public, so it loads before the password
+                    const tick = (now) => {
+                        const dt = last ? (now - last) / 1000 : 0;
+                        last = now;
+                        const target = illus.complete ? progress() : Math.min(progress(), 0.1);
+                        shown += (target - shown) * (still ? 1 : 1 - Math.exp(-dt * 8));
+                        if (target >= 1 && shown > 0.995) shown = 1;
+                        fillTo(shown, now);
+                        setMeter(shown);
+                        if (shown >= 1) { popSparkles(); return resolve(); }
+                        requestAnimationFrame(tick);
+                    };
+                    requestAnimationFrame(tick);
+                });
+            }
+            const loadGarden = () => window.introGarden ? Promise.resolve() : new Promise((res) => {
+                const s = document.createElement("script");
+                s.src = "/intro-garden.js";
+                s.onload = s.onerror = res;
+                document.head.appendChild(s);
+                setTimeout(res, 1500);
+            });
+
+            async function goDark() {
+                lofi = true;
+                markSwitch();
+                // nothing more of the 3D site: its stage and downloads stop here
+                if (stage) { stage.frame.remove(); stage = null; }
+                fetching?.abort();
+                $("slow").hidden = true;
+                document.body.classList.add("lofi");
+                dark.classList.remove("hidden");
+                $("dark-left").appendChild(panel);
+                form.classList.remove("ready");
+                form.classList.add("loading");
+                scatterStars();
+                await loadGarden();
+                const garden = window.introGarden ? window.introGarden(dark, { reach: 1.4 }) : null;
+                await Promise.all([fillIllus(), flipName(garden)]);
+                // let the last flowers open, but don't keep anyone waiting on them
+                await wait(still ? 0 : Math.min(garden ? garden.remaining() : 0, 500) + 100);
+                showPassword();
+            }
+
+            /* ---------- Going in ---------- */
+            // The homepage (index.html carries the marker) opens on the hi-fi
+            // site from here, unless Lo-fi was picked in the bar.
+            function toHifi(html) { return !lofi && html.includes("/*hifi-first*/"); }
+            // The colour the next page opens on, so the last moment fades into it
+            function pageColour(html) {
+                const m = html.match(/body\s*\{[^}]*?background(?:-color)?\s*:\s*(#[0-9a-f]{3,8})/i);
+                return m ? m[1] : "#ffffff";
+            }
+
+            input.addEventListener("input", () => { errorEl.textContent = ""; });
+
+            eye.addEventListener("click", () => {
+                const show = input.type === "password";
+                input.type = show ? "text" : "password";
+                eye.setAttribute("aria-label", show ? "Hide password" : "Show password");
+                eye.setAttribute("aria-pressed", String(show));
+                input.focus();
+            });
+
+            panel.addEventListener("animationend", () => panel.classList.remove("shake"));
+
+            // Moving between pages (a remembered password): the sheet shows the
+            // site's bar (see the script above) until the page unlocks.
+            const opening = async function () {
+                const { isSuccessful } = await staticrypt.handleDecryptOnLoad();
+                if (!isSuccessful) {
+                    // the remembered password had run out: back to the way in
+                    document.documentElement.classList.remove("passing");
+                    $("passing-bar")?.remove();
+                    $("staticrypt_loading").classList.add("hidden");
+                    $("staticrypt_content").classList.remove("hidden");
+                    if (lofi) return goDark();
+                    await load();
+                    if (lofi) return;   // Lo-fi was picked while the doors loaded
+                    await wait(still ? 0 : 250);
+                    showPassword();
+                }
+            };
+            // (not any sooner: written before load, the page comes out cut short)
+            window.onload = opening;
+
+            form.addEventListener("submit", async function (e) {
+                e.preventDefault();
+                if (busy || !form.classList.contains("ready")) return;
+
+                const password = input.value;
+                if (!password) {
+                    errorEl.textContent = "Type the password first.";
+                    input.focus();
+                    return;
+                }
+
+                busy = true;
+                holdPage = true;
+                // answer at once: the field steps back while the password is
+                // checked (that check is slow on purpose; it's what keeps the site locked)
+                panel.classList.add("checking");
+                await wait(40);   // a moment for the fade to begin before the slow check holds the page
+                const { isSuccessful } = await staticrypt.handleDecryptionOfPage(password, remember.checked);
+
+                if (!isSuccessful) {
+                    holdPage = false;
+                    panel.classList.remove("checking");
+                    panel.classList.add("shake");
+                    errorEl.textContent = "That's not the password. Check the spelling; capitals count.";
+                    input.select();
+                    busy = false;
+                    return;
+                }
+
+                document.documentElement.style.overflow = "hidden";
+                document.body.classList.add("leaving");
+                if (stage?.ready && toHifi(pendingPage)) {
+                    // The stage is hi-fi, already built behind the doors: they open
+                    // in place, its own top bar takes over, and the address becomes
+                    // the hi-fi page's.
+                    const siteBar = window.gateSiteBar("hifi", true);
+                    document.querySelector(".bar").replaceWith(siteBar);
+                    stage.opened = () => {
+                        siteBar.remove();
+                        stage.frame.style.pointerEvents = "auto";
+                        stage.frame.removeAttribute("aria-hidden");
+                        stage.frame.tabIndex = 0;
+                        stage.frame.focus();
+                        $("panel")?.remove();
+                        const hifi = location.pathname.replace(/index\.html$/, "") + "hifi/";
+                        try { history.replaceState(null, "", hifi); localStorage.setItem("portfolio.fi", "hifi"); } catch (e) {}
+                        document.title = "Chloe Ma · Hi-fi portfolio";
+                    };
+                    stage.frame.contentWindow.postMessage({ stage: "open" }, location.origin);
+                    // (if the doors haven't said they're open well after their slide, go in the usual way)
+                    setTimeout(() => { if (stage.frame.style.pointerEvents !== "auto") location.replace("hifi/"); }, 6000);
+                    return;
+                }
+                if (toHifi(pendingPage)) {
+                    // Hi-fi opens behind these same closed doors (its loading
+                    // screen wears this picture of them until its own 3D doors are
+                    // ready, then they slide apart onto the shelf wall). The top
+                    // bar turns into the site's own.
+                    // the doors go with a copy of the site's top bar, styled inline,
+                    // inside the same overlay: the bar is anchored above them at
+                    // every moment, on every page they're shown on
+                    const siteBar = window.gateSiteBar("hifi", true);
+                    document.querySelector(".bar").replaceWith(siteBar);
+                    const barCopy = frozen(siteBar);
+                    barCopy.removeAttribute("id"); barCopy.style.zIndex = "2";
+                    try { sessionStorage.setItem("portfolio.enter", doorsHTML() + barCopy.outerHTML); } catch (e) {}
+                    return location.replace("hifi/");
+                }
+                // the lo-fi way in: into the picture, which grows past the screen's edges
+                if (lofi && !still) {
+                    await wait(350);
+                    const r = illus.getBoundingClientRect(), vw = innerWidth, vh = innerHeight;
+                    const S = Math.max(vw / r.width, vh / r.height) * 1.25;
+                    illus.style.transform = `translate(${vw / 2 - (r.left + r.width / 2)}px, ${vh / 2 - (r.top + r.height / 2)}px) scale(${S})`;
+                    illus.style.borderRadius = "0";
+                    await wait(1300);
+                }
+                // any other page: a fade into the page's own colour
+                if (!still) {
+                    veil.style.background = pageColour(pendingPage);
+                    veil.classList.add("on");
+                    await wait(400);
+                }
+                document.write(carryBar(pendingPage));
+                document.close();
+            });
+          })();
+        </script>
+    </body>
+</html>

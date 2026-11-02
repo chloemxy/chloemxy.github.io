@@ -37,6 +37,7 @@ function initBar({ home, version } = {}) {
       <nav class="site-bar__switch" aria-label="Site version">
         <a href="index.html" data-fi="lofi">Lo-fi</a><a href="hifi/" data-fi="hifi">Hi-fi</a>
       </nav>
+      <a href="resume.html" class="site-bar__link" aria-label="Resume"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 15.5h5M10 9h2"/></svg><span>Resume</span></a>
       <button type="button" class="site-bar__icon" id="menuToggle" aria-label="Menu" aria-expanded="false" aria-controls="menuPanel">
         <svg class="site-bar__burger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
           <line class="b1" x1="5" y1="7" x2="19" y2="7"/><line class="b2" x1="5" y1="12" x2="19" y2="12"/><line class="b3" x1="5" y1="17" x2="19" y2="17"/>
@@ -61,7 +62,7 @@ function initBar({ home, version } = {}) {
         <p class="menu-col-label">Links</p>
         <ul class="menu-links-list">
           <li><a href="https://www.linkedin.com/in/chloexyma" target="_blank" rel="noopener">LinkedIn</a></li>
-          <li><a href="#" target="_blank" rel="noopener">Resume</a></li>
+          <li><a href="resume.html">Resume</a></li>
           <li><a href="mailto:chloexy.ma@gmail.com">Email</a></li>
         </ul>
       </div>
