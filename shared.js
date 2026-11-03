@@ -253,6 +253,39 @@ function initSubFooter() {
 }
 
 /* ══════════════════════════════════
+   30-SECOND READ
+   A switch under the hero folds a case study to its skim layer: headlines,
+   numbers and callouts. The choice carries across case studies.
+══════════════════════════════════ */
+function initSkim() {
+  const hero = document.querySelector('#hero .container');
+  if (!hero) return;
+  const KEY = 'caseRead';
+  const box = document.createElement('div');
+  box.className = 'skim-switch reveal';
+  box.setAttribute('role', 'group');
+  box.setAttribute('aria-label', 'How much to read');
+  box.innerHTML = '<span class="skim-switch__k">Read</span>' +
+    '<button type="button" data-skim="1">30 seconds</button>' +
+    '<button type="button" data-skim="0">The full story</button>';
+  hero.appendChild(box);
+  const set = on => {
+    document.body.classList.toggle('skim', on);
+    box.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.skim === '1') === on)));
+  };
+  let start = false;
+  try { start = localStorage.getItem(KEY) === '1'; } catch (e) {}
+  set(start);
+  box.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    const on = b.dataset.skim === '1';
+    set(on);
+    try { localStorage.setItem(KEY, on ? '1' : '0'); } catch (e) {}
+  });
+}
+
+/* ══════════════════════════════════
    SCROLL PROGRESS BAR
 ══════════════════════════════════ */
 function initScrollProgress() {

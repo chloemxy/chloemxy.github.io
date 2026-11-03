@@ -8,41 +8,11 @@
   <script>
     // In from the password page (it left a note): its picture of the doors,
     // up from the very first paint, until the scene's own 3D doors are ready
-    // behind it (main.js takes it down).
+    // behind it (main.js takes it down). Only then: the doors are the way
+    // into the portfolio, seen once a visit. Any other arrival (a refresh,
+    // the Hi-fi switch, a bookmark) gets the plain loading screen below.
     try {
       var held = sessionStorage.getItem('portfolio.enter');
-      // Opened any other way (a remembered password, the Hi-fi switch, a
-      // bookmark): the same doors, drawn here with the password page's own
-      // layout, so every way into hi-fi starts at them. (Not in the stage,
-      // which builds its 3D doors, nor with ?doors= set.)
-      if (!held && !/stage\.html$/.test(location.pathname) && !/[?&]doors=/.test(location.search)) {
-        var SHOT = { fov: 27.5, eye: 1.6, view: [-1.85, -0.06, 1.28, 2.43], keep: [-0.94, -0.02, 0.41, 2.43], aimZ: 0 };
-        var PLATE = { z: 0.38, x0: -3.785, x1: 3.215, y0: -0.4, y1: 3.6 };
-        var PARTS = { left: [-3.4928, -0.7337, 0, 2.31], mid: [-0.7337, 0.1596, 0, 2.31], right: [0.1596, 2.9628, 0, 2.31], head: [-3.6928, 3.1628, 2.31, 2.81] };
-        var PIC = '/img/gate/doors.jpg';
-        var W = innerWidth, H = innerHeight, tanH = Math.tan(SHOT.fov * Math.PI / 360);
-        var barFrac = Math.min(0.3, (W < 900 ? 56 : 64) / H);   // the top bar (tokens.css --bar-h)
-        var a = W / H / (1 - barFrac);
-        var seen = Math.max(SHOT.view[3] - SHOT.view[1], SHOT.keep[3] - SHOT.keep[1], (SHOT.keep[2] - SHOT.keep[0]) / a), w = seen * a;
-        var cx = Math.min(Math.max((SHOT.view[0] + SHOT.view[2]) / 2, SHOT.keep[2] - w / 2), SHOT.keep[0] + w / 2);
-        var h = seen / (1 - barFrac), cy = SHOT.view[3] - seen / 2 + (h - seen) / 2, d = h / 2 / tanH;
-        var P = H / 2 / tanH, horizon = H / 2 + (cy - SHOT.eye) / d * P, s = P / (d + SHOT.aimZ - PLATE.z);
-        var X = function (x) { return W / 2 + (x - cx) * s; }, Y = function (y) { return horizon - (y - SHOT.eye) * s; };
-        var left = X(PLATE.x0), topY = Y(PLATE.y1), pw = (PLATE.x1 - PLATE.x0) * s, ph = (PLATE.y1 - PLATE.y0) * s;
-        var pic = function (x, y) { return 'background:url(' + PIC + ') ' + (left - x) + 'px ' + (topY - y) + 'px/' + pw + 'px ' + ph + 'px no-repeat'; };
-        var part = function (name, r) {
-          var x = X(r[0]), y = Y(r[3]);
-          return '<div class="gd-' + name + '" style="position:absolute;left:' + x + 'px;top:' + y + 'px;width:' + (X(r[1]) - x) + 'px;height:' + (Y(r[2]) - y) + 'px;' + pic(x, y) + ';will-change:transform"></div>';
-        };
-        // main.js opens them only once the picture is on screen
-        var img = new Image(); img.src = PIC;
-        window.gateDoorsPic = img.decode().catch(function () {});
-        var seam = X(PARTS.mid[1]);
-        held = '<div class="gate-backdrop" data-dl="' + (seam + 40) + '" data-dr="' + (W - seam + 40) + '" data-mw="' + (seam - X(PARTS.mid[0])) + '" data-hh="' + (Y(PARTS.head[2]) + 40) + '" '
-          + 'style="position:absolute;left:0;top:0;width:' + W + 'px;height:' + H + 'px;overflow:hidden;pointer-events:none;background:#d8c3a2">'
-          + '<div class="gd-still" style="position:absolute;left:' + left + 'px;top:' + topY + 'px;width:' + pw + 'px;height:' + ph + 'px;' + pic(left, topY) + '"></div>'
-          + part('mid', PARTS.mid) + part('left', PARTS.left) + part('right', PARTS.right) + part('head', PARTS.head) + '</div>';
-      }
       if (held && held.charAt(0) === '<') {
         var hold = document.createElement('div');
         hold.id = 'gate-hold';
@@ -62,7 +32,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap">
   <link rel="stylesheet" href="fonts.css">
-  <link rel="stylesheet" href="style.css?v=20261102170340">
+  <link rel="stylesheet" href="style.css?v=20261102232953">
   <script type="importmap">
     {
       "imports": {
@@ -73,8 +43,8 @@
   </script>
   <script>function hifiChosen() { try { localStorage.setItem('portfolio.fi', 'hifi'); } catch (e) {} }
     hifiChosen(); addEventListener('pageshow', function (e) { if (e.persisted) hifiChosen(); });</script>
-  <link rel="stylesheet" href="../tokens.css?v=20261102170340">
-  <link rel="stylesheet" href="../bar.css?v=20261102170340">
+  <link rel="stylesheet" href="../tokens.css?v=20261102232954">
+  <link rel="stylesheet" href="../bar.css?v=20261102232954">
   <style>
     body:has(.loading:not(.done)) .bar { z-index: 5; }
     .loader-slow { margin: 0; color: var(--mute); opacity: 0; visibility: hidden; transition: opacity 400ms var(--out), visibility 400ms; }
@@ -142,16 +112,16 @@
   <button id="stage-back" type="button" class="stage-back btn ghost label" hidden>&larr; Back to the wall</button>
   <div id="veil" class="veil" aria-hidden="true"></div>
 
-  <div id="loading" class="loading" role="progressbar" aria-label="Filling the drawer" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+  <div id="loading" class="loading" role="progressbar" aria-label="Filling the cabinets" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
     <div class="loader-wall" aria-hidden="true">
       <div class="ld"><span class="ld-glass"><i class="ld-card"></i></span><span class="ld-front"><b class="ld-knob"></b></span></div>
     </div>
-    <p class="loader-line"><span class="loader-text">Filling the drawer</span><span class="loader-pct">0%</span></p>
+    <p class="loader-line"><span class="loader-text">Filling the cabinets</span><span class="loader-pct">0%</span></p>
     <p class="loader-slow label" id="loader-slow" aria-live="polite">Taking a while? <a href="../index.html">See the lo-fi portfolio</a></p>
   </div>
 
   <script>window.STAGE = true;</script>
-  <script type="module" src="src/main.js?v=20261102170340"></script>
+  <script type="module" src="src/main.js?v=20261102232953"></script>
   <script>
     setTimeout(function () {
       var l = document.getElementById('loading'), m = document.getElementById('loader-slow');
